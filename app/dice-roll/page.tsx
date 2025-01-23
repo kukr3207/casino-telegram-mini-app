@@ -1,12 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function DiceRollPage() {
   const [betType, setBetType] = useState<"sum" | "pair" | "odd-even" | "range">("sum");
   const [selectedBet, setSelectedBet] = useState<string | number | null>(null);
   const [betAmount, setBetAmount] = useState(10);
   const [showRules, setShowRules] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Telegram" in window) {
+      const tg = window.Telegram.WebApp;
+
+      // Configure Telegram Main Button
+      tg.MainButton.text = "Roll Dice";
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => {
+        console.log(`Placed bet: ${betType}, Selection: ${selectedBet}, Amount: ${betAmount}`);
+        tg.close();
+      });
+
+      return () => {
+        tg.MainButton.hide(); // Hide MainButton when leaving the page
+      };
+    }
+  }, [betType, selectedBet, betAmount]);
 
   const handleIncreaseBet = () => setBetAmount((prev) => prev + 10);
   const handleDecreaseBet = () => setBetAmount((prev) => (prev > 10 ? prev - 10 : prev));
@@ -82,10 +100,8 @@ export default function DiceRollPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center px-4 py-6 space-y-8">
-      {/* Header */}
       <h2 className="text-center text-xl font-bold mb-4">Dice Roll</h2>
 
-      {/* Dice Animation */}
       <div className="flex justify-center items-center">
         <div className="dice-roll-animation">
           <div className="dice">🎲</div>
@@ -93,7 +109,6 @@ export default function DiceRollPage() {
         </div>
       </div>
 
-      {/* Bet Type Selection */}
       <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
         <h3 className="text-lg font-semibold mb-3 text-center">Choose Your Bet:</h3>
         <div className="flex justify-center gap-4 flex-wrap">
@@ -136,13 +151,11 @@ export default function DiceRollPage() {
         </div>
       </div>
 
-      {/* Bet Options */}
       <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
         <h3 className="text-lg font-semibold mb-3 text-center">Select a Bet:</h3>
         {renderBetOptions()}
       </div>
 
-      {/* Bet Amount */}
       <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
         <h3 className="text-lg font-semibold mb-3 text-center">Bet Amount:</h3>
         <div className="flex items-center justify-center gap-6">
@@ -162,7 +175,6 @@ export default function DiceRollPage() {
         </div>
       </div>
 
-      {/* Rules Section */}
       <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
         <button
           onClick={() => setShowRules(!showRules)}

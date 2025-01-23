@@ -1,21 +1,41 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function CoinFlipPage() {
   const [selectedBet, setSelectedBet] = useState<"heads" | "tails" | null>(null);
   const [betAmount, setBetAmount] = useState(10);
   const [showRules, setShowRules] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Telegram" in window) {
+      const tg = window.Telegram.WebApp;
+
+      // Configure Telegram Main Button
+      tg.MainButton.text = "Place Bet";
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => {
+        console.log(`Placed bet on ${selectedBet} with ${betAmount} tokens`);
+        tg.close(); // Close the Mini App after the action
+      });
+
+      // Adjust the theme
+      const theme = tg.colorScheme; // 'dark' or 'light'
+      document.body.setAttribute("data-theme", theme);
+
+      return () => {
+        tg.MainButton.hide(); // Hide MainButton when leaving the page
+      };
+    }
+  }, [selectedBet, betAmount]);
+
   const handleIncreaseBet = () => setBetAmount((prev) => prev + 10);
   const handleDecreaseBet = () => setBetAmount((prev) => (prev > 10 ? prev - 10 : prev));
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center px-4 py-6 space-y-8">
-      {/* Header */}
       <h2 className="text-center text-xl font-bold mb-4">Coin Flip</h2>
 
-      {/* Coin Animation */}
       <div className="relative flex justify-center items-center">
         <div className="coin-container">
           <div className="coin">
@@ -29,7 +49,6 @@ export default function CoinFlipPage() {
         </div>
       </div>
 
-      {/* Bet Selection */}
       <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
         <h3 className="text-lg font-semibold mb-3 text-center">Bet On:</h3>
         <div className="flex justify-center gap-4">
@@ -48,7 +67,6 @@ export default function CoinFlipPage() {
         </div>
       </div>
 
-      {/* Bet Amount */}
       <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
         <h3 className="text-lg font-semibold mb-3 text-center">Bet Amount:</h3>
         <div className="flex items-center justify-center gap-6">
@@ -68,7 +86,6 @@ export default function CoinFlipPage() {
         </div>
       </div>
 
-      {/* Rules Section */}
       <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
         <button
           onClick={() => setShowRules(!showRules)}

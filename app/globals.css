@@ -350,3 +350,24 @@ nav span {
     transform: rotateY(360deg);
   }
 }
+
+/* Add support for dynamic Telegram viewport height */
+body {
+  height: var(--tg-viewport-height);
+}
+
+/* Optional: Telegram-specific themes */
+[data-theme="dark"] {
+  --bg-color: #1e1e1e;
+  --text-color: #ffffff;
+}
+
+[data-theme="light"] {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
