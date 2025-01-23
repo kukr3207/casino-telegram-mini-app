@@ -8,7 +8,7 @@ export default function CoinFlipPage() {
   const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Telegram" in window) {
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
 
       // Configure Telegram Main Button

@@ -9,8 +9,8 @@ export default function DiceRollPage() {
   const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Telegram" in window) {
-      const tg = window.Telegram.WebApp;
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+        const tg = window.Telegram.WebApp;
 
       // Configure Telegram Main Button
       tg.MainButton.text = "Roll Dice";
