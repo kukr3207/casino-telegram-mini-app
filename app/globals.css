@@ -10,9 +10,21 @@
   --accent-color: #ffd700; /* Casino Gold */
 }
 
-body {
-  @apply bg-gray-900 text-white; /* Default to dark mode for Telegram */
+[data-theme="dark"] {
+  --bg-color: #1e1e1e;
+  --text-color: #ffffff;
 }
+
+[data-theme="light"] {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
 
 button {
   @apply focus:outline-none transition ease-in-out duration-150;
