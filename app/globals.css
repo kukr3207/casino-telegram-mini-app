@@ -44,7 +44,7 @@ button {
   @apply focus:outline-none transition ease-in-out duration-150;
 }
 
-.telegram-btn {
+/* .telegram-btn {
   padding: 12px 20px;
   font-size: 16px;
   font-weight: 600;
@@ -70,7 +70,7 @@ button {
 
 .telegram-btn-secondary:hover {
   background-color: #666;
-}
+} */
 
 /* Coin Flip Animation */
 .coin-container {
