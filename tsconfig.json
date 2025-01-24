@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "esnext", // Modern JS for better performance
     "lib": [
       "dom",
       "dom.iterable",
@@ -16,7 +16,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "preserve", // Use the modern JSX transform
     "incremental": true,
     "baseUrl": ".", // Enable absolute imports
     "paths": {
@@ -34,7 +34,9 @@
     "**/*.ts",
     "**/*.tsx",
     "next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx" // Include app directory if using Next.js app router
   ],
   "exclude": [
     "node_modules"

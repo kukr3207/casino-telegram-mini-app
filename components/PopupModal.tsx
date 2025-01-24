@@ -1,50 +1,41 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 
 interface PopupModalProps {
-  title: string;
-  description: string;
-  route: string;
+  isVisible: boolean;
   closePopup: () => void;
+  gameId: string;
 }
 
-const PopupModal: React.FC<PopupModalProps> = ({
-  title,
-  description,
-  route,
-  closePopup,
-}) => {
-  const router = useRouter();
+const gameDetails: { [key: string]: { title: string; description: string } } = {
+  "coin-flip": { title: "Coin Flip", description: "Play and flip a coin to win!" },
+  "dice-roll": { title: "Dice Roll", description: "Roll the dice and test your luck!" },
+  "slot-machine": { title: "Slot Machine", description: "Spin the slots and win big!" },
+};
 
-  const handlePlayGame = () => {
-    closePopup();
-    router.push(route);
-  };
+export default function PopupModal({ isVisible, closePopup, gameId }: PopupModalProps) {
+  if (!isVisible) return null;
+
+  const game = gameDetails[gameId];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-11/12 max-w-sm text-center">
-        <h2 className="text-xl font-bold text-yellow-400">{title}</h2>
-        <p className="text-gray-300 mt-2">{description}</p>
-        <div className="mt-4 flex flex-col gap-3">
-          <button
-            onClick={handlePlayGame}
-            className="bg-yellow-400 text-gray-900 font-semibold py-2 rounded-lg hover:bg-yellow-500"
-          >
-            Play Game
-          </button>
-          <button
-            onClick={closePopup}
-            className="text-gray-400 hover:text-white"
-          >
-            Close
-          </button>
-        </div>
+    <div className="popup-overlay">
+      <div className="popup-content">
+        <h2 className="text-yellow-400 text-2xl font-bold">{game.title}</h2>
+        <p className="text-gray-300 my-4">{game.description}</p>
+        <button
+          className="play-button telegram-btn"
+          onClick={() => {
+            window.location.href = `/${gameId}`; // Navigate to game page
+          }}
+        >
+          Play Now
+        </button>
+        <button className="close-button telegram-btn-secondary" onClick={closePopup}>
+          Close
+        </button>
       </div>
     </div>
   );
-};
-
-export default PopupModal;
+}

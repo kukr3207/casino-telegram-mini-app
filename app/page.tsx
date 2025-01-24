@@ -1,38 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import GameSection from "../components/GameSection";
 import PopupModal from "../components/PopupModal";
 
-export default function Home() {
-  const [popup, setPopup] = useState({
-    visible: false,
-    title: "",
-    description: "",
-    route: "",
-  });
+export default function Page() {
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<string>("");
 
-  const showPopup = (title: string, description: string, route: string) => {
-    setPopup({ visible: true, title, description, route });
+  const showPopup = (gameId: string) => {
+    setSelectedGame(gameId);
+    setIsPopupVisible(true);
   };
 
   const closePopup = () => {
-    setPopup({ visible: false, title: "", description: "", route: "" });
+    setIsPopupVisible(false);
+    setSelectedGame("");
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      {/* Game Section */}
-      <main className="flex-1 p-4">
-        <GameSection showPopup={showPopup} />
-      </main>
-
-      {/* Popup Modal */}
-      {popup.visible && (
+    <div>
+      <GameSection showPopup={showPopup} />
+      {isPopupVisible && (
         <PopupModal
-          title={popup.title}
-          description={popup.description}
-          route={popup.route}
+          isVisible={isPopupVisible}
+          gameId={selectedGame}
           closePopup={closePopup}
         />
       )}
