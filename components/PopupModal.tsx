@@ -1,13 +1,14 @@
 import React from "react";
 import "../styles/popup-modal.css";
 
-interface PopupModalProps {
-  isVisible: boolean;
-  gameId: string;
-  closePopup: () => void;
+interface GameDetails {
+  name: string;
+  description: string;
+  animationClass: string;
+  route: string;
 }
 
-const gameDetails = {
+const gameDetails: Record<string, GameDetails> = {
   "coin-flip": {
     name: "Coin Flip",
     description: "Bet and flip the coin to test your luck!",
@@ -27,6 +28,12 @@ const gameDetails = {
     route: "/slot-machine",
   },
 };
+
+interface PopupModalProps {
+  isVisible: boolean;
+  gameId: string;
+  closePopup: () => void;
+}
 
 const PopupModal: React.FC<PopupModalProps> = ({ isVisible, gameId, closePopup }) => {
   const game = gameDetails[gameId];
