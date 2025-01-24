@@ -1,25 +1,36 @@
 nav {
     background-color: var(--dark-bg);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+    width: 95%; /* Set width to 90% */
+    margin: 0 auto; /* Center the menu */
+    border-radius: 20px; /* Curved rectangle effect */
+    padding: 8px 0;
+    display: flex;
+    justify-content: center;
+    margin: 0 0 10px 10px;
   }
   
   nav ul {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 10px 0;
+    padding: 0; /* Adjusted padding for better fit */
     margin: 0;
     list-style: none;
+    width: 100%; /* Ensure the menu items fit within the nav */
   }
   
   nav a {
     text-decoration: none;
     color: white;
     font-size: 14px;
-    transition: color 0.2s ease-in-out;
+    padding: 8px 16px;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    border-radius: 8px; /* Add curved effect to menu items */
   }
   
   nav a:hover {
     color: var(--accent-color);
+    background-color: rgba(255, 215, 0, 0.1); /* Add hover effect */
   }
   

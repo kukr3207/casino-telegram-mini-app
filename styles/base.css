@@ -4,15 +4,15 @@
 
 /* Root Variables */
 :root {
-  --primary-color: #0088cc; /* Telegram Blue */
+  --primary-color: #1111; /* Telegram Blue */
   --secondary-color: #f0f0f0; /* Neutral White for Light Mode */
-  --dark-bg: #1e1e1e; /* Dark Background */
+  --dark-bg: #0000; /* Dark Background */
   --light-bg: #ffffff; /* Light Background */
   --accent-color: #ffd700; /* Casino Gold */
 }
 /* Themes */
 [data-theme="dark"] {
-    --bg-color: #1e1e1e;
+    --bg-color: #000000;
     --text-color: #ffffff;
   }
   
