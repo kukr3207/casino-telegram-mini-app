@@ -11,23 +11,23 @@ export default function CoinFlipPage() {
   const handleIncreaseBet = () => setBetAmount((prev) => prev + 10);
   const handleDecreaseBet = () => setBetAmount((prev) => (prev > 10 ? prev - 10 : prev));
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
+//   useEffect(() => {
+//     if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+//       const tg = window.Telegram.WebApp;
 
-      // Configure Telegram Main Button
-      tg.MainButton.text = "Place Bet";
-      tg.MainButton.show();
-      tg.MainButton.onClick(() => {
-        console.log(`Placed bet: ${selectedBet}, Amount: ${betAmount}`);
-        tg.close();
-      });
+//       // Configure Telegram Main Button
+//       tg.MainButton.text = "Place Bet";
+//       tg.MainButton.show();
+//       tg.MainButton.onClick(() => {
+//         console.log(`Placed bet: ${selectedBet}, Amount: ${betAmount}`);
+//         tg.close();
+//       });
 
-      return () => {
-        tg.MainButton.hide();
-      };
-    }
-  }, [selectedBet, betAmount]);
+//       return () => {
+//         tg.MainButton.hide();
+//       };
+//     }
+//   }, [selectedBet, betAmount]);
 
   return (
     <div className="min-h-screen">
