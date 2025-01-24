@@ -3,6 +3,9 @@
 import { useState } from "react";
 import GameSection from "../components/GameSection";
 import PopupModal from "../components/PopupModal";
+import "../styles/base.css";
+import "../styles/game-section.css";
+import "../styles/popup-modal.css";
 
 export default function Page() {
   const [isPopupVisible, setIsPopupVisible] = useState(false);

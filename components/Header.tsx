@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import "../styles/header.css";
+
 
 const tokens = [
   { id: 1, image: "/images/token1.png", count: 10000 },

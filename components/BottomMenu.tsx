@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import "../styles/bottom-menu.css";
+
 
 const BottomMenu: React.FC = () => {
   return (

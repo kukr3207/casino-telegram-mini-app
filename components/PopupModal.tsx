@@ -1,41 +1,53 @@
-"use client";
-
 import React from "react";
+import "../styles/popup-modal.css";
 
 interface PopupModalProps {
   isVisible: boolean;
-  closePopup: () => void;
   gameId: string;
+  closePopup: () => void;
 }
 
-const gameDetails: { [key: string]: { title: string; description: string } } = {
-  "coin-flip": { title: "Coin Flip", description: "Play and flip a coin to win!" },
-  "dice-roll": { title: "Dice Roll", description: "Roll the dice and test your luck!" },
-  "slot-machine": { title: "Slot Machine", description: "Spin the slots and win big!" },
+const gameDetails = {
+  "coin-flip": {
+    name: "Coin Flip",
+    description: "Bet and flip the coin to test your luck!",
+    animationClass: "coin-flip-animation",
+    route: "/coin-flip",
+  },
+  "dice-roll": {
+    name: "Dice Roll",
+    description: "Roll the dice and see what you get!",
+    animationClass: "dice-roll-animation",
+    route: "/dice-roll",
+  },
+  "slot-machine": {
+    name: "Slot Machine",
+    description: "Spin the slots and win big!",
+    animationClass: "slot-machine-animation",
+    route: "/slot-machine",
+  },
 };
 
-export default function PopupModal({ isVisible, closePopup, gameId }: PopupModalProps) {
-  if (!isVisible) return null;
-
+const PopupModal: React.FC<PopupModalProps> = ({ isVisible, gameId, closePopup }) => {
   const game = gameDetails[gameId];
+
+  if (!isVisible || !game) return null;
 
   return (
     <div className="popup-overlay">
       <div className="popup-content">
-        <h2 className="text-yellow-400 text-2xl font-bold">{game.title}</h2>
-        <p className="text-gray-300 my-4">{game.description}</p>
-        <button
-          className="play-button telegram-btn"
-          onClick={() => {
-            window.location.href = `/${gameId}`; // Navigate to game page
-          }}
-        >
-          Play Now
+        <button className="close-button" onClick={closePopup}>
+          ✖
         </button>
-        <button className="close-button telegram-btn-secondary" onClick={closePopup}>
-          Close
-        </button>
+        <div className={`popup-animation ${game.animationClass}`}></div>
+        <h2 className="popup-title">{game.name}</h2>
+        <p className="popup-description">{game.description}</p>
+        <a href={game.route} className="play-button">
+          Play Game
+        </a>
       </div>
     </div>
   );
-}
+};
+
+export default PopupModal;

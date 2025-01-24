@@ -1,0 +1,25 @@
+nav {
+    background-color: var(--dark-bg);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  nav ul {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0;
+    margin: 0;
+    list-style: none;
+  }
+  
+  nav a {
+    text-decoration: none;
+    color: white;
+    font-size: 14px;
+    transition: color 0.2s ease-in-out;
+  }
+  
+  nav a:hover {
+    color: var(--accent-color);
+  }
+  
