@@ -3,6 +3,9 @@
 import "./globals.css";
 import Header from "../components/Header";
 import BottomMenu from "../components/BottomMenu";
+import "../styles/header.css";
+import "../styles/bottom-menu.css";
+
 import { useEffect, useState } from "react";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
