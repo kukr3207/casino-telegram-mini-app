@@ -15,7 +15,7 @@ export async function POST(req) {
       );
     }
 
-    const client = new MongoClient(process.env.MONGO_URI, { useUnifiedTopology: true });
+    const client = new MongoClient(process.env.MONGO_URI);
     console.log("Connecting to database...");
 
     await client.connect();
@@ -24,7 +24,7 @@ export async function POST(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    const result = await users.updateOne(
+    await users.updateOne(
       { chatId },
       {
         $set: { firstName, updatedAt: new Date() },
@@ -32,14 +32,19 @@ export async function POST(req) {
       },
       { upsert: true }
     );
-    console.log("Database operation successful:", result);
 
     await client.close();
     console.log("Database connection closed");
 
-    return new Response(JSON.stringify({ message: "User saved successfully" }), { status: 200 });
+    return new Response(
+      JSON.stringify({ message: "User saved successfully" }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error saving user data:", error);
-    return new Response(JSON.stringify({ error: "Database error" }), { status: 500 });
+    return new Response(
+      JSON.stringify({ error: "Database error" }),
+      { status: 500 }
+    );
   }
 }
