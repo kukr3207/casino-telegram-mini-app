@@ -12,6 +12,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [viewportHeight, setViewportHeight] = useState("100vh");
 
   useEffect(() => {
+      console.log("Window object:", window);
+      console.log("Telegram object:", window.Telegram);
+      console.log("Telegram.WebApp:", window.Telegram?.WebApp);
+    
     if (typeof window !== "undefined" && window.Telegram?.WebApp) {
       console.log("Telegram initialized.");
       const tg = window.Telegram.WebApp;
