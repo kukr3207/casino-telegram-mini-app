@@ -34,8 +34,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
       // Validate initDataUnsafe
       if (initDataUnsafe?.user) {
-        const { id: chatId, first_name: firstName } = initDataUnsafe.user;
-        console.log("User details extracted:", { chatId, firstName });
+        const {
+          id: chatId,
+          first_name: firstName,
+          username,
+        } = initDataUnsafe.user;
+
+        console.log("User details extracted:", { chatId, firstName, username });
 
         // Check if the user is already saved
         const savedChatId = sessionStorage.getItem("chat_id");
@@ -46,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ chatId, firstName, initData }),
+            body: JSON.stringify({ chatId, firstName, username, initData }),
           })
             .then((response) => {
               if (response.ok) {

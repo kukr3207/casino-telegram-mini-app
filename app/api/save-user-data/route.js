@@ -5,7 +5,7 @@ export async function POST(req) {
     console.log("Request received");
 
     const { chatId, firstName } = await req.json();
-    console.log("Data parsed:", { chatId, firstName });
+    console.log("Data parsed:", { chatId, firstName, username });
 
     if (!chatId || !firstName) {
       console.error("Missing required fields");
@@ -27,7 +27,7 @@ export async function POST(req) {
     await users.updateOne(
       { chatId },
       {
-        $set: { firstName, updatedAt: new Date() },
+        $set: { firstName, username, updatedAt: new Date() },
         $setOnInsert: {
           createdAt: new Date(),
           casino_chips: 0,
