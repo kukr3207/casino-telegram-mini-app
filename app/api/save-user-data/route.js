@@ -4,7 +4,7 @@ export async function POST(req) {
   try {
     console.log("Request received");
 
-    const { chatId, firstName } = await req.json();
+    const { chatId, firstName, username } = await req.json();
     console.log("Data parsed:", { chatId, firstName, username });
 
     if (!chatId || !firstName) {
@@ -27,7 +27,7 @@ export async function POST(req) {
     await users.updateOne(
       { chatId },
       {
-        $set: { firstName, username, updatedAt: new Date() },
+        $set: { firstName, username: username || null, updatedAt: new Date() },
         $setOnInsert: {
           createdAt: new Date(),
           casino_chips: 0,
