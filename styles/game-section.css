@@ -2,9 +2,13 @@
 
 .game-section {
     display: flex;
+    background-color: #0b0b13; /* Rich black */
     flex-direction: column;
     gap: 16px;
-    padding: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); /* Subtle shadow */
   }
   
   .game-card {
@@ -14,6 +18,7 @@
     background-color: #1f1f2e; /* Rich navy */
     border-radius: 12px;
     padding: 16px;
+    margin-bottom: 15px;
     transition: transform 0.3s ease, background-color 0.3s ease;
     box-shadow: 0 4px 8px rgba(255, 255, 255, 0.5);
     cursor: pointer;

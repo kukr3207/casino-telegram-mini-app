@@ -61,7 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
 
         {/* Main Content */}
-        <main style={{ flex: 1, overflowY: "auto" }}>{children}</main>
+        <main style={{ flex: 1, overflowY: "auto", paddingBottom: "60px" }}>
+          {children}
+        </main>
 
         {/* Bottom Menu Component */}
         <BottomMenu />

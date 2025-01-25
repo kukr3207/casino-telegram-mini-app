@@ -1,35 +1,45 @@
 import { MongoClient } from "mongodb";
 
-const client = new MongoClient(process.env.MONGO_URI);
-
 export async function POST(req) {
   try {
+    console.log("Request received");
+
     const { chatId, firstName } = await req.json();
+    console.log("Data parsed:", { chatId, firstName });
 
     if (!chatId || !firstName) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-      });
+      console.error("Missing required fields");
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400 }
+      );
     }
 
-    await client.connect();
-    const db = client.db("house-of-luck");
-    const usersCollection = db.collection("users");
+    const client = new MongoClient(process.env.MONGO_URI, { useUnifiedTopology: true });
+    console.log("Connecting to database...");
 
-    // Upsert user data (update if exists, otherwise insert)
-    await usersCollection.updateOne(
+    await client.connect();
+    console.log("Connected to database");
+
+    const db = client.db("casino-mini-app");
+    const users = db.collection("users");
+
+    const result = await users.updateOne(
       { chatId },
-      { $set: { chatId, firstName, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+      {
+        $set: { firstName, updatedAt: new Date() },
+        $setOnInsert: { createdAt: new Date() },
+      },
       { upsert: true }
     );
+    console.log("Database operation successful:", result);
 
-    return new Response(JSON.stringify({ message: "User saved successfully" }), {
-      status: 200,
-    });
+    await client.close();
+    console.log("Database connection closed");
+
+    return new Response(JSON.stringify({ message: "User saved successfully" }), { status: 200 });
   } catch (error) {
     console.error("Error saving user data:", error);
     return new Response(JSON.stringify({ error: "Database error" }), { status: 500 });
-  } finally {
-    await client.close();
   }
 }

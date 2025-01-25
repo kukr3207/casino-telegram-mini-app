@@ -21,18 +21,49 @@
     --text-color: #000000;
   }
   
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  height: var(--tg-viewport-height);
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Prevent scrolling on the body */
+  }
+  
+  main {
+    flex: 1;
+    overflow-y: auto; /* Make the main content area scrollable */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling for mobile devices */
+  }
+  
+/* Game Section */
+.flex {
+    display: flex;
+  }
+  
+  .flex-col {
+    flex-direction: column;
+  }
+  
+  .gap-4 {
+    gap: 1rem;
+  }
+  
+  .p-4 {
+    padding: 1rem;
+  }
+  
+  .bg-gray-800 {
+    background-color: #2d3748;
+  }
+  
+  .hover\:bg-gray-700:hover {
+    background-color: #4a5568;
+  }
+  
+  .shadow-lg {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.25);
+  }
+  
+  .text-gray-400 {
+    color: #cbd5e0;
+  }
