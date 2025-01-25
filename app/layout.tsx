@@ -16,13 +16,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       console.log("Telegram object:", window.Telegram);
       console.log("Telegram.WebApp:", window.Telegram?.WebApp);
     
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      console.log("Telegram initialized.");
-      const tg = window.Telegram.WebApp;
-      const height = tg.viewportHeight || window.innerHeight;
-      setViewportHeight(`${height}px`);
-      tg.ready();
-    }
+      if (typeof window !== "undefined") {
+        console.log("Window object is available.");
+    
+        if (window.Telegram?.WebApp) {
+          console.log("Telegram WebApp detected.");
+          const tg = window.Telegram.WebApp;
+          const height = tg.viewportHeight || window.innerHeight;
+          setViewportHeight(`${height}px`);
+          tg.ready();
+          console.log("Telegram WebApp is ready.");
+        } else {
+          console.warn("Telegram.WebApp is not available.");
+        }
+      } else {
+        console.error("Window object is undefined.");
+      }
 
     const params = new URLSearchParams(window.location.search);
     const chatId = params.get("chat_id");
