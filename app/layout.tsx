@@ -12,49 +12,59 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [viewportHeight, setViewportHeight] = useState("100vh");
 
   useEffect(() => {
-      console.log("Window object:", window);
-      console.log("Telegram object:", window.Telegram);
-      console.log("Telegram.WebApp:", window.Telegram?.WebApp);
-    
-      if (typeof window !== "undefined") {
-        console.log("Window object is available.");
-    
-        if (window.Telegram?.WebApp) {
-          console.log("Telegram WebApp detected.");
-          const tg = window.Telegram.WebApp;
-          const height = tg.viewportHeight || window.innerHeight;
-          setViewportHeight(`${height}px`);
-          tg.ready();
-          console.log("Telegram WebApp is ready.");
+    console.log("Initializing Telegram WebApp...");
+
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      console.log("Telegram WebApp detected.");
+
+      // Initialize Telegram WebApp
+      tg.ready();
+
+      // Set viewport height for responsiveness
+      const height = tg.viewportHeight || window.innerHeight;
+      setViewportHeight(`${height}px`);
+
+      // Extract initData from Telegram
+      const initData = tg.initData;
+      const initDataUnsafe = tg.initDataUnsafe;
+
+      console.log("Raw initData:", initData);
+      console.log("Parsed initDataUnsafe:", initDataUnsafe);
+
+      // Validate initDataUnsafe
+      if (initDataUnsafe?.user) {
+        const { id: chatId, first_name: firstName } = initDataUnsafe.user;
+        console.log("User details extracted:", { chatId, firstName });
+
+        // Check if the user is already saved
+        const savedChatId = sessionStorage.getItem("chat_id");
+        if (!savedChatId) {
+          console.log("Saving user data to backend...");
+          fetch("/api/save-user-data", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ chatId, firstName, initData }),
+          })
+            .then((response) => {
+              if (response.ok) {
+                sessionStorage.setItem("chat_id", chatId.toString());
+                console.log("User data saved successfully.");
+              } else {
+                console.error("Failed to save user data.");
+              }
+            })
+            .catch((error) => console.error("Error saving user data:", error));
         } else {
-          console.warn("Telegram.WebApp is not available.");
+          console.log("User data already exists in sessionStorage.");
         }
       } else {
-        console.error("Window object is undefined.");
+        console.warn("initDataUnsafe does not contain user details.");
       }
-
-    const params = new URLSearchParams(window.location.search);
-    const chatId = params.get("chat_id");
-    const firstName = params.get("first_name");
-
-    if (chatId && firstName) {
-      const savedChatId = sessionStorage.getItem("chat_id");
-      if (!savedChatId) {
-        fetch("/api/save-user-data", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chatId, firstName }),
-        })
-          .then((response) => {
-            if (response.ok) {
-              sessionStorage.setItem("chat_id", chatId);
-              console.log("User data saved.");
-            } else {
-              console.error("Failed to save user data.");
-            }
-          })
-          .catch((error) => console.error("Error saving user data:", error));
-      }
+    } else {
+      console.error("Telegram WebApp is not available.");
     }
   }, []);
 
