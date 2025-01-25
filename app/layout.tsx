@@ -19,23 +19,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       tg.ready();
     }
 
-    // Extract user data from URL parameters
     const params = new URLSearchParams(window.location.search);
     const chatId = params.get("chat_id");
     const firstName = params.get("first_name");
 
-    // Save user data only once
     if (chatId && firstName) {
       const savedChatId = sessionStorage.getItem("chat_id");
       if (!savedChatId) {
-        fetch("/save-user-data", {
+        fetch("/api/save-user-data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chatId, firstName }),
         })
           .then((response) => {
             if (response.ok) {
-              sessionStorage.setItem("chat_id", chatId); // Save to session storage
+              sessionStorage.setItem("chat_id", chatId);
+              console.log("User data saved.");
+            } else {
+              console.error("Failed to save user data.");
             }
           })
           .catch((error) => console.error("Error saving user data:", error));
@@ -57,15 +58,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           color: "var(--text-color)",
         }}
       >
-        {/* Header Component */}
         <Header />
-
-        {/* Main Content */}
         <main style={{ flex: 1, overflowY: "auto", paddingBottom: "60px" }}>
           {children}
         </main>
-
-        {/* Bottom Menu Component */}
         <BottomMenu />
       </body>
     </html>
