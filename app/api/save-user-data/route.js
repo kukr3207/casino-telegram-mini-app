@@ -24,13 +24,19 @@ export async function POST(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
+    // Update or insert the user document, initializing tokens only for new users
     await users.updateOne(
       { chatId },
       {
         $set: { firstName, updatedAt: new Date() },
-        $setOnInsert: { createdAt: new Date() },
+        $setOnInsert: {
+          createdAt: new Date(),
+          casino_chips: 0, // Initialize token1
+          withdraw_tokens: 0, // Initialize token2
+          hol_tokens: 0, // Initialize token3
+        },
       },
-      { upsert: true }
+      { upsert: true } // Create a new document if no match is found
     );
 
     await client.close();
