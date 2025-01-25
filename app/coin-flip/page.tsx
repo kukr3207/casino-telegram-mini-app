@@ -35,8 +35,8 @@ export default function CoinFlipPage() {
         <h2>Coin Flip</h2>
         <div className="coin-flip-animation">
           <div className="coin">
-            <div className="coin-front shadow-glow"></div>
-            <div className="coin-back shadow-glow"></div>
+            <div className="coin-front"></div>
+            <div className="coin-back"></div>
           </div>
         </div>
 

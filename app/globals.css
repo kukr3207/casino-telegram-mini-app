@@ -44,36 +44,6 @@ button {
   @apply focus:outline-none transition ease-in-out duration-150;
 }
 
-/* Header Styling */
-header {
-  background-color: var(--dark-bg);
-  padding: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-header div {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-header img {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-}
-
-header span {
-  font-size: 14px;
-  color: var(--accent-color);
-  font-weight: bold;
-}
-
 /* Bottom Menu Styling */
 nav {
   background-color: var(--dark-bg);

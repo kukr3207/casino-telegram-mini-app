@@ -5,9 +5,9 @@ import "../styles/header.css";
 
 
 const tokens = [
-  { id: 1, image: "/images/token1.png", count: 10000 },
-  { id: 2, image: "/images/token2.png", count: 50000 },
-  { id: 3, image: "/images/token3.png", count: 10000 },
+  { id: 1, image: "/images/token1.png", count: 1110 },
+  { id: 2, image: "/images/token2.png", count: 1110 },
+  { id: 3, image: "/images/token3.png", count: 1110 },
 ];
 
 const Header: React.FC = () => {
