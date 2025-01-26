@@ -1,14 +1,14 @@
 "use client";
 
 import "../styles/base.css";
-// import "../styles/globals.css";
+import "./globals.css";
 import "../styles/header.css";
 import "../styles/bottom-menu.css";
 import Header from "../components/Header";
 import BottomMenu from "../components/BottomMenu";
 import SplashScreen from "../components/SplashScreen";
 import { useEffect, useState } from "react";
-import TokenProvider from "../app/context/TokenProvider";
+import TokenProvider from "../context/TokenProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [viewportHeight, setViewportHeight] = useState("100vh");

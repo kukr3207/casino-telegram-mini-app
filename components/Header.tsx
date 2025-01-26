@@ -1,14 +1,9 @@
 "use client";
 
-import { useTokenContext } from "../app/context/TokenProvider";
+import { useTokenContext } from "../context/TokenProvider";
 
 export default function Header() {
   const { tokens } = useTokenContext();
-
-  if (!tokens || tokens.length === 0) {
-    console.warn("Tokens not loaded properly.");
-    return null;
-  }
 
   return (
     <header className="flex justify-center items-center gap-4 bg-gray-800 py-3 px-4 shadow-md">
