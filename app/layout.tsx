@@ -37,6 +37,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             .then((response) => {
               if (response.ok) {
                 sessionStorage.setItem("chat_id", chatId.toString());
+                console.log("Chat ID saved to session storage.");
+              } else {
+                console.error("Failed to save user data.");
               }
             })
             .catch(console.error);

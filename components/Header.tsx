@@ -22,15 +22,9 @@ export default function Header() {
   };
 
   useEffect(() => {
-    // Initial load from session storage
     updateTokensFromSession();
-
-    // Update every second to reflect changes in session storage
-    const interval = setInterval(() => {
-      updateTokensFromSession();
-    }, 1000);
-
-    return () => clearInterval(interval); // Clean up interval on unmount
+    const interval = setInterval(updateTokensFromSession, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -47,7 +41,7 @@ export default function Header() {
           />
           <span
             className="text-yellow-400 font-semibold"
-            style={{ pointerEvents: "none" }} // Disable interaction
+            style={{ pointerEvents: "none" }}
           >
             {token.count}
           </span>
