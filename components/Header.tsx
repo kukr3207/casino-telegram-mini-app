@@ -1,51 +1,71 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import "../styles/header.css";
+import { useEffect, useState } from "react";
 
-interface TokenData {
-  token1: number;
-  token2: number;
-  token3: number;
+
+function formatTokenCount(count: number): string {
+    if (count >= 1e6) {
+        // Format for million (e.g., 1M, 1.1M)
+        return `${(count / 1e6).toFixed(count % 1e6 === 0 ? 0 : 1)}M`;
+    } else if (count >= 1e3) {
+        // Format for thousand (e.g., 1K, 1.1K)
+        return `${(count / 1e3).toFixed(count % 1e3 === 0 ? 0 : 1)}K`;
+    }
+    return count.toString(); // Return the exact number for counts < 1000
 }
 
-const Header: React.FC = () => {
-  const [tokens, setTokens] = useState<TokenData | null>(null);
 
-  useEffect(() => {
-    const fetchTokenData = async () => {
-      try {
-        const response = await fetch("/api/fetch-tokens");
-        if (response.ok) {
-          const data = await response.json();
-          setTokens(data);
-        } else {
-          console.error("Failed to fetch tokens.");
-        }
-      } catch (error) {
-        console.error("Error fetching tokens:", error);
-      }
-    };
+export default function Header() {
+    const [tokens, setTokens] = useState([
+        { id: 1, image: "/images/token1.png", count: "Loading..." },
+        { id: 2, image: "/images/token2.png", count: "Loading..." },
+        { id: 3, image: "/images/token3.png", count: "Loading..." },
+    ]);
 
-    fetchTokenData();
-  }, []);
+    useEffect(() => {
+        const fetchTokenCounts = async () => {
+            try {
+                const chatId = sessionStorage.getItem("chat_id");
+                if (!chatId) return;
 
-  return (
-    <header>
-      <div>
-        <img src="/images/token1.png" alt="Token 1" />
-        <span>{tokens ? tokens.token1 : "Loading..."}</span>
-      </div>
-      <div>
-        <img src="/images/token2.png" alt="Token 2" />
-        <span>{tokens ? tokens.token2 : "Loading..."}</span>
-      </div>
-      <div>
-        <img src="/images/token3.png" alt="Token 3" />
-        <span>{tokens ? tokens.token3 : "Loading..."}</span>
-      </div>
-    </header>
-  );
-};
+                const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
+                if (response.ok) {
+                    const data = await response.json();
 
-export default Header;
+                    // Update the token counts dynamically
+                    setTokens([
+                        { id: 1, image: "/images/token1.png", count: formatTokenCount(data.token1) },
+                        { id: 2, image: "/images/token2.png", count: formatTokenCount(data.token2) },
+                        { id: 3, image: "/images/token3.png", count: formatTokenCount(data.token3) },
+                    ]);
+                } else {
+                    console.error("Failed to fetch token counts.");
+                }
+            } catch (error) {
+                console.error("Error fetching token counts:", error);
+            }
+        };
+
+        fetchTokenCounts();
+        const interval = setInterval(fetchTokenCounts, 60000); // Fetch every 60 seconds
+        return () => clearInterval(interval); // Cleanup interval on component unmount
+    }, []);
+
+    return (
+        <header className="flex justify-center items-center gap-4 bg-gray-800 py-3 px-4 shadow-md">
+            {tokens.map((token) => (
+                <div
+                    key={token.id}
+                    className="flex items-center bg-gray-700 px-4 py-2 rounded-lg shadow-md"
+                >
+                    <img
+                        src={token.image}
+                        alt={`Token ${token.id}`}
+                        className="w-6 h-6 mr-2"
+                    />
+                    <span className="text-yellow-400 font-semibold">{token.count}</span>
+                </div>
+            ))}
+        </header>
+    );
+}
