@@ -14,9 +14,9 @@ function formatTokenCount(count: number): string {
 
 export default function Header() {
     const [tokens, setTokens] = useState([
-        { id: 1, image: "/images/token1.png", count: "Loading..." },
-        { id: 2, image: "/images/token2.png", count: "Loading..." },
-        { id: 3, image: "/images/token3.png", count: "Loading..." },
+        { id: 1, image: "/images/token1.png", count: "Wait.." },
+        { id: 2, image: "/images/token2.png", count: "Wait.." },
+        { id: 3, image: "/images/token3.png", count: "Wait.." },
     ]);
 
     useEffect(() => {

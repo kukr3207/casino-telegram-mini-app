@@ -1,38 +1,34 @@
 header {
     background-color: var(--dark-bg);
-    padding: 10px;
+    padding: 10px 0;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap; /* Allow wrapping if the screen size is small */
-    gap: 10px;
-    width: 100%; /* Ensure the header spans the full width */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
-}
-
-header div {
+    justify-content: center; /* Center the tokens horizontally */
+    align-items: center; /* Align tokens vertically */
+    gap: 20px; /* Adjust spacing between tokens */
+    width: 100%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  }
+  
+  header div {
     display: flex;
     align-items: center;
-    padding: 10px;
+    justify-content: center; /* Center content inside each token */
+    padding: 10px 20px;
     background-color: #0000;
-    border-radius: 30px; /* Make the inner boxes curved */
+    border-radius: 30px; /* Curved token background */
     box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
-    flex: 1 1 calc(33% - 20px); /* Dynamic width: adjusts based on space */
-    max-width: 150px; /* Prevent boxes from becoming too large */
-    min-width: 80px; /* Prevent boxes from becoming too small */
-    justify-content: center; /* Center the content inside the token */
-}
-
-header img {
-    width: 24px;
-    height: 24px;
+  }
+  
+  header img {
+    width: 30px;
+    height: 30px;
     margin-right: 8px;
-    flex-shrink: 0; /* Prevent image from shrinking */
-}
-
-header span {
-    font-size: 18px;
+  }
+  
+  header span {
+    font-size: 20px; /* Slightly reduce font size for better fit */
     color: var(--accent-color);
     font-weight: bold;
-    white-space: nowrap; /* Prevent text from wrapping */
-}
+    white-space: nowrap; /* Prevent text wrapping */
+  }
+  
