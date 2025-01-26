@@ -1,0 +1,31 @@
+.splash-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #121212;
+    color: #ffd700;
+    font-family: Arial, sans-serif;
+    flex-direction: column;
+  }
+  
+  .splash-logo {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    animation: fadeIn 1.5s ease-in-out;
+  }
+  
+  .splash-text {
+    font-size: 1rem;
+    animation: fadeIn 2s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  

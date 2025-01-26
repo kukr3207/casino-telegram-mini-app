@@ -6,10 +6,13 @@ import "../styles/header.css";
 import "../styles/bottom-menu.css";
 import Header from "../components/Header";
 import BottomMenu from "../components/BottomMenu";
+import SplashScreen from "../components/SplashScreen";
 import { useEffect, useState } from "react";
+import TokenProvider from "../app/context/TokenProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [viewportHeight, setViewportHeight] = useState("100vh");
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
 
   useEffect(() => {
     console.log("Initializing Telegram WebApp...");
@@ -24,7 +27,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       // Set viewport height for responsiveness
       const height = tg.viewportHeight || window.innerHeight;
       setViewportHeight(`${height}px`);
-      console.log("Viewport height set:", `${height}px`);
 
       // Extract initData from Telegram
       const initData = tg.initData;
@@ -54,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 sessionStorage.setItem("chat_id", chatId.toString());
                 console.log("User data saved successfully.");
               } else {
-                console.error("Failed to save user data. Status:", response.status);
+                console.error("Failed to save user data.");
               }
             })
             .catch((error) => console.error("Error saving user data:", error));
@@ -67,6 +69,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     } else {
       console.error("Telegram WebApp is not available.");
     }
+
+    // Hide the splash screen after fetching data
+    const timer = setTimeout(() => setIsSplashVisible(false), 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -83,11 +90,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           color: "var(--text-color)",
         }}
       >
-        <Header />
-        <main style={{ flex: 1, overflowY: "auto", paddingBottom: "60px" }}>
-          {children}
-        </main>
-        <BottomMenu />
+        <TokenProvider>
+          {isSplashVisible ? (
+            <SplashScreen onFinish={() => setIsSplashVisible(false)} />
+          ) : (
+            <>
+              <Header />
+              <main style={{ flex: 1, overflowY: "auto", paddingBottom: "60px" }}>
+                {children}
+              </main>
+              <BottomMenu />
+            </>
+          )}
+        </TokenProvider>
       </body>
     </html>
   );
