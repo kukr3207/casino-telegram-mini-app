@@ -4,49 +4,51 @@
     color: #f0f0f0;
     background-color: #121212;
     font-family: 'Arial', sans-serif;
+    min-height: 100vh;
   }
   
   /* Token Descriptions Section */
   .description {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     margin-bottom: 30px;
   }
   
   .description-item {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
     padding: 15px;
     background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
     border-radius: 15px;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
   .description-item img {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: 2px solid #ffd700;
   }
   
   .description-content h2 {
-    font-size: 18px;
+    font-size: 20px;
     margin-bottom: 5px;
     color: #ffd700;
     text-transform: uppercase;
   }
   
   .description-content p {
-    font-size: 14px;
+    font-size: 15px;
     color: #b0b0b0;
   }
   
   /* Buy Chips Section */
   .buy-chips {
     margin-top: 30px;
-    padding: 20px;
+    padding: 25px;
     background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
     border-radius: 15px;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
@@ -54,32 +56,33 @@
   }
   
   .buy-chips h3 {
-    font-size: 20px;
+    font-size: 22px;
     color: #ffd700;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
   }
   
   .buy-chips p {
-    font-size: 14px;
+    font-size: 16px;
     color: #f0f0f0;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
   }
   
   .predefined-options {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 15px;
     justify-content: center;
   }
   
   .buy-button {
     background: linear-gradient(145deg, #ffd700, #e5b800);
     color: #000;
-    padding: 10px 20px;
+    padding: 12px 25px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 10px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
@@ -89,20 +92,22 @@
   }
   
   .custom-buy input {
-    padding: 10px;
+    padding: 12px;
     width: 60%;
     margin-right: 10px;
     margin-top: 10px;
     border: 2px solid #ffd700;
-    border-radius: 10px;
+    border-radius: 12px;
     outline: none;
-    font-size: 14px;
+    font-size: 15px;
     color: #000;
+    background-color: #fff;
+    transition: border-color 0.3s ease;
   }
   
   .custom-buy input:focus {
     border-color: #e5b800;
-    background-color: #fff;
+    background-color: #f8f8f8;
   }
   
   /* Special Offers Section */
@@ -115,7 +120,7 @@
   }
   
   .bundles h3 {
-    font-size: 20px;
+    font-size: 22px;
     color: #ffd700;
     text-align: center;
     margin-bottom: 20px;
@@ -130,10 +135,11 @@
     background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
     border-radius: 15px;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
   .bundles .bundle p {
-    font-size: 16px;
+    font-size: 18px;
     color: #ffd700;
     margin: 0;
     flex: 1;

@@ -8,12 +8,12 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
     }
 
-    // Example payment URL for Telegram Stars (replace with your actual bot token and setup)
-    const botToken = process.env.BOT_TOKEN;
-    const paymentLink = `https://t.me/${process.env.BOT_USERNAME}?start=buy_${amount}_${chatId}`;
+    // Create the payment link for Telegram Stars
+    const botToken = process.env.BOT_TOKEN; // Ensure this is set in Vercel env vars
+    const botUsername = process.env.BOT_USERNAME; // Ensure this is set in Vercel env vars
+    const paymentLink = `https://t.me/${botUsername}?start=buy_${amount}_${chatId}`;
 
-    // Optionally, log or store payment info in the database
-    console.log(`Created payment link for Chat ID: ${chatId}, Amount: ${amount}`);
+    console.log(`Payment link created for Chat ID: ${chatId}, Amount: ${amount}`);
 
     return NextResponse.json({ paymentLink });
   } catch (error) {
