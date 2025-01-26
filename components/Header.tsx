@@ -28,7 +28,7 @@ export default function Header() {
                 const chatId = sessionStorage.getItem("chat_id");
                 if (!chatId) return;
 
-                const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
+                const response = await fetch('/api/get-token-counts?chatId=${chatId}');
                 if (response.ok) {
                     const data = await response.json();
 
