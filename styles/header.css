@@ -4,22 +4,20 @@ header {
     display: flex;
     justify-content: center;
     gap: 10px;
-    width: 100%; /* Set width to 90% */
-    /* max-width: 5000px; */
-    /* margin: 0 auto; Center the header */
-    /* border-radius: 20px; Curved rectangle effect */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
-    /* margin: 10px 0 0 10px; */
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
   }
   
   header div {
     display: flex;
     align-items: center;
-    padding: 10px 10px;
-    background-color: #0000;
-    border-radius: 30px; /* Make the inner boxes curved */
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 30px;
     box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
-    margin: 0 10px 0 0;
   }
   
   header img {
@@ -29,7 +27,7 @@ header {
   }
   
   header span {
-    font-size: 24px;
+    font-size: 16px;
     color: var(--accent-color);
     font-weight: bold;
   }
