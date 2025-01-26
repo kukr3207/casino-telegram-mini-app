@@ -25,8 +25,11 @@ export default function Header() {
     // Initial load from session storage
     updateTokensFromSession();
 
-    // Set up an interval to keep updating tokens
-    const interval = setInterval(updateTokensFromSession, 1000); // Update every second
+    // Update every second to reflect changes in session storage
+    const interval = setInterval(() => {
+      updateTokensFromSession();
+    }, 1000);
+
     return () => clearInterval(interval); // Clean up interval on unmount
   }, []);
 
@@ -42,7 +45,12 @@ export default function Header() {
             alt={`Token ${token.id}`}
             className="w-6 h-6 mr-2"
           />
-          <span className="text-yellow-400 font-semibold">{token.count}</span>
+          <span
+            className="text-yellow-400 font-semibold"
+            style={{ pointerEvents: "none" }} // Disable interaction
+          >
+            {token.count}
+          </span>
         </div>
       ))}
     </header>
