@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
+// Define the structure of the token and context
 interface Token {
   id: number;
   image: string;
@@ -13,8 +14,10 @@ interface TokenContextType {
   fetchTokens: () => Promise<void>;
 }
 
-const TokenContext = createContext<TokenContextType | null>(null);
+// Create context with proper type
+const TokenContext = createContext<TokenContextType | undefined>(undefined);
 
+// Hook to consume context
 export const useTokenContext = () => {
   const context = useContext(TokenContext);
   if (!context) {
@@ -23,7 +26,7 @@ export const useTokenContext = () => {
   return context;
 };
 
-export default function TokenProvider({ children }: { children: React.ReactNode }) {
+export default function TokenProvider({ children }: { children: ReactNode }) {
   const [tokens, setTokens] = useState<Token[]>([
     { id: 1, image: "/images/token1.png", count: 0 },
     { id: 2, image: "/images/token2.png", count: 0 },
@@ -32,7 +35,10 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
 
   const fetchTokens = async () => {
     const chatId = sessionStorage.getItem("chat_id");
-    if (!chatId) return;
+    if (!chatId) {
+      console.warn("Chat ID not found in sessionStorage.");
+      return;
+    }
 
     try {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
@@ -43,6 +49,8 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
           { id: 2, image: "/images/token2.png", count: tokenCounts.hol_tokens || 0 },
           { id: 3, image: "/images/token3.png", count: tokenCounts.withdraw_tokens || 0 },
         ]);
+      } else {
+        console.error("Failed to fetch token counts.");
       }
     } catch (error) {
       console.error("Error fetching token counts:", error);
