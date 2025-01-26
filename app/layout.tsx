@@ -24,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       // Set viewport height for responsiveness
       const height = tg.viewportHeight || window.innerHeight;
       setViewportHeight(`${height}px`);
+      console.log("Viewport height set:", `${height}px`);
 
       // Extract initData from Telegram
       const initData = tg.initData;
@@ -53,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 sessionStorage.setItem("chat_id", chatId.toString());
                 console.log("User data saved successfully.");
               } else {
-                console.error("Failed to save user data.");
+                console.error("Failed to save user data. Status:", response.status);
               }
             })
             .catch((error) => console.error("Error saving user data:", error));

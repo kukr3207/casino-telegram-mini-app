@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+// Function to format token counts into K/M format
 function formatTokenCount(count: number): string {
     if (count >= 1e6) {
         return `${(count / 1e6).toFixed(count % 1e6 === 0 ? 0 : 1)}M`;
@@ -22,25 +23,30 @@ export default function Header() {
         const fetchTokenCounts = async () => {
             try {
                 const chatId = sessionStorage.getItem("chat_id");
-                if (!chatId) return;
+                if (!chatId) {
+                    console.warn("Chat ID not found in sessionStorage.");
+                    return;
+                }
 
                 const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
                 if (response.ok) {
                     const data = await response.json();
 
+                    // Ensure the correct field names match the database schema
                     setTokens([
-                        { id: 1, image: "/images/token1.png", count: formatTokenCount(data.token1) },
-                        { id: 2, image: "/images/token2.png", count: formatTokenCount(data.token2) },
-                        { id: 3, image: "/images/token3.png", count: formatTokenCount(data.token3) },
+                        { id: 1, image: "/images/token1.png", count: formatTokenCount(data.casino_chips || 0) },
+                        { id: 2, image: "/images/token2.png", count: formatTokenCount(data.hol_tokens || 0) },
+                        { id: 3, image: "/images/token3.png", count: formatTokenCount(data.withdraw_tokens || 0) },
                     ]);
                 } else {
-                    console.error("Failed to fetch token counts.");
+                    console.error("Failed to fetch token counts. Response status:", response.status);
                 }
             } catch (error) {
                 console.error("Error fetching token counts:", error);
             }
         };
 
+        // Fetch token counts initially and set up an interval to refresh every 60 seconds
         fetchTokenCounts();
         const interval = setInterval(fetchTokenCounts, 60000);
         return () => clearInterval(interval);
