@@ -7,16 +7,14 @@ export default function WalletPage() {
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [buyAmount, setBuyAmount] = useState(0);
   const [isBuying, setIsBuying] = useState(false);
-  const predefinedAmounts = [10, 50, 100, 250, 500, 1000];
+  const predefinedAmounts = [50, 100, 250, 500, 1000];
 
-  // Fetch the user's casino chips count
   useEffect(() => {
     const fetchTokenCounts = async () => {
       try {
         const chatId = sessionStorage.getItem("chat_id");
         if (!chatId) {
           console.error("Chat ID not found in sessionStorage.");
-          setCasinoChips("Error");
           return;
         }
 
@@ -26,91 +24,130 @@ export default function WalletPage() {
           setCasinoChips(tokenCounts.token1 || 0);
         } else {
           console.error("Failed to fetch token counts.");
-          setCasinoChips("Error");
         }
       } catch (error) {
         console.error("Error fetching token counts:", error);
-        setCasinoChips("Error");
       }
     };
 
     fetchTokenCounts();
   }, []);
 
-  // Handle the purchase of casino chips
   const handleBuy = async (amount: number) => {
-    if (amount <= 0) return;
+    if (amount < 10) return; // Enforce minimum buy of 10 chips
     setIsBuying(true);
-  
+
     try {
       const chatId = sessionStorage.getItem("chat_id");
       const tg = window.Telegram?.WebApp;
-  
-      if (!tg || !tg.openLink) {
-        console.error("Telegram WebApp is not available or openLink is undefined.");
-        alert("Telegram WebApp is required to make a purchase.");
+
+      if (!tg) {
+        console.error("Telegram WebApp is not available.");
         setIsBuying(false);
         return;
       }
-  
+
       const response = await fetch(`/api/create-stars-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, amount }),
       });
-  
+
       if (response.ok) {
         const { paymentLink } = await response.json();
-        tg.openLink(paymentLink); // Opens the Telegram Stars payment window
+        tg.openLink(paymentLink); // Opens Telegram's Stars payment window
       } else {
         console.error("Failed to create payment.");
-        alert("Failed to initiate the purchase. Please try again.");
       }
     } catch (error) {
       console.error("Error handling purchase:", error);
-      alert("An error occurred. Please try again.");
     } finally {
       setIsBuying(false);
-      setBuyAmount(0); // Reset custom amount input after the purchase
     }
   };
-  
 
   return (
     <div className="wallet-page">
-      <h2 className="wallet-header">Your Casino Chips: {casinoChips}</h2>
-      <div className="buy-chips">
-        <h3 className="buy-title">Buy Casino Chips</h3>
+      {/* Token Descriptions */}
+      <div className="description">
+        <div className="description-item">
+          <img src="/images/token1.png" alt="Casino Chips" />
+          <div className="description-content">
+            <h2>Casino Chips</h2>
+            <p>Your primary gaming currency. Use these to play games.</p>
+          </div>
+        </div>
+        <div className="description-item">
+          <img src="/images/token2.png" alt="Withdrawable Tokens" />
+          <div className="description-content">
+            <h2>Withdrawable Tokens</h2>
+            <p>Earned by winning games. Redeem them for rewards.</p>
+          </div>
+        </div>
+        <div className="description-item">
+          <img src="/images/token3.png" alt="HOL Tokens" />
+          <div className="description-content">
+            <h2>HOL Tokens</h2>
+            <p>Your leaderboard rank and rewards in the House of Luck.</p>
+          </div>
+        </div>
+      </div>
 
-        {/* Predefined Chip Purchase Options */}
+      {/* Buy Casino Chips Section */}
+      <div className="buy-chips">
+        <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
+        <p>1 Telegram Star = 1 Casino Chip</p>
         <div className="predefined-options">
           {predefinedAmounts.map((amount) => (
             <button
               key={amount}
-              className={`buy-button ${isBuying ? "disabled" : ""}`}
+              className="buy-button"
               onClick={() => handleBuy(amount)}
               disabled={isBuying}
             >
-              {isBuying ? "Processing..." : `${amount} Chips`}
+              Buy {amount} 🌟
             </button>
           ))}
         </div>
-
-        {/* Custom Amount Purchase */}
         <div className="custom-buy">
           <input
             type="number"
-            placeholder="Enter custom amount"
+            placeholder="Enter custom amount (min 10)"
             value={buyAmount}
             onChange={(e) => setBuyAmount(Number(e.target.value))}
-            className="custom-input"
+            min="10"
           />
           <button
-            className={`buy-button ${isBuying || buyAmount <= 0 ? "disabled" : ""}`}
+            className="buy-button"
             onClick={() => handleBuy(buyAmount)}
-            disabled={isBuying || buyAmount <= 0}
+            disabled={isBuying || buyAmount < 10}
           >
-            {isBuying ? "Processing..." : "Buy"}
+            Buy
+          </button>
+        </div>
+      </div>
+
+      {/* Special Offers Section */}
+      <div className="bundles">
+        <h3>Special Offers</h3>
+        <div className="bundle">
+          <p>Buy 1000 Chips + 50 Free!</p>
+          <button
+            className="buy-button"
+            onClick={() => handleBuy(1050)}
+            disabled={isBuying}
+          >
+            Buy Now
+          </button>
+        </div>
+        <div className="bundle">
+          <p>Buy 5000 Chips + 300 Free!</p>
+          <button
+            className="buy-button"
+            onClick={() => handleBuy(5300)}
+            disabled={isBuying}
+          >
+            Buy Now
           </button>
         </div>
       </div>

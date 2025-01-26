@@ -3,15 +3,15 @@
     padding: 20px;
     color: #f0f0f0;
     background-color: #121212;
-    font-family: "Arial", sans-serif;
+    font-family: 'Arial', sans-serif;
   }
   
-  /* Description Section */
+  /* Token Descriptions Section */
   .description {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
   }
   
   .description-item {
@@ -31,14 +31,9 @@
     border: 2px solid #ffd700;
   }
   
-  .description-content {
-    display: flex;
-    flex-direction: column;
-  }
-  
   .description-content h2 {
     font-size: 18px;
-    margin: 0 0 5px 0;
+    margin-bottom: 5px;
     color: #ffd700;
     text-transform: uppercase;
   }
@@ -46,35 +41,37 @@
   .description-content p {
     font-size: 14px;
     color: #b0b0b0;
-    margin: 0;
   }
   
   /* Buy Chips Section */
-  .buy-chips,
-  .bundles {
+  .buy-chips {
     margin-top: 30px;
-    padding: 15px;
+    padding: 20px;
     background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
     border-radius: 15px;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+    text-align: center;
   }
   
-  .buy-chips h3,
-  .bundles h3 {
+  .buy-chips h3 {
     font-size: 20px;
     color: #ffd700;
-    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .buy-chips p {
+    font-size: 14px;
+    color: #f0f0f0;
     margin-bottom: 20px;
   }
   
   .predefined-options {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
     justify-content: center;
   }
   
-  /* Buy Button */
   .buy-button {
     background: linear-gradient(145deg, #ffd700, #e5b800);
     color: #000;
@@ -91,69 +88,58 @@
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
   }
   
-  .buy-button:disabled {
-    background: #b0b0b0;
-    color: #333;
-    cursor: not-allowed;
-  }
-  
-  /* Custom Buy Section */
-  .custom-buy {
-    text-align: center;
-    margin-top: 20px;
-  }
-  
   .custom-buy input {
     padding: 10px;
     width: 60%;
     margin-right: 10px;
+    margin-top: 10px;
     border: 2px solid #ffd700;
     border-radius: 10px;
     outline: none;
     font-size: 14px;
+    color: #000;
   }
   
   .custom-buy input:focus {
     border-color: #e5b800;
+    background-color: #fff;
   }
   
-  /* Bundles Section */
+  /* Special Offers Section */
+  .bundles {
+    margin-top: 30px;
+    padding: 20px;
+    background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+  }
+  
+  .bundles h3 {
+    font-size: 20px;
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
   .bundles .bundle {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    margin-top: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
     background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
     border-radius: 15px;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
   }
   
   .bundles .bundle p {
-    margin: 0;
     font-size: 16px;
     color: #ffd700;
+    margin: 0;
     flex: 1;
   }
   
   .bundles .buy-button {
     font-size: 14px;
-  }
-  
-  /* Responsive Design */
-  @media screen and (max-width: 768px) {
-    .description-item {
-      flex-direction: column;
-      text-align: center;
-    }
-  
-    .custom-buy input {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-  
-    .predefined-options {
-      gap: 10px;
-    }
   }
   
