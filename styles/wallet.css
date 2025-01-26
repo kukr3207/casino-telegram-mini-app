@@ -1,0 +1,132 @@
+/* Wallet Page Styling */
+/* Wallet Page Styling */
+.wallet-page {
+    padding: 20px;
+    color: #f0f0f0;
+    background-color: #121212;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .description {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .description-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+  }
+  
+  .description-item img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #ffd700;
+  }
+  
+  .description-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .description-content h2 {
+    font-size: 18px;
+    margin-bottom: 5px;
+    color: #ffd700;
+    text-transform: uppercase;
+  }
+  
+  .description-content p {
+    font-size: 14px;
+    color: #b0b0b0;
+  }
+  
+  
+  .buy-chips,
+  .bundles {
+    margin-top: 30px;
+    padding: 15px;
+    background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+  }
+  
+  .buy-chips h2,
+  .bundles h2 {
+    font-size: 20px;
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .buy-chips .predefined-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .buy-button {
+    background: linear-gradient(145deg, #ffd700, #e5b800);
+    color: #000;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .buy-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  }
+  
+  .custom-buy {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .custom-buy input {
+    padding: 10px;
+    width: 60%;
+    margin-right: 10px;
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+  }
+  
+  .custom-buy input:focus {
+    border-color: #e5b800;
+  }
+  
+  .bundles .bundle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-top: 15px;
+    background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+  }
+  
+  .bundles .bundle p {
+    margin: 0;
+    font-size: 16px;
+    color: #ffd700;
+    flex: 1;
+  }
+  
+  .bundles .buy-button {
+    font-size: 14px;
+  }
+  
