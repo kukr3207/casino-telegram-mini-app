@@ -21,15 +21,15 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // First, try to find the user with chatId as a string
+    // Query with chatId as string
     let user = await users.findOne({ chatId: chatId });
     console.warn("User found with string chatId:", user);
 
-    // If not found, try to find the user with chatId as a number
+    // If not found, query with chatId as Double
     if (!user) {
-      console.warn("No user found with string chatId. Trying with number...");
-      user = await users.findOne({ chatId: Number(chatId) });
-      console.warn("User found with number chatId:", user);
+      console.warn("No user found with string chatId. Trying with Double...");
+      user = await users.findOne({ chatId: parseFloat(chatId) });
+      console.warn("User found with Double chatId:", user);
     }
 
     if (!user) {
