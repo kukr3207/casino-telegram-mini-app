@@ -34,9 +34,9 @@ export default function Header() {
 
                     // Ensure the correct field names match the database schema
                     setTokens([
-                        { id: 1, image: "/images/token1.png", count: formatTokenCount(data.casino_chips || 0) },
-                        { id: 2, image: "/images/token2.png", count: formatTokenCount(data.hol_tokens || 0) },
-                        { id: 3, image: "/images/token3.png", count: formatTokenCount(data.withdraw_tokens || 0) },
+                        { id: 1, image: "/images/token1.png", count: formatTokenCount(data.tokenCounts.casino_chips || 0) },
+                        { id: 2, image: "/images/token2.png", count: formatTokenCount(data.tokenCounts.hol_tokens || 0) },
+                        { id: 3, image: "/images/token3.png", count: formatTokenCount(data.tokenCounts.withdraw_tokens || 0) },
                     ]);
                 } else {
                     console.error("Failed to fetch token counts. Response status:", response.status);
