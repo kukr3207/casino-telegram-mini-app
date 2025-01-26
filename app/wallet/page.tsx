@@ -5,24 +5,18 @@ import "../../styles/wallet.css";
 
 export default function WalletPage() {
   const [casinoChips, setCasinoChips] = useState("Loading...");
-  const [withdrawableTokens, setWithdrawableTokens] = useState("Loading...");
-  const [holTokens, setHolTokens] = useState("Loading...");
   const [buyAmount, setBuyAmount] = useState(0);
   const [isBuying, setIsBuying] = useState(false);
-
   const predefinedAmounts = [10, 50, 100, 250, 500, 1000];
-  const bundles = [
-    { amount: 1000, bonus: 50 },
-    { amount: 2500, bonus: 150 },
-    { amount: 5000, bonus: 500 },
-  ];
 
+  // Fetch the user's casino chips count
   useEffect(() => {
     const fetchTokenCounts = async () => {
       try {
         const chatId = sessionStorage.getItem("chat_id");
         if (!chatId) {
           console.error("Chat ID not found in sessionStorage.");
+          setCasinoChips("Error");
           return;
         }
 
@@ -30,117 +24,96 @@ export default function WalletPage() {
         if (response.ok) {
           const { tokenCounts } = await response.json();
           setCasinoChips(tokenCounts.token1 || 0);
-          setWithdrawableTokens(tokenCounts.token2 || 0);
-          setHolTokens(tokenCounts.token3 || 0);
         } else {
           console.error("Failed to fetch token counts.");
+          setCasinoChips("Error");
         }
       } catch (error) {
         console.error("Error fetching token counts:", error);
+        setCasinoChips("Error");
       }
     };
 
     fetchTokenCounts();
   }, []);
 
+  // Handle the purchase of casino chips
   const handleBuy = async (amount: number) => {
     if (amount <= 0) return;
     setIsBuying(true);
+  
     try {
       const chatId = sessionStorage.getItem("chat_id");
-      const response = await fetch(`/api/buy-casino-chips`, {
+      const tg = window.Telegram?.WebApp;
+  
+      if (!tg || !tg.openLink) {
+        console.error("Telegram WebApp is not available or openLink is undefined.");
+        alert("Telegram WebApp is required to make a purchase.");
+        setIsBuying(false);
+        return;
+      }
+  
+      const response = await fetch(`/api/create-stars-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, amount }),
       });
+  
       if (response.ok) {
-        const data = await response.json();
-        setCasinoChips(data.updatedCasinoChips);
-        alert("Purchase successful!");
+        const { paymentLink } = await response.json();
+        tg.openLink(paymentLink); // Opens the Telegram Stars payment window
       } else {
-        alert("Failed to buy casino chips.");
+        console.error("Failed to create payment.");
+        alert("Failed to initiate the purchase. Please try again.");
       }
     } catch (error) {
-      console.error("Error buying casino chips:", error);
+      console.error("Error handling purchase:", error);
+      alert("An error occurred. Please try again.");
     } finally {
       setIsBuying(false);
+      setBuyAmount(0); // Reset custom amount input after the purchase
     }
   };
+  
 
   return (
     <div className="wallet-page">
-      <section className="description">
-        <div className="description-item">
-          <img src="/images/token1.png" alt="Casino Chips" />
-          <div className="description-content">
-            <h2>Casino Chips</h2>
-            <p>Your primary gaming currency. Use these to play games.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token2.png" alt="Withdrawable Tokens" />
-          <div className="description-content">
-            <h2>Withdrawable Tokens</h2>
-            <p>Earned by winning games. Redeem them for rewards.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token3.png" alt="HOL Tokens" />
-          <div className="description-content">
-            <h2>HOL Tokens</h2>
-            <p>Your leaderboard rank and rewards in the House of Luck.</p>
-          </div>
-        </div>
-      </section>
+      <h2 className="wallet-header">Your Casino Chips: {casinoChips}</h2>
+      <div className="buy-chips">
+        <h3 className="buy-title">Buy Casino Chips</h3>
 
-      <section className="buy-chips">
-        <h2>Buy Casino Chips</h2>
+        {/* Predefined Chip Purchase Options */}
         <div className="predefined-options">
           {predefinedAmounts.map((amount) => (
             <button
               key={amount}
-              className="buy-button"
+              className={`buy-button ${isBuying ? "disabled" : ""}`}
               onClick={() => handleBuy(amount)}
               disabled={isBuying}
             >
-              {amount} Chips
+              {isBuying ? "Processing..." : `${amount} Chips`}
             </button>
           ))}
         </div>
+
+        {/* Custom Amount Purchase */}
         <div className="custom-buy">
           <input
             type="number"
             placeholder="Enter custom amount"
             value={buyAmount}
             onChange={(e) => setBuyAmount(Number(e.target.value))}
+            className="custom-input"
           />
           <button
-            className="buy-button"
+            className={`buy-button ${isBuying || buyAmount <= 0 ? "disabled" : ""}`}
             onClick={() => handleBuy(buyAmount)}
             disabled={isBuying || buyAmount <= 0}
           >
-            Buy
+            {isBuying ? "Processing..." : "Buy"}
           </button>
         </div>
-      </section>
-
-      <section className="bundles">
-        <h2>Special Offers</h2>
-        {bundles.map((bundle, index) => (
-          <div key={index} className="bundle">
-            <p>
-              Buy {bundle.amount} Chips + {bundle.bonus} Free!
-            </p>
-            <button
-              className="buy-button"
-              onClick={() => handleBuy(bundle.amount)}
-              disabled={isBuying}
-            >
-              Buy Now
-            </button>
-          </div>
-        ))}
-      </section>
+      </div>
     </div>
   );
 }

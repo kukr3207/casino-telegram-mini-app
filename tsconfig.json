@@ -36,7 +36,9 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "app/**/*.ts",
-    "app/**/*.tsx" // Include app directory if using Next.js app router
+    "app/**/*.tsx", // Include app directory if using Next.js app router
+    "types/**/*.d.ts", 
+    "src/**/*"
   ],
   "exclude": [
     "node_modules"

@@ -1,12 +1,12 @@
 /* Wallet Page Styling */
-/* Wallet Page Styling */
 .wallet-page {
     padding: 20px;
     color: #f0f0f0;
     background-color: #121212;
-    font-family: 'Arial', sans-serif;
+    font-family: "Arial", sans-serif;
   }
   
+  /* Description Section */
   .description {
     display: flex;
     flex-direction: column;
@@ -38,7 +38,7 @@
   
   .description-content h2 {
     font-size: 18px;
-    margin-bottom: 5px;
+    margin: 0 0 5px 0;
     color: #ffd700;
     text-transform: uppercase;
   }
@@ -46,9 +46,10 @@
   .description-content p {
     font-size: 14px;
     color: #b0b0b0;
+    margin: 0;
   }
   
-  
+  /* Buy Chips Section */
   .buy-chips,
   .bundles {
     margin-top: 30px;
@@ -58,21 +59,22 @@
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
   }
   
-  .buy-chips h2,
-  .bundles h2 {
+  .buy-chips h3,
+  .bundles h3 {
     font-size: 20px;
     color: #ffd700;
     text-align: center;
     margin-bottom: 20px;
   }
   
-  .buy-chips .predefined-options {
+  .predefined-options {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 15px;
     justify-content: center;
   }
   
+  /* Buy Button */
   .buy-button {
     background: linear-gradient(145deg, #ffd700, #e5b800);
     color: #000;
@@ -89,6 +91,13 @@
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
   }
   
+  .buy-button:disabled {
+    background: #b0b0b0;
+    color: #333;
+    cursor: not-allowed;
+  }
+  
+  /* Custom Buy Section */
   .custom-buy {
     text-align: center;
     margin-top: 20px;
@@ -108,6 +117,7 @@
     border-color: #e5b800;
   }
   
+  /* Bundles Section */
   .bundles .bundle {
     display: flex;
     justify-content: space-between;
@@ -128,5 +138,22 @@
   
   .bundles .buy-button {
     font-size: 14px;
+  }
+  
+  /* Responsive Design */
+  @media screen and (max-width: 768px) {
+    .description-item {
+      flex-direction: column;
+      text-align: center;
+    }
+  
+    .custom-buy input {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+  
+    .predefined-options {
+      gap: 10px;
+    }
   }
   
