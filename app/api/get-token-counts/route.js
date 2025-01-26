@@ -2,7 +2,6 @@ import { MongoClient } from "mongodb";
 
 export async function GET(req) {
   try {
-    // Extract query parameters
     const { searchParams } = new URL(req.url);
     const chatId = searchParams.get("chatId");
 
@@ -15,7 +14,6 @@ export async function GET(req) {
 
     console.log("Received chatId:", chatId);
 
-    // Connect to MongoDB
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     console.log("Connected to database");
@@ -23,36 +21,41 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Find user by chatId, converting to string for comparison
-    const user = await users.findOne({ chatId: chatId.toString() });
+    // First, try to find the user with chatId as a string
+    let user = await users.findOne({ chatId: chatId });
+    console.warn("User found with string chatId:", user);
+
+    // If not found, try to find the user with chatId as a number
+    if (!user) {
+      console.warn("No user found with string chatId. Trying with number...");
+      user = await users.findOne({ chatId: Number(chatId) });
+      console.warn("User found with number chatId:", user);
+    }
 
     if (!user) {
-      console.warn("User not found for chatId:", chatId);
       return new Response(
         JSON.stringify({ error: "User not found" }),
         { status: 404 }
       );
     }
 
-    // Extract token counts from the user document
     const tokenCounts = {
-      casinoChips: user.casino_chips || 0,
-      holTokens: user.hol_tokens || 0,
-      withdrawTokens: user.withdraw_tokens || 0,
+      token1: user.casino_chips || 0,
+      token2: user.hol_tokens || 0,
+      token3: user.withdraw_tokens || 0,
     };
-
-    console.log("Token counts for user:", tokenCounts);
 
     await client.close();
     console.log("Database connection closed");
 
-    return new Response(JSON.stringify(tokenCounts), {
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ tokenCounts }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching token counts:", error);
     return new Response(
-      JSON.stringify({ error: "Database error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500 }
     );
   }
