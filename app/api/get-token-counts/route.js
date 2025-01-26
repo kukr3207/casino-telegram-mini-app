@@ -40,9 +40,9 @@ export async function GET(req) {
     }
 
     const tokenCounts = {
-      token1: user.casino_chips || 0,
-      token2: user.hol_tokens || 0,
-      token3: user.withdraw_tokens || 0,
+      casino_chips: user.casino_chips || 0,
+      hol_tokens: user.hol_tokens || 0,
+      withdraw_tokens: user.withdraw_tokens || 0,
     };
 
     await client.close();
