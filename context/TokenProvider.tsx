@@ -37,7 +37,10 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
     }
 
     const chatId = sessionStorage.getItem("chat_id");
-    if (!chatId) return;
+    if (!chatId) {
+      console.error("Chat ID not found in session storage.");
+      return;
+    }
 
     try {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
@@ -45,8 +48,8 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
         const { tokenCounts } = await response.json();
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
-          { id: 2, image: "/images/token2.png", count: tokenCounts.hol_tokens || 0 },
-          { id: 3, image: "/images/token3.png", count: tokenCounts.withdraw_tokens || 0 },
+          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
         ];
         setTokens(updatedTokens);
         sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
@@ -61,8 +64,8 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
   const updateTokensLocally = (updatedCounts: { casino_chips: number; hol_tokens: number; withdraw_tokens: number }) => {
     const updatedTokens = [
       { id: 1, image: "/images/token1.png", count: updatedCounts.casino_chips || 0 },
-      { id: 2, image: "/images/token2.png", count: updatedCounts.hol_tokens || 0 },
-      { id: 3, image: "/images/token3.png", count: updatedCounts.withdraw_tokens || 0 },
+      { id: 2, image: "/images/token2.png", count: updatedCounts.withdraw_tokens || 0 },
+      { id: 3, image: "/images/token3.png", count: updatedCounts.hol_tokens || 0 },
     ];
     setTokens(updatedTokens);
     sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
