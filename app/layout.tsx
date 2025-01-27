@@ -63,8 +63,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       console.error("Telegram WebApp is not available.");
     }
 
-    const timer = setTimeout(() => setIsSplashVisible(false), 3000);
-    return () => clearTimeout(timer);
+    // Check if the splash screen has been shown before
+    const splashShown = sessionStorage.getItem("splash_shown");
+    if (!splashShown) {
+      const timer = setTimeout(() => {
+        setIsSplashVisible(false);
+        sessionStorage.setItem("splash_shown", "true");
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsSplashVisible(false);
+    }
   }, []);
 
   return (
