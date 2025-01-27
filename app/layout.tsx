@@ -25,26 +25,42 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       setViewportHeight(`${height}px`);
 
       const initDataUnsafe = tg.initDataUnsafe;
+
       if (initDataUnsafe?.user) {
         const { id: chatId } = initDataUnsafe.user;
-        const savedChatId = sessionStorage.getItem("chat_id");
-        if (!savedChatId) {
-          fetch("/api/save-user-data", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chatId }),
-          })
-            .then((response) => {
-              if (response.ok) {
-                sessionStorage.setItem("chat_id", chatId.toString());
-                console.log("Chat ID saved to session storage.");
-              } else {
-                console.error("Failed to save user data.");
-              }
+
+        if (chatId) {
+          console.log("Received chatId from Telegram:", chatId);
+
+          const savedChatId = sessionStorage.getItem("chat_id");
+          if (!savedChatId) {
+            console.log("Saving chatId to session storage...");
+            sessionStorage.setItem("chat_id", chatId.toString());
+
+            fetch("/api/save-user-data", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chatId }),
             })
-            .catch(console.error);
+              .then((response) => {
+                if (response.ok) {
+                  console.log("Chat ID saved to backend successfully.");
+                } else {
+                  console.error("Failed to save chat ID to backend.");
+                }
+              })
+              .catch((error) => console.error("Error saving chat ID:", error));
+          } else {
+            console.log("Chat ID already exists in session storage:", savedChatId);
+          }
+        } else {
+          console.warn("No valid chatId found in Telegram initDataUnsafe.");
         }
+      } else {
+        console.warn("initDataUnsafe is missing or invalid.");
       }
+    } else {
+      console.error("Telegram WebApp is not available.");
     }
 
     const timer = setTimeout(() => setIsSplashVisible(false), 3000);
