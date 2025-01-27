@@ -7,12 +7,12 @@ interface GameSectionProps {
 }
 
 const games = [
-  {
-    id: "coin-flip",
-    title: "Coin Flip",
-    description: "Bet and flip a coin!",
-    animationClass: "coin-flip-animation",
-  },
+  // {
+  //   id: "coin-flip",
+  //   title: "Coin Flip",
+  //   description: "Bet and flip a coin!",
+  //   animationClass: "coin-flip-animation",
+  // },
   {
     id: "dice-roll",
     title: "Dice Roll",

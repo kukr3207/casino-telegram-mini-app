@@ -1,127 +1,107 @@
-/* Background and Container */
-.min-h-screen {
-    background: linear-gradient(to bottom, #1e1e2e, #1a1a26);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  
-  .dice-roll-container {
-    max-width: 400px;
-    width: 100%;
-    background: linear-gradient(to bottom, #22223a, #1e1e2e);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
-    text-align: center;
-  }
-  
-  /* Title */
-  h2 {
-    font-size: 2rem;
-    font-weight: bold;
-    background: linear-gradient(to right, #ffd700, #ffcc33);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 16px;
-  }
-  
-  /* Dice Animation */
-  .dice-roll-animation {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  
-  .dice {
-    width: 50px;
-    height: 50px;
-    background-color: white;
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    font-weight: bold;
-    animation: rollDice 1.5s infinite linear;
-  }
-  
-  @keyframes rollDice {
-    0% {
-      transform: rotate(0deg);
-    }
-    25% {
-      transform: rotate(90deg);
-    }
-    50% {
-      transform: rotate(180deg);
-    }
-    75% {
-      transform: rotate(270deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  
-  /* Buttons */
-  .casino-btn {
-    background: linear-gradient(to bottom, #ffd700, #ffcc33);
-    color: #22223a;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin: 8px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
-  }
-  
-  .casino-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
-  }
-  
-  .casino-btn-secondary {
-    background: #444;
-    color: white;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: transform 0.2s;
-  }
-  
-  .casino-btn-secondary:hover {
-    transform: scale(1.05);
-  }
-  
-  /* Rules Section */
-  .rules-toggle {
-    color: #ffd700;
-    font-weight: bold;
-    margin-top: 16px;
-    cursor: pointer;
-  }
-  
-  .rules-toggle:hover {
-    text-decoration: underline;
-  }
-  
-  .rules-content {
-    background: #333344;
-    padding: 12px;
-    border-radius: 8px;
-    margin-top: 8px;
-    text-align: left;
-  }
-  
-  /* Spacing */
-  .text-xl {
-    margin-bottom: 12px;
-    font-weight: bold;
-    font-size: 1.2rem;
-  }
-  
+/* Dice Roll Page */
+.dice-roll-page {
+  padding: 20px;
+  color: #fff;
+  background-color: #121212;
+  font-family: Arial, sans-serif;
+}
+
+.category-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.category {
+  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+  padding: 15px;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.category h3 {
+  font-size: 18px;
+  color: #ffd700;
+  margin-bottom: 10px;
+}
+
+.bet-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bet-button {
+  background: #444;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bet-button.selected {
+  background: #ffd700;
+  color: #000;
+}
+
+.bet-button:hover {
+  transform: scale(1.05);
+}
+
+.payout-ratio {
+  font-size: 14px;
+  color: #bbb;
+  margin-top: 10px;
+}
+
+.selected-bets {
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+  border-radius: 15px;
+}
+
+.selected-bets h3 {
+  font-size: 18px;
+  color: #ffd700;
+  margin-bottom: 10px;
+}
+
+.bet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.place-bet {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.place-bet-button {
+  background: #ffd700;
+  color: #000;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.place-bet-button:hover {
+  transform: scale(1.05);
+}
+
+.dice-result {
+  margin-top: 20px;
+  text-align: center;
+  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+  padding: 15px;
+  border-radius: 15px;
+}

@@ -1,6 +1,6 @@
-/* Background and Container */
+/* Container and Background */
 .min-h-screen {
-  background: linear-gradient(to bottom, #ffffff, #ffffff);
+  background: linear-gradient(to bottom, #0f0f1f, #1e1e2e);
   color: white;
   display: flex;
   align-items: center;
@@ -8,153 +8,120 @@
   padding: 16px;
 }
 
-.coin-flip-container {
-  max-width: 400px;
-  width: 90%;
-  background: linear-gradient(to bottom, #22223a, #1e1e2e);
-  border-radius: 20px;
-  padding: 44px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+.dice-roll-container {
+  max-width: 500px;
+  width: 100%;
+  background: linear-gradient(to bottom, #1c1c34, #242447);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
   text-align: center;
 }
 
 /* Title */
 h2 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
-  background: linear-gradient(to right, #ffd700, #ffcc33);
+  background: linear-gradient(to right, #ff9d00, #ffc93c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-/* Coin Animation */
-.coin-flip-animation {
-  width: 120px;
-  height: 120px;
-  perspective: 1000px;
-  margin: 16px auto;
-}
-.coin-container {
-    width: 100px;
-    height: 100px;
-    perspective: 1000px;
-    margin: 0 auto;
-  }
-  
-  .coin {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    animation: flip 1.5s infinite linear;
-  }
-  
-  .coin-front,
-.coin-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  backface-visibility: hidden; /* Ensures only one side is visible at a time */
-  background-size: cover;
-  background-position: center;
+/* Primary Bet Section */
+.primary-bet-options {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.coin-front {
-  background-image: url("../public/images/heads.png"); /* Replace with your heads image path */
-  transform: rotateY(0deg);
+.casino-btn {
+  background: linear-gradient(to bottom, #ffc93c, #ff9d00);
+  color: #1c1c34;
+  font-weight: bold;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-.coin-back {
-  background-image: url("../public/images/tails.png"); /* Replace with your tails image path */
-  transform: rotateY(180deg);
+.casino-btn.dimmed {
+  opacity: 0.5;
 }
-@keyframes flip {
+
+.casino-btn.active-glow {
+  border: 2px solid #ff9d00;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+}
+
+/* Secondary Bet Section */
+.secondary-bet-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Bet Amount Section */
+.text-xl {
+  font-size: 1.2rem;
+  color: #ff9d00;
+}
+
+.flex {
+  display: flex;
+}
+
+.casino-btn-secondary {
+  background: #2c2c44;
+  color: #ff9d00;
+  font-weight: bold;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.result {
+  font-size: 1.5rem;
+  margin-top: 20px;
+}
+
+/* Animation */
+.dice {
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  color: #333;
+  font-weight: bold;
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  animation: rollDice 1.5s ease-in-out;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.rolling {
+  animation: rollDice 1.5s infinite ease-in-out;
+}
+
+@keyframes rollDice {
   0% {
-    transform: rotateY(0deg);
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotateX(90deg);
   }
   50% {
     transform: rotateY(180deg);
   }
-  100% {
-    transform: rotateY(360deg);
+  75% {
+    transform: rotateX(270deg);
   }
-}
-
-.coin {
-  animation: flip 2s infinite linear; /* Adjust the duration as needed */
-}
-
-/* Buttons */
-.casino-btn {
-  background: linear-gradient(to bottom, #ffd700, #ffcc33);
-  color: #22223a;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin: 8px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
-}
-
-.casino-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
-}
-
-.casino-btn.active-glow {
-  box-shadow: 0 0 10px rgba(255, 200, 50, 0.8);
-}
-
-.casino-btn-secondary {
-  background: #444;
-  color: white;
-  border-radius: 8px;
-  font-weight: bold;
-  transition: transform 0.2s;
-}
-
-.casino-btn-secondary:hover {
-  transform: scale(1.05);
-}
-
-/* Rules Section */
-.rules-toggle {
-  color: #ffd700;
-  font-weight: bold;
-  margin-top: 16px;
-  cursor: pointer;
-}
-
-.rules-toggle:hover {
-  text-decoration: underline;
-}
-
-.rules-content {
-  background: #333344;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 8px;
-  text-align: left;
-}
-
-/* Spacing */
-.text-xl {
-  margin-bottom: 12px;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.bet-amount-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin: 16px 0;
-}
-
-.shadow-glow {
-  box-shadow: 0 0 15px rgba(255, 200, 50, 0.7);
+  100% {
+    transform: rotate(360deg);
+  }
 }
