@@ -11,51 +11,58 @@ export default function WalletPage() {
   const [isBuying, setIsBuying] = useState(false);
   const predefinedAmounts = [50, 100, 250, 500, 1000];
 
+  // Function to fetch token counts and refresh session storage
+  const fetchTokenCounts = async () => {
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) {
+      console.error("Chat ID not found in sessionStorage.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
+      if (response.ok) {
+        const { tokenCounts } = await response.json();
+        setCasinoChips(tokenCounts.casino_chips || 0);
+        updateTokensLocally({
+          casino_chips: tokenCounts.casino_chips || 0,
+          hol_tokens: tokenCounts.hol_tokens || 0,
+          withdraw_tokens: tokenCounts.withdraw_tokens || 0,
+        });
+      } else {
+        console.error("Failed to fetch token counts.");
+      }
+    } catch (error) {
+      console.error("Error fetching token counts:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchTokenCounts = async () => {
-      const chatId = sessionStorage.getItem("chat_id");
-      if (!chatId) {
-        console.error("Chat ID not found in sessionStorage.");
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
-        if (response.ok) {
-          const { tokenCounts } = await response.json();
-          setCasinoChips(tokenCounts.casino_chips || 0);
-        } else {
-          console.error("Failed to fetch token counts.");
-        }
-      } catch (error) {
-        console.error("Error fetching token counts:", error);
-      }
-    };
-
     fetchTokenCounts();
   }, []);
 
+  // Function to handle buying chips
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
     setIsBuying(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
-      const response = await fetch(`/api/send-invoice`, {
+
+      const response = await fetch(`/api/create-invoice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, amount, packageType, chipsBought }),
       });
 
       if (response.ok) {
-        const { invoiceData } = await response.json();
+        const { invoiceLink } = await response.json();
 
-        // Redirect to bot chat or handle in-app WebApp behavior
+        // Open the payment link in Telegram
         const tg = window.Telegram?.WebApp;
 
-        if (tg) {
-          // Send payload or redirect user to the payment
-          tg.sendData(invoiceData.payload);
+        if (tg && invoiceLink) {
+          tg.sendData(invoiceLink); // Sends the payment link back to Telegram to handle
         } else {
-          console.error("Telegram WebApp is not available.");
+          alert("Payment failed: Unable to process invoice.");
         }
       } else {
         console.error("Failed to create invoice.");
