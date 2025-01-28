@@ -108,7 +108,7 @@ export default function WalletPage() {
             <button
               key={amount}
               className="buy-button"
-              onClick={() => handleBuy(amount)}
+              onClick={() => handleBuy(amount/100)}
               disabled={isBuying}
             >
               Buy {amount} 🌟
@@ -125,7 +125,7 @@ export default function WalletPage() {
           />
           <button
             className="buy-button"
-            onClick={() => handleBuy(buyAmount)}
+            onClick={() => handleBuy(buyAmount/100)}
             disabled={isBuying || buyAmount < 10}
           >
             Buy
@@ -140,7 +140,7 @@ export default function WalletPage() {
           <p>Buy 1000 Chips + 50 Free!</p>
           <button
             className="buy-button"
-            onClick={() => handleBuy(1000, "Bundle", 1050)}
+            onClick={() => handleBuy(10, "Bundle", 1050)}
             disabled={isBuying}
           >
             Buy Now
@@ -150,7 +150,7 @@ export default function WalletPage() {
           <p>Buy 5000 Chips + 300 Free!</p>
           <button
             className="buy-button"
-            onClick={() => handleBuy(5000, "Bundle", 5300)}
+            onClick={() => handleBuy(50, "Bundle", 5300)}
             disabled={isBuying}
           >
             Buy Now
