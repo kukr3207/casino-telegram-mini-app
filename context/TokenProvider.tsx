@@ -35,7 +35,9 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
       setTokens(JSON.parse(cachedTokens));
       return;
     }
+  };
 
+  const refreshTokens = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) {
       console.error("Chat ID not found in session storage.");
@@ -53,11 +55,12 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
         ];
         setTokens(updatedTokens);
         sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
+        console.log("Tokens refreshed and saved to session storage:", updatedTokens);
       } else {
-        console.error("Failed to fetch token counts.");
+        console.error("Failed to refresh token counts.");
       }
     } catch (error) {
-      console.error("Error fetching token counts:", error);
+      console.error("Error refreshing token counts:", error);
     }
   };
 
@@ -76,7 +79,7 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
   }, []);
 
   return (
-    <TokenContext.Provider value={{ tokens, updateTokensLocally, refreshTokens: initializeTokens }}>
+    <TokenContext.Provider value={{ tokens, updateTokensLocally, refreshTokens }}>
       {children}
     </TokenContext.Provider>
   );

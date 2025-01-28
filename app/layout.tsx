@@ -17,53 +17,62 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     console.log("Initializing Telegram WebApp...");
 
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
+    const initializeTokensAndChatId = async () => {
+      if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
 
-      const height = tg.viewportHeight || window.innerHeight;
-      setViewportHeight(`${height}px`);
+        const height = tg.viewportHeight || window.innerHeight;
+        setViewportHeight(`${height}px`);
 
-      const initDataUnsafe = tg.initDataUnsafe;
+        const initDataUnsafe = tg.initDataUnsafe;
 
-      if (initDataUnsafe?.user) {
-        const { id: chatId } = initDataUnsafe.user;
+        if (initDataUnsafe?.user) {
+          const { id: chatId } = initDataUnsafe.user;
 
-        if (chatId) {
-          console.log("Received chatId from Telegram:", chatId);
+          if (chatId) {
+            console.log("Received chatId from Telegram:", chatId);
 
-          const savedChatId = sessionStorage.getItem("chat_id");
-          if (!savedChatId) {
-            console.log("Saving chatId to session storage...");
-            sessionStorage.setItem("chat_id", chatId.toString());
+            const savedChatId = sessionStorage.getItem("chat_id");
+            if (!savedChatId) {
+              console.log("Saving chatId to session storage...");
+              sessionStorage.setItem("chat_id", chatId.toString());
 
-            fetch("/api/save-user-data", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chatId }),
-            })
-              .then((response) => {
+              // Fetch and save token counts during splash screen
+              try {
+                const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
                 if (response.ok) {
-                  console.log("Chat ID saved to backend successfully.");
+                  const { tokenCounts } = await response.json();
+                  const tokens = [
+                    { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
+                    { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+                    { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+                  ];
+                  sessionStorage.setItem("tokens", JSON.stringify(tokens));
+                  console.log("Tokens initialized and saved to session storage:", tokens);
                 } else {
-                  console.error("Failed to save chat ID to backend.");
+                  console.error("Failed to fetch token counts.");
                 }
-              })
-              .catch((error) => console.error("Error saving chat ID:", error));
+              } catch (error) {
+                console.error("Error fetching token counts during splash screen:", error);
+              }
+            } else {
+              console.log("Chat ID already exists in session storage:", savedChatId);
+            }
           } else {
-            console.log("Chat ID already exists in session storage:", savedChatId);
+            console.warn("No valid chatId found in Telegram initDataUnsafe.");
           }
         } else {
-          console.warn("No valid chatId found in Telegram initDataUnsafe.");
+          console.warn("initDataUnsafe is missing or invalid.");
         }
       } else {
-        console.warn("initDataUnsafe is missing or invalid.");
+        console.error("Telegram WebApp is not available.");
       }
-    } else {
-      console.error("Telegram WebApp is not available.");
-    }
+    };
 
-    // Check if the splash screen has been shown before
+    initializeTokensAndChatId();
+
+    // Manage splash screen visibility
     const splashShown = sessionStorage.getItem("splash_shown");
     if (!splashShown) {
       const timer = setTimeout(() => {
