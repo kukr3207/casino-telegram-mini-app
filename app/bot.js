@@ -21,12 +21,16 @@ bot.onText(/\/start/, (msg) => {
             text: "Open House Of Luck App",
             web_app: {
               url: `${WEB_APP_URL}?chat_id=${chatId}&first_name=${firstName}`,
-            }, // Open the web app with user details
+            },
           },
         ],
       ],
     },
   });
 });
+
+console.log("Bot is running...");
+
+
 
 console.log("Bot is running...");

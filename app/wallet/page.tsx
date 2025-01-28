@@ -33,7 +33,7 @@ export default function WalletPage() {
     fetchTokenCounts();
   }, []);
 
-  const handleBuy = async (amount: number) => {
+  const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
     if (amount < 10) return; // Enforce minimum buy of 10 chips
     setIsBuying(true);
 
@@ -47,17 +47,17 @@ export default function WalletPage() {
         return;
       }
 
-      const response = await fetch(`/api/create-stars-payment`, {
+      const response = await fetch(`/api/send-invoice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, amount }),
+        body: JSON.stringify({ chatId, amount, packageType, chipsBought }),
       });
 
       if (response.ok) {
-        const { paymentLink } = await response.json();
-        tg.openLink(paymentLink); // Opens Telegram's Stars payment window
+        console.log("Invoice created successfully.");
+        // The payment will be handled in Telegram; no further action is required here.
       } else {
-        console.error("Failed to create payment.");
+        console.error("Failed to create invoice.");
       }
     } catch (error) {
       console.error("Error handling purchase:", error);
@@ -134,7 +134,7 @@ export default function WalletPage() {
           <p>Buy 1000 Chips + 50 Free!</p>
           <button
             className="buy-button"
-            onClick={() => handleBuy(1050)}
+            onClick={() => handleBuy(1000, "Bundle", 1050)}
             disabled={isBuying}
           >
             Buy Now
@@ -144,7 +144,7 @@ export default function WalletPage() {
           <p>Buy 5000 Chips + 300 Free!</p>
           <button
             className="buy-button"
-            onClick={() => handleBuy(5300)}
+            onClick={() => handleBuy(5000, "Bundle", 5300)}
             disabled={isBuying}
           >
             Buy Now
