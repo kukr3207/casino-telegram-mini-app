@@ -7,9 +7,18 @@ import "../../styles/wallet.css";
 export default function WalletPage() {
   const { updateTokensLocally } = useTokenContext();
   const [casinoChips, setCasinoChips] = useState("Loading...");
-  const [buyAmount, setBuyAmount] = useState(0);
+  const [buyAmount, setBuyAmount] = useState(50); // Minimum value set to 50
   const [isBuying, setIsBuying] = useState(false);
-  const predefinedAmounts = [50, 100, 250, 500, 1000];
+  const [errorMessage, setErrorMessage] = useState(""); // Warning message
+
+  // Pricing Tiers
+  const pricingTiers = [
+    { chips: 50, price: 75, bonus: 0 },
+    { chips: 100, price: 149, bonus: 0 },
+    { chips: 500, price: 725, bonus: 0 },
+    { chips: 1000, price: 1399, bonus: 50 },
+    { chips: 5000, price: 6750, bonus: 300 },
+  ];
 
   const fetchTokenCounts = async () => {
     const chatId = sessionStorage.getItem("chat_id");
@@ -19,7 +28,6 @@ export default function WalletPage() {
     }
 
     try {
-      console.log("Fetching token counts for chatId:", chatId);
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
         const { tokenCounts } = await response.json();
@@ -29,7 +37,6 @@ export default function WalletPage() {
           hol_tokens: tokenCounts.hol_tokens || 0,
           withdraw_tokens: tokenCounts.withdraw_tokens || 0,
         });
-        console.log("Token counts fetched successfully:", tokenCounts);
       } else {
         console.error("Failed to fetch token counts.");
       }
@@ -43,11 +50,15 @@ export default function WalletPage() {
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
+    if (amount < 50) {
+      setErrorMessage("Minimum purchase amount is 50 tokens.");
+      setTimeout(() => setErrorMessage(""), 4000);
+      return;
+    }
+
     setIsBuying(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
-      console.log(`Initiating purchase for ${amount} stars, chatId: ${chatId}`);
-
       const response = await fetch(`/api/create-invoice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,17 +67,14 @@ export default function WalletPage() {
 
       if (response.ok) {
         const { invoiceLink } = await response.json();
-        console.log("Invoice link received:", invoiceLink);
-
         const tg = window.Telegram?.WebApp;
         if (tg) {
-          console.log("Opening Telegram Stars payment drawer...");
           tg.openLink(invoiceLink);
         } else {
           console.error("Telegram WebApp is not available.");
         }
       } else {
-        console.error("Failed to create invoice. Response:", await response.json());
+        console.error("Failed to create invoice.");
       }
     } catch (error) {
       console.error("Error handling purchase:", error);
@@ -75,7 +83,6 @@ export default function WalletPage() {
     }
   };
 
-  
   return (
     <div className="wallet-page">
       {/* Token Descriptions */}
@@ -107,59 +114,45 @@ export default function WalletPage() {
       <div className="buy-chips">
         <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
         <p>1 Telegram Star = 1 Casino Chip</p>
+        {errorMessage && <div className="error-message">{errorMessage}</div>}
         <div className="predefined-options">
-          {predefinedAmounts.map((amount) => (
+          {pricingTiers.map(({ chips, price, bonus }) => (
             <button
-              key={amount}
+              key={chips}
               className="buy-button"
-              onClick={() => handleBuy(amount)}
+              onClick={() => handleBuy(price, "Tier", chips + bonus)}
               disabled={isBuying}
             >
-              Buy {amount} 🌟
+              {chips} Chips {bonus > 0 && `+ ${bonus} Bonus`} 🌟 {price} Stars
             </button>
           ))}
         </div>
         <div className="custom-buy">
           <input
             type="number"
-            placeholder="Enter custom amount (min 10)"
+            placeholder="Enter custom amount (min 50)"
             value={buyAmount}
             onChange={(e) => setBuyAmount(Number(e.target.value))}
-            min="10"
+            min="50"
           />
           <button
             className="buy-button"
             onClick={() => handleBuy(buyAmount)}
-            disabled={isBuying || buyAmount < 10}
+            disabled={isBuying}
           >
             Buy
           </button>
         </div>
       </div>
 
-      {/* Special Offers Section */}
-      <div className="bundles">
-        <h3>Special Offers</h3>
-        <div className="bundle">
-          <p>Buy 1000 Chips + 50 Free!</p>
-          <button
-            className="buy-button"
-            onClick={() => handleBuy(1000, "Bundle", 1050)}
-            disabled={isBuying}
-          >
-            Buy Now
-          </button>
-        </div>
-        <div className="bundle">
-          <p>Buy 5000 Chips + 300 Free!</p>
-          <button
-            className="buy-button"
-            onClick={() => handleBuy(5000, "Bundle", 5300)}
-            disabled={isBuying}
-          >
-            Buy Now
-          </button>
-        </div>
+      {/* Withdrawal Section */}
+      <div className="withdrawal">
+        <h3>Withdraw Tokens</h3>
+        <p>
+          Withdrawable tokens can be exchanged for Stars. Each token earns <strong>1.4 Stars</strong>. A 5%
+          withdrawal fee applies.
+        </p>
+        <button className="withdraw-button">Request Withdrawal</button>
       </div>
     </div>
   );
