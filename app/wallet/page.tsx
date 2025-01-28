@@ -46,18 +46,14 @@ export default function WalletPage() {
       });
 
       if (response.ok) {
-        const { payload } = await response.json();
+        const { invoiceData } = await response.json();
 
-        // Telegram WebApp Payment Simulation
-        const tg = typeof window !== "undefined" && window.Telegram ? window.Telegram.WebApp : null;
+        // Redirect to bot chat or handle in-app WebApp behavior
+        const tg = window.Telegram?.WebApp;
 
-if (tg) {
-  tg.sendData(payload); // or other Telegram WebApp functions
-} else {
-  console.error("Telegram WebApp is not available.");
-}
         if (tg) {
-          tg.sendData(payload); // You can use this to trigger server-side payment simulation
+          // Send payload or redirect user to the payment
+          tg.sendData(invoiceData.payload);
         } else {
           console.error("Telegram WebApp is not available.");
         }
@@ -70,8 +66,6 @@ if (tg) {
       setIsBuying(false);
     }
   };
-
-
 
   return (
     <div className="wallet-page">

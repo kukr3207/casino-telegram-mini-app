@@ -48,7 +48,7 @@ export async function POST(req) {
 
     await client.close();
 
-    return new Response(JSON.stringify({ payload }), { status: 200 });
+    return new Response(JSON.stringify({ invoiceData: { payload } }), { status: 200 });
   } catch (error) {
     console.error("Error processing payment:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
