@@ -2,8 +2,8 @@ import TelegramBot from "node-telegram-bot-api";
 import { MongoClient } from "mongodb";
 import { randomUUID } from "crypto";
 
-const botToken = "7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ";
-const providerToken = '';
+const botToken = '7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ';
+const providerToken = "";
 const bot = new TelegramBot(botToken, { polling: false });
 
 export async function POST(req) {
@@ -16,7 +16,7 @@ export async function POST(req) {
 
     const payload = randomUUID();
 
-    // Send invoice
+    // Send invoice inside the Telegram Mini App
     await bot.sendInvoice(
       chatId,
       `Buy ${chipsBought} Casino Chips`,
@@ -28,12 +28,14 @@ export async function POST(req) {
       { start_parameter: "casino_purchase" }
     );
 
+    console.log(`Invoice sent for ${chipsBought} chips to ${chatId}`);
+
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("casino-mini-app");
     const transactions = db.collection("transactions");
 
-    // Save invoice details in the database
+    // Save invoice details
     await transactions.insertOne({
       chatId,
       payload,

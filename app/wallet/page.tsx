@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTokenContext } from "../../context/TokenProvider"; // Import TokenProvider for updating session storage
 import "../../styles/wallet.css";
 
 export default function WalletPage() {
+  const { updateTokensLocally } = useTokenContext(); // Use TokenProvider for updating session storage
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [buyAmount, setBuyAmount] = useState(0);
   const [isBuying, setIsBuying] = useState(false);
@@ -65,6 +67,27 @@ export default function WalletPage() {
       setIsBuying(false);
     }
   };
+
+   // Function to update session storage after successful payment
+   const updateSessionTokens = async () => {
+    try {
+      const chatId = sessionStorage.getItem("chat_id");
+      if (!chatId) return;
+
+      const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
+      if (response.ok) {
+        const { tokenCounts } = await response.json();
+        updateTokensLocally({
+          casino_chips: tokenCounts.casino_chips,
+          hol_tokens: tokenCounts.hol_tokens,
+          withdraw_tokens: tokenCounts.withdraw_tokens,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating session storage:", error);
+    }
+  };
+
 
   return (
     <div className="wallet-page">
