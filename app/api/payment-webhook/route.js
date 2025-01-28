@@ -5,6 +5,34 @@ export async function POST(req) {
     const update = await req.json();
     console.log("Webhook event received:", update);
 
+    // Handle `pre_checkout_query` event
+    if (update.pre_checkout_query) {
+      console.log("Pre-checkout query received:", update.pre_checkout_query);
+
+      const queryId = update.pre_checkout_query.id;
+      try {
+        // Approve the pre_checkout_query
+        const response = await fetch(
+          `https://api.telegram.org/bot7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ/answerPreCheckoutQuery`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pre_checkout_query_id: queryId,
+              ok: true, // Approving the payment
+            }),
+          }
+        );
+
+        const data = await response.json();
+        console.log("Pre-checkout query approved:", data);
+      } catch (error) {
+        console.error("Error approving pre-checkout query:", error);
+        return new Response("Error approving pre-checkout query", { status: 500 });
+      }
+    }
+
+    // Handle `successful_payment` event
     if (update.message && update.message.successful_payment) {
       const chatId = update.message.from.id.toString();
       const amountPaid = update.message.successful_payment.total_amount / 100;
@@ -26,7 +54,6 @@ export async function POST(req) {
 
       const newCasinoChips = transaction.chipsBought;
 
-      // Update users table
       const user = await users.findOne({ chatId });
       const updatedChips = (user?.casino_chips || 0) + newCasinoChips;
 
@@ -36,13 +63,11 @@ export async function POST(req) {
         { upsert: true }
       );
 
-      // Update transactions table
       await transactions.updateOne(
         { payload: invoicePayload },
         { $set: { status: "completed" } }
       );
 
-      // Insert into payments table
       await payments.insertOne({
         chatId,
         transactionId: update.message.successful_payment.telegram_payment_charge_id,
