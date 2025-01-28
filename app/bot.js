@@ -5,22 +5,51 @@ const bot = new TelegramBot('7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ', { 
 
 bot.on("successful_payment", async (msg) => {
   const { chatId } = msg.from;
-  const { total_amount, invoice_payload } = msg.successful_payment;
+  const { total_amount, invoice_payload, telegram_payment_charge_id } = msg.successful_payment;
 
   const client = new MongoClient(process.env.MONGO_URI);
   await client.connect();
   const db = client.db("casino-mini-app");
+  const transactions = db.collection("transactions");
+  const payments = db.collection("payments");
   const users = db.collection("users");
 
-  const user = await users.findOne({ chatId });
+  const transaction = await transactions.findOne({ payload: invoice_payload });
 
-  const newCasinoChips = (user?.casino_chips || 0) + total_amount / 100;
+  if (!transaction) {
+    console.error("Transaction not found for payload:", invoice_payload);
+    return;
+  }
+
+  const newCasinoChips = (transaction.chipsBought || 0);
+
+  // Update users table
+  const user = await users.findOne({ chatId });
+  const updatedChips = (user?.casino_chips || 0) + newCasinoChips;
 
   await users.updateOne(
     { chatId },
-    { $set: { casino_chips: newCasinoChips }, $currentDate: { updatedAt: true } },
+    { $set: { casino_chips: updatedChips }, $currentDate: { updatedAt: true } },
     { upsert: true }
   );
 
-  console.log(`Payment successful for ${chatId}, updated casino chips: ${newCasinoChips}`);
+  // Update transactions table
+  await transactions.updateOne(
+    { payload: invoice_payload },
+    { $set: { status: "completed" } }
+  );
+
+  // Insert into payments table
+  await payments.insertOne({
+    chatId,
+    transactionId: telegram_payment_charge_id,
+    starsSpent: total_amount / 100,
+    casinoChipsReceived: newCasinoChips,
+    status: "completed",
+    createdAt: new Date(),
+  });
+
+  console.log(`Payment processed for ${chatId}, new casino chips: ${updatedChips}`);
+
+  await client.close();
 });

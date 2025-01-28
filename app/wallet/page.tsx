@@ -11,7 +11,6 @@ export default function WalletPage() {
   const [isBuying, setIsBuying] = useState(false);
   const predefinedAmounts = [50, 100, 250, 500, 1000];
 
-  // Function to fetch token counts and refresh session storage
   const fetchTokenCounts = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) {
@@ -41,7 +40,6 @@ export default function WalletPage() {
     fetchTokenCounts();
   }, []);
 
-  // Function to handle buying chips
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
     setIsBuying(true);
     try {
@@ -56,13 +54,12 @@ export default function WalletPage() {
       if (response.ok) {
         const { invoiceLink } = await response.json();
 
-        // Open the payment link in Telegram
+        // Open the Stars Payment Drawer using Telegram WebApp.openLink
         const tg = window.Telegram?.WebApp;
-
-        if (tg && invoiceLink) {
-          tg.sendData(invoiceLink); // Sends the payment link back to Telegram to handle
+        if (tg) {
+          tg.openLink(invoiceLink);
         } else {
-          alert("Payment failed: Unable to process invoice.");
+          console.error("Telegram WebApp is not available.");
         }
       } else {
         console.error("Failed to create invoice.");
@@ -73,6 +70,7 @@ export default function WalletPage() {
       setIsBuying(false);
     }
   };
+
 
   return (
     <div className="wallet-page">

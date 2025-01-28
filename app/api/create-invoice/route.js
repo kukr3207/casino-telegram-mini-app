@@ -9,6 +9,7 @@ export async function POST(req) {
     }
 
     const payload = randomUUID();
+
     const response = await fetch(`https://api.telegram.org/bot7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ/createInvoiceLink`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -18,7 +19,7 @@ export async function POST(req) {
         payload,
         provider_token: process.env.PROVIDER_TOKEN,
         currency: "XTR",
-        prices: [{ label: "Casino Chips", amount: amount * 100 }],
+        prices: [{ label: "Casino Chips", amount: amount * 100 }], // Smallest units for XTR
         start_parameter: "casino_purchase",
       }),
     });
@@ -28,6 +29,25 @@ export async function POST(req) {
     if (!data.ok) {
       throw new Error("Failed to create invoice link");
     }
+
+    // Save the invoice details in the transactions table
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+    const db = client.db("casino-mini-app");
+    const transactions = db.collection("transactions");
+
+    await transactions.insertOne({
+      chatId,
+      payload,
+      amount,
+      packageType,
+      chipsBought,
+      invoiceLink: data.result,
+      status: "pending",
+      createdAt: new Date(),
+    });
+
+    await client.close();
 
     return new Response(JSON.stringify({ invoiceLink: data.result }), { status: 200 });
   } catch (error) {
