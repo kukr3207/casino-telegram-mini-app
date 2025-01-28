@@ -20,7 +20,7 @@ export async function POST(req) {
         payload,
         provider_token: '',
         currency: "XTR",
-        prices: [{ label: "Casino Chips", amount: amount * 100 }], // Smallest units for XTR
+        prices: [{ label: "Casino Chips", amount: amount }],
         start_parameter: "casino_purchase",
       }),
     });
@@ -31,7 +31,7 @@ export async function POST(req) {
       throw new Error("Failed to create invoice link");
     }
 
-    // Save the invoice details in the transactions table
+    // Save the invoice details in the database
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("casino-mini-app");

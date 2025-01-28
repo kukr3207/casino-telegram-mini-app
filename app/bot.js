@@ -3,9 +3,19 @@ const { MongoClient } = require("mongodb");
 
 const bot = new TelegramBot('7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ', { polling: true });
 
+bot.on("pre_checkout_query", async (query) => {
+  console.log("Pre-checkout query received:", query);
+  try {
+    await bot.answerPreCheckoutQuery(query.id, true); // Approve payment
+    console.log("Pre-checkout query approved.");
+  } catch (error) {
+    console.error("Error in pre-checkout query:", error);
+  }
+});
+
 bot.on("successful_payment", async (msg) => {
   const { chatId } = msg.from;
-  const { total_amount, invoice_payload, telegram_payment_charge_id } = msg.successful_payment;
+  const { total_amount, invoice_payload } = msg.successful_payment;
 
   const client = new MongoClient(process.env.MONGO_URI);
   await client.connect();
@@ -42,7 +52,7 @@ bot.on("successful_payment", async (msg) => {
   // Insert into payments table
   await payments.insertOne({
     chatId,
-    transactionId: telegram_payment_charge_id,
+    transactionId: msg.successful_payment.telegram_payment_charge_id,
     starsSpent: total_amount / 100,
     casinoChipsReceived: newCasinoChips,
     status: "completed",
