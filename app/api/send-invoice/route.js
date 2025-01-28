@@ -3,7 +3,7 @@ import { MongoClient } from "mongodb";
 import { randomUUID } from "crypto";
 
 const botToken = '7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ';
-const providerToken = "";
+const providerToken = '';
 const bot = new TelegramBot(botToken, { polling: false });
 
 export async function POST(req) {
@@ -16,7 +16,7 @@ export async function POST(req) {
 
     const payload = randomUUID();
 
-    // Send invoice inside the Telegram Mini App
+    // Send invoice via Telegram
     await bot.sendInvoice(
       chatId,
       `Buy ${chipsBought} Casino Chips`,
@@ -35,7 +35,7 @@ export async function POST(req) {
     const db = client.db("casino-mini-app");
     const transactions = db.collection("transactions");
 
-    // Save invoice details
+    // Store invoice details in `transactions` table
     await transactions.insertOne({
       chatId,
       payload,
@@ -48,9 +48,9 @@ export async function POST(req) {
 
     await client.close();
 
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return new Response(JSON.stringify({ payload }), { status: 200 });
   } catch (error) {
-    console.error("Error creating invoice:", error);
+    console.error("Error processing payment:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
   }
 }

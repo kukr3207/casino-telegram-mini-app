@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTokenContext } from "../../context/TokenProvider"; // Import TokenProvider for updating session storage
+import { useTokenContext } from "../../context/TokenProvider";
 import "../../styles/wallet.css";
 
 export default function WalletPage() {
-  const { updateTokensLocally } = useTokenContext(); // Use TokenProvider for updating session storage
+  const { updateTokensLocally } = useTokenContext();
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [buyAmount, setBuyAmount] = useState(0);
   const [isBuying, setIsBuying] = useState(false);
@@ -13,17 +13,17 @@ export default function WalletPage() {
 
   useEffect(() => {
     const fetchTokenCounts = async () => {
-      try {
-        const chatId = sessionStorage.getItem("chat_id");
-        if (!chatId) {
-          console.error("Chat ID not found in sessionStorage.");
-          return;
-        }
+      const chatId = sessionStorage.getItem("chat_id");
+      if (!chatId) {
+        console.error("Chat ID not found in sessionStorage.");
+        return;
+      }
 
+      try {
         const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
         if (response.ok) {
           const { tokenCounts } = await response.json();
-          setCasinoChips(tokenCounts.token1 || 0);
+          setCasinoChips(tokenCounts.casino_chips || 0);
         } else {
           console.error("Failed to fetch token counts.");
         }
@@ -36,19 +36,9 @@ export default function WalletPage() {
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
-    if (amount < 10) return; // Enforce minimum buy of 10 chips
     setIsBuying(true);
-
     try {
       const chatId = sessionStorage.getItem("chat_id");
-      const tg = window.Telegram?.WebApp;
-
-      if (!tg) {
-        console.error("Telegram WebApp is not available.");
-        setIsBuying(false);
-        return;
-      }
-
       const response = await fetch(`/api/send-invoice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,8 +46,15 @@ export default function WalletPage() {
       });
 
       if (response.ok) {
-        console.log("Invoice created successfully.");
-        // The payment will be handled in Telegram; no further action is required here.
+        const { payload } = await response.json();
+
+        // Telegram WebApp Payment Simulation
+        const tg = window.Telegram.WebApp;
+        if (tg) {
+          tg.sendData(payload); // You can use this to trigger server-side payment simulation
+        } else {
+          console.error("Telegram WebApp is not available.");
+        }
       } else {
         console.error("Failed to create invoice.");
       }
@@ -68,25 +65,6 @@ export default function WalletPage() {
     }
   };
 
-   // Function to update session storage after successful payment
-   const updateSessionTokens = async () => {
-    try {
-      const chatId = sessionStorage.getItem("chat_id");
-      if (!chatId) return;
-
-      const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
-      if (response.ok) {
-        const { tokenCounts } = await response.json();
-        updateTokensLocally({
-          casino_chips: tokenCounts.casino_chips,
-          hol_tokens: tokenCounts.hol_tokens,
-          withdraw_tokens: tokenCounts.withdraw_tokens,
-        });
-      }
-    } catch (error) {
-      console.error("Error updating session storage:", error);
-    }
-  };
 
 
   return (

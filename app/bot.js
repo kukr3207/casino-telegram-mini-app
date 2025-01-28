@@ -1,85 +1,49 @@
 const TelegramBot = require("node-telegram-bot-api");
-const { randomUUID } = require("crypto");
-const { createInvoiceInDatabase, createPaymentInDatabase, getInvoiceFromDatabase } = require("./database");
+const { MongoClient } = require("mongodb");
+const bot = new TelegramBot('7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ', { polling: true });
 
-const BOT_TOKEN = '7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ';
-const PROVIDER_TOKEN = ''; // Your Telegram Stars provider token
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-
-console.log("Bot is running...");
-
-// Command to trigger an invoice manually
-bot.onText(/\/invoice/, async (msg) => {
-  const chatId = msg.chat.id;
-  await sendInvoice(chatId, 100, "Buy Premium Chips", "Get 100 premium casino chips!");
-});
-
-// Handle pre_checkout_query
 bot.on("pre_checkout_query", async (query) => {
   const { id, invoice_payload } = query;
-  console.log(`Received pre_checkout_query: ${id}, payload: ${invoice_payload}`);
 
-  const invoice = await getInvoiceFromDatabase(invoice_payload);
-  
-  if (invoice) {
-    // Approve the pre-checkout query
+  try {
+    // Approve the payment
     await bot.answerPreCheckoutQuery(id, true);
-  } else {
-    // Reject the payment
-    await bot.answerPreCheckoutQuery(id, false, { error_message: "Invalid invoice payload!" });
+    console.log(`Approved pre_checkout_query for payload: ${invoice_payload}`);
+  } catch (error) {
+    console.error("Error approving pre_checkout_query:", error);
   }
 });
 
-// Handle successful payments
 bot.on("message", async (msg) => {
   if (msg.successful_payment) {
-    const successfulPayment = msg.successful_payment;
-    const { total_amount, invoice_payload, telegram_payment_charge_id } = successfulPayment;
+    const { chatId } = msg.from;
+    const { total_amount, invoice_payload, telegram_payment_charge_id } = msg.successful_payment;
 
-    console.log("Successful Payment Received:", successfulPayment);
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+    const db = client.db("casino-mini-app");
+    const transactions = db.collection("transactions");
+    const users = db.collection("users");
 
-    // Fetch invoice details
-    const invoice = await getInvoiceFromDatabase(invoice_payload);
-
-    if (invoice) {
-      // Save the payment in the database
-      await createPaymentInDatabase({
-        payment_id: telegram_payment_charge_id,
-        user_id: msg.from.id,
-        amount: total_amount / 100, // Convert from cents
-        invoice_id: invoice.id,
-      });
-
-      // Send a confirmation message
-      bot.sendMessage(msg.chat.id, `✅ Payment successful! You have purchased ${invoice.product}.`);
+    const transaction = await transactions.findOne({ payload: invoice_payload });
+    if (!transaction) {
+      console.error("Transaction not found for payload:", invoice_payload);
+      return;
     }
+
+    const newCasinoChips = (transaction.chipsBought || 0) + total_amount / 100;
+
+    await users.updateOne(
+      { chatId },
+      { $set: { casino_chips: newCasinoChips }, $currentDate: { updatedAt: true } },
+      { upsert: true }
+    );
+
+    await transactions.updateOne(
+      { payload: invoice_payload },
+      { $set: { status: "completed" } }
+    );
+
+    console.log(`Payment successful for ${chatId}, updated casino chips: ${newCasinoChips}`);
   }
 });
-
-// Function to send an invoice inside the app (not as a chat message)
-async function sendInvoice(chatId, amount, product, description) {
-  const payload = randomUUID();
-  try {
-    await bot.sendInvoice(chatId, {
-      currency: "XTR", // Telegram Stars
-      prices: [{ label: product, amount: amount * 100 }], // Convert to smallest units
-      title: product,
-      provider_token: PROVIDER_TOKEN,
-      description,
-      payload,
-      start_parameter: "purchase",
-    });
-
-    console.log(`Invoice sent for ${product} to ${chatId}`);
-
-    // Save invoice in the database
-    await createInvoiceInDatabase({
-      amount,
-      product,
-      payload,
-      user_id: chatId,
-    });
-  } catch (error) {
-    console.error("Error sending invoice:", error);
-  }
-}
