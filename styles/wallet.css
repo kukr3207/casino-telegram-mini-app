@@ -11,8 +11,8 @@
 .description {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .description-item {
@@ -26,21 +26,21 @@
 }
 
 .description-item img {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 2px solid #ffd700;
 }
 
 .description-content h2 {
-  font-size: 20px;
+  font-size: px;
   margin-bottom: 5px;
   color: #ffd700;
   text-transform: uppercase;
 }
 
 .description-content p {
-  font-size: 15px;
+  font-size: 10px;
   color: #b0b0b0;
 }
 
