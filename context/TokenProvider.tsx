@@ -23,20 +23,31 @@ export const useTokenContext = () => {
 };
 
 export default function TokenProvider({ children }: { children: React.ReactNode }) {
-  const [tokens, setTokens] = useState<Token[]>([
-    { id: 1, image: "/images/token1.png", count: 0 },
-    { id: 2, image: "/images/token2.png", count: 0 },
-    { id: 3, image: "/images/token3.png", count: 0 },
-  ]);
+  const [tokens, setTokens] = useState<Token[]>([]);
 
-  const initializeTokens = async () => {
+  // Initialize tokens from session storage
+  const initializeTokens = () => {
     const cachedTokens = sessionStorage.getItem("tokens");
     if (cachedTokens) {
       setTokens(JSON.parse(cachedTokens));
-      return;
+    } else {
+      console.warn("No tokens found in session storage during initialization.");
     }
   };
 
+  // Update tokens in state and session storage immediately
+  const updateTokensLocally = (updatedCounts: { casino_chips: number; hol_tokens: number; withdraw_tokens: number }) => {
+    const updatedTokens = [
+      { id: 1, image: "/images/token1.png", count: updatedCounts.casino_chips || 0 },
+      { id: 2, image: "/images/token2.png", count: updatedCounts.withdraw_tokens || 0 },
+      { id: 3, image: "/images/token3.png", count: updatedCounts.hol_tokens || 0 },
+    ];
+    setTokens(updatedTokens);
+    sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
+    console.log("Tokens updated locally and saved to session storage:", updatedTokens);
+  };
+
+  // Refresh tokens by fetching from the backend
   const refreshTokens = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) {
@@ -48,30 +59,18 @@ export default function TokenProvider({ children }: { children: React.ReactNode 
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
         const { tokenCounts } = await response.json();
-        const updatedTokens = [
-          { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
-          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
-          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
-        ];
-        setTokens(updatedTokens);
-        sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-        console.log("Tokens refreshed and saved to session storage:", updatedTokens);
+        updateTokensLocally({
+          casino_chips: tokenCounts.casino_chips || 0,
+          hol_tokens: tokenCounts.hol_tokens || 0,
+          withdraw_tokens: tokenCounts.withdraw_tokens || 0,
+        });
+        console.log("Tokens refreshed from backend and saved.");
       } else {
-        console.error("Failed to refresh token counts.");
+        console.error("Failed to refresh token counts from backend.");
       }
     } catch (error) {
       console.error("Error refreshing token counts:", error);
     }
-  };
-
-  const updateTokensLocally = (updatedCounts: { casino_chips: number; hol_tokens: number; withdraw_tokens: number }) => {
-    const updatedTokens = [
-      { id: 1, image: "/images/token1.png", count: updatedCounts.casino_chips || 0 },
-      { id: 2, image: "/images/token2.png", count: updatedCounts.withdraw_tokens || 0 },
-      { id: 3, image: "/images/token3.png", count: updatedCounts.hol_tokens || 0 },
-    ];
-    setTokens(updatedTokens);
-    sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
   };
 
   useEffect(() => {
