@@ -49,7 +49,13 @@ export default function WalletPage() {
         const { payload } = await response.json();
 
         // Telegram WebApp Payment Simulation
-        const tg = window.Telegram.WebApp;
+        const tg = typeof window !== "undefined" && window.Telegram ? window.Telegram.WebApp : null;
+
+if (tg) {
+  tg.sendData(payload); // or other Telegram WebApp functions
+} else {
+  console.error("Telegram WebApp is not available.");
+}
         if (tg) {
           tg.sendData(payload); // You can use this to trigger server-side payment simulation
         } else {
