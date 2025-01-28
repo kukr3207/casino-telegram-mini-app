@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { MongoClient } from "mongodb";
 
 export async function POST(req) {
   try {
@@ -17,7 +18,7 @@ export async function POST(req) {
         title: `Buy ${chipsBought} Casino Chips`,
         description: `Get ${chipsBought} chips with the ${packageType} package.`,
         payload,
-        provider_token: process.env.PROVIDER_TOKEN,
+        provider_token: '',
         currency: "XTR",
         prices: [{ label: "Casino Chips", amount: amount * 100 }], // Smallest units for XTR
         start_parameter: "casino_purchase",
