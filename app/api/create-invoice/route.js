@@ -5,7 +5,10 @@ export async function POST(req) {
   try {
     const { chatId, amount, packageType, chipsBought } = await req.json();
 
+    console.log("Creating invoice for:", { chatId, amount, packageType, chipsBought });
+
     if (!chatId || !amount || !packageType || !chipsBought) {
+      console.error("Missing required parameters:", { chatId, amount, packageType, chipsBought });
       return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400 });
     }
 
@@ -26,12 +29,13 @@ export async function POST(req) {
     });
 
     const data = await response.json();
+    console.log("Create invoice response:", data);
 
     if (!data.ok) {
+      console.error("Failed to create invoice link:", data);
       throw new Error("Failed to create invoice link");
     }
 
-    // Save the invoice details in the database
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("casino-mini-app");
@@ -48,6 +52,7 @@ export async function POST(req) {
       createdAt: new Date(),
     });
 
+    console.log("Invoice saved to database for chatId:", chatId);
     await client.close();
 
     return new Response(JSON.stringify({ invoiceLink: data.result }), { status: 200 });

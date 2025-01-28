@@ -19,6 +19,7 @@ export default function WalletPage() {
     }
 
     try {
+      console.log("Fetching token counts for chatId:", chatId);
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
         const { tokenCounts } = await response.json();
@@ -28,6 +29,7 @@ export default function WalletPage() {
           hol_tokens: tokenCounts.hol_tokens || 0,
           withdraw_tokens: tokenCounts.withdraw_tokens || 0,
         });
+        console.log("Token counts fetched successfully:", tokenCounts);
       } else {
         console.error("Failed to fetch token counts.");
       }
@@ -44,6 +46,7 @@ export default function WalletPage() {
     setIsBuying(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
+      console.log(`Initiating purchase for ${amount} stars, chatId: ${chatId}`);
 
       const response = await fetch(`/api/create-invoice`, {
         method: "POST",
@@ -53,16 +56,17 @@ export default function WalletPage() {
 
       if (response.ok) {
         const { invoiceLink } = await response.json();
+        console.log("Invoice link received:", invoiceLink);
 
-        // Open the Stars Payment Drawer using Telegram WebApp.openLink
         const tg = window.Telegram?.WebApp;
         if (tg) {
+          console.log("Opening Telegram Stars payment drawer...");
           tg.openLink(invoiceLink);
         } else {
           console.error("Telegram WebApp is not available.");
         }
       } else {
-        console.error("Failed to create invoice.");
+        console.error("Failed to create invoice. Response:", await response.json());
       }
     } catch (error) {
       console.error("Error handling purchase:", error);
@@ -71,7 +75,7 @@ export default function WalletPage() {
     }
   };
 
-
+  
   return (
     <div className="wallet-page">
       {/* Token Descriptions */}

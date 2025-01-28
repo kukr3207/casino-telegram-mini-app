@@ -1,21 +1,23 @@
 const TelegramBot = require("node-telegram-bot-api");
 const { MongoClient } = require("mongodb");
 
-const bot = new TelegramBot('7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ', { polling: true });
+const bot = new TelegramBot("7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ", { polling: true });
 
 bot.on("pre_checkout_query", async (query) => {
   console.log("Pre-checkout query received:", query);
   try {
-    await bot.answerPreCheckoutQuery(query.id, true); // Approve payment
-    console.log("Pre-checkout query approved.");
+    await bot.answerPreCheckoutQuery(query.id, true);
+    console.log("Pre-checkout query approved for payload:", query.invoice_payload);
   } catch (error) {
     console.error("Error in pre-checkout query:", error);
   }
 });
 
 bot.on("successful_payment", async (msg) => {
+  console.log("Successful payment received:", msg.successful_payment);
+
   const { chatId } = msg.from;
-  const { total_amount, invoice_payload } = msg.successful_payment;
+  const { total_amount, invoice_payload, telegram_payment_charge_id } = msg.successful_payment;
 
   const client = new MongoClient(process.env.MONGO_URI);
   await client.connect();
@@ -31,9 +33,8 @@ bot.on("successful_payment", async (msg) => {
     return;
   }
 
-  const newCasinoChips = (transaction.chipsBought || 0);
+  const newCasinoChips = transaction.chipsBought;
 
-  // Update users table
   const user = await users.findOne({ chatId });
   const updatedChips = (user?.casino_chips || 0) + newCasinoChips;
 
@@ -43,23 +44,20 @@ bot.on("successful_payment", async (msg) => {
     { upsert: true }
   );
 
-  // Update transactions table
   await transactions.updateOne(
     { payload: invoice_payload },
     { $set: { status: "completed" } }
   );
 
-  // Insert into payments table
   await payments.insertOne({
     chatId,
-    transactionId: msg.successful_payment.telegram_payment_charge_id,
+    transactionId: telegram_payment_charge_id,
     starsSpent: total_amount / 100,
     casinoChipsReceived: newCasinoChips,
     status: "completed",
     createdAt: new Date(),
   });
 
-  console.log(`Payment processed for ${chatId}, new casino chips: ${updatedChips}`);
-
+  console.log(`Payment processed for chatId: ${chatId}, new casino chips: ${updatedChips}`);
   await client.close();
 });
