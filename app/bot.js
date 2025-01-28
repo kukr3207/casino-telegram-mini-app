@@ -9,7 +9,7 @@ bot.on("pre_checkout_query", async (query) => {
     await bot.answerPreCheckoutQuery(query.id, true);
     console.log("Pre-checkout query approved for payload:", query.invoice_payload);
   } catch (error) {
-    console.error("Error in pre-checkout query:", error);
+    console.error("Error approving pre-checkout query:", error);
   }
 });
 
@@ -26,29 +26,32 @@ bot.on("successful_payment", async (msg) => {
   const payments = db.collection("payments");
   const users = db.collection("users");
 
+  // Find transaction in the database
   const transaction = await transactions.findOne({ payload: invoice_payload });
-
   if (!transaction) {
     console.error("Transaction not found for payload:", invoice_payload);
     return;
   }
 
+  // Update user's chips
   const newCasinoChips = transaction.chipsBought;
-
   const user = await users.findOne({ chatId });
   const updatedChips = (user?.casino_chips || 0) + newCasinoChips;
 
+  // Update users table
   await users.updateOne(
     { chatId },
     { $set: { casino_chips: updatedChips }, $currentDate: { updatedAt: true } },
     { upsert: true }
   );
 
+  // Update transactions table
   await transactions.updateOne(
     { payload: invoice_payload },
     { $set: { status: "completed" } }
   );
 
+  // Add to payments table
   await payments.insertOne({
     chatId,
     transactionId: telegram_payment_charge_id,
@@ -58,6 +61,6 @@ bot.on("successful_payment", async (msg) => {
     createdAt: new Date(),
   });
 
-  console.log(`Payment processed for chatId: ${chatId}, new casino chips: ${updatedChips}`);
+  console.log(`Payment processed successfully for chatId: ${chatId}, new chips: ${updatedChips}`);
   await client.close();
 });

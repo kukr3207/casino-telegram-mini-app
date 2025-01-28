@@ -2,25 +2,57 @@ import { MongoClient } from "mongodb";
 
 export async function POST(req) {
   try {
-    const { update } = await req.json();
+    const update = await req.json();
+    console.log("Webhook event received:", update);
 
     if (update.message && update.message.successful_payment) {
       const chatId = update.message.from.id.toString();
       const amountPaid = update.message.successful_payment.total_amount / 100;
+      const invoicePayload = update.message.successful_payment.invoice_payload;
 
-      const client = new MongoClient(process.env.MONGO_URI); // Ensure MONGO_URI is set
+      const client = new MongoClient(process.env.MONGO_URI);
       await client.connect();
       const db = client.db("casino-mini-app");
+      const transactions = db.collection("transactions");
+      const payments = db.collection("payments");
       const users = db.collection("users");
 
-      // Increment the user's casino chips balance
+      const transaction = await transactions.findOne({ payload: invoicePayload });
+
+      if (!transaction) {
+        console.error("Transaction not found for payload:", invoicePayload);
+        return new Response("Transaction not found", { status: 404 });
+      }
+
+      const newCasinoChips = transaction.chipsBought;
+
+      // Update users table
+      const user = await users.findOne({ chatId });
+      const updatedChips = (user?.casino_chips || 0) + newCasinoChips;
+
       await users.updateOne(
         { chatId },
-        { $inc: { casino_chips: amountPaid } },
+        { $set: { casino_chips: updatedChips }, $currentDate: { updatedAt: true } },
         { upsert: true }
       );
 
-      console.log(`Payment confirmed for Chat ID: ${chatId}, Amount Paid: ${amountPaid}`);
+      // Update transactions table
+      await transactions.updateOne(
+        { payload: invoicePayload },
+        { $set: { status: "completed" } }
+      );
+
+      // Insert into payments table
+      await payments.insertOne({
+        chatId,
+        transactionId: update.message.successful_payment.telegram_payment_charge_id,
+        starsSpent: amountPaid,
+        casinoChipsReceived: newCasinoChips,
+        status: "completed",
+        createdAt: new Date(),
+      });
+
+      console.log(`Payment processed for Chat ID: ${chatId}, new casino chips: ${updatedChips}`);
       await client.close();
     }
 

@@ -29,7 +29,7 @@ export async function POST(req) {
     });
 
     const data = await response.json();
-    console.log("Create invoice response:", data);
+    console.log("Invoice creation response:", data);
 
     if (!data.ok) {
       console.error("Failed to create invoice link:", data);
@@ -52,12 +52,12 @@ export async function POST(req) {
       createdAt: new Date(),
     });
 
-    console.log("Invoice saved to database for chatId:", chatId);
+    console.log("Invoice saved successfully for chatId:", chatId);
     await client.close();
 
     return new Response(JSON.stringify({ invoiceLink: data.result }), { status: 200 });
   } catch (error) {
-    console.error("Error creating invoice:", error);
+    console.error("Error in create-invoice.js:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
   }
 }
