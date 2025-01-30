@@ -41,10 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 body: JSON.stringify({ chatId, firstName, username }),
               });
 
-              // Fetch user-related data
-              const getUserResponse = await fetch(`/api/get-user-data?chatId=${chatId}`);
-              if (getUserResponse.ok) {
-                const { tokenCounts, userDetails } = await getUserResponse.json();
+              // Fetch only token counts instead of full user data
+              const tokenResponse = await fetch(`/api/get-token-counts?chatId=${chatId}`);
+              if (tokenResponse.ok) {
+                const { tokenCounts } = await tokenResponse.json();
 
                 // Store token counts in session storage immediately
                 const tokens = [
@@ -54,14 +54,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 ];
                 sessionStorage.setItem("tokens", JSON.stringify(tokens));
                 console.log("Tokens updated in session storage:", tokens);
-
-                // Store user details in session storage
-                sessionStorage.setItem("user_details", JSON.stringify(userDetails));
               } else {
-                console.error("Failed to fetch user data.");
+                console.error("Failed to fetch token counts.");
               }
             } catch (error) {
-              console.error("Error fetching or storing user data:", error);
+              console.error("Error fetching or storing token data:", error);
             }
           }
         }
