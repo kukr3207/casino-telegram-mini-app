@@ -85,9 +85,6 @@ export default function WalletPage() {
         } else {
           console.error("Telegram WebApp is not available.");
         }
-
-        // ✅ Simulate token update when the webhook receives payment
-        window.postMessage({ type: "update_tokens" }, "*");
       } else {
         console.error("Failed to create invoice.");
         setProcessingChip(null);
@@ -102,7 +99,7 @@ export default function WalletPage() {
 
   return (
     <div className="wallet-page">
-      {/* ✅ Confetti Animation on successful payment */}
+      {/* ✅ Confetti Animation AFTER successful payment confirmation */}
       {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
 
       {/* Token Descriptions */}
