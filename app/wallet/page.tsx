@@ -60,26 +60,34 @@ export default function WalletPage() {
     setIsBuying(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
-      const response = await fetch(`/api/create-invoice`, {
+      
+      // Fetch current token count
+      const balanceResponse = await fetch(`/api/get-token-counts?chatId=${chatId}`);
+      if (!balanceResponse.ok) {
+        console.error("Failed to fetch current token balance.");
+        return;
+      }
+      const { tokenCounts } = await balanceResponse.json();
+      const currentCasinoChips = tokenCounts.casino_chips || 0;
+      const updatedCasinoChips = currentCasinoChips + chipsBought;
+
+      // Update DB with new total token count
+      await fetch(`/api/update-tokens`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, amount, packageType, chipsBought }),
+        body: JSON.stringify({ chatId, tokens: updatedCasinoChips }),
       });
 
-      if (response.ok) {
-        const { invoiceLink } = await response.json();
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-          tg.openLink(invoiceLink);
-        } else {
-          console.error("Telegram WebApp is not available.");
-        }
-
-        // Fetch updated token balance after successful purchase
-        await fetchTokenCounts();
-      } else {
-        console.error("Failed to create invoice.");
-      }
+      // Update session storage
+      const updatedTokens = [
+        { id: 1, image: "/images/token1.png", count: updatedCasinoChips },
+        { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+        { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+      ];
+      sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
+      
+      // Fetch updated token balance to reflect immediately
+      await fetchTokenCounts();
     } catch (error) {
       console.error("Error handling purchase:", error);
     } finally {
