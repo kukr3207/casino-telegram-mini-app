@@ -109,13 +109,13 @@ export async function POST(req) {
 
       // ✅ Notify the frontend for UI update & trigger confetti
       console.log("🎉 Sending postMessage to trigger confetti effect...");
-      return new Response(
-        JSON.stringify({
-          type: "update_tokens",
-          tokens: updatedTokens,
-        }),
-        { status: 200 }
-      );
+if (typeof globalThis !== "undefined" && globalThis.window) {
+  globalThis.window.postMessage({
+    type: "update_tokens",
+    tokens: updatedTokens
+  }, "*");
+}
+
     }
 
     return new Response("Webhook received", { status: 200 });
