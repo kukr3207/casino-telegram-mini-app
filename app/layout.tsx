@@ -46,18 +46,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               if (getUserResponse.ok) {
                 const { tokenCounts, userDetails } = await getUserResponse.json();
 
-                // Store token counts in session storage
+                // Store token counts in session storage immediately
                 const tokens = [
                   { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
                   { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
                   { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
                 ];
                 sessionStorage.setItem("tokens", JSON.stringify(tokens));
+                console.log("Tokens updated in session storage:", tokens);
 
                 // Store user details in session storage
                 sessionStorage.setItem("user_details", JSON.stringify(userDetails));
-
-                console.log("User data loaded and stored in session storage:", { tokens, userDetails });
               } else {
                 console.error("Failed to fetch user data.");
               }
@@ -69,7 +68,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       }
 
       // Hide splash screen after initialization
-      setTimeout(() => setIsSplashVisible(false), 3000);
+      setTimeout(() => {
+        setIsSplashVisible(false);
+      }, 1000); // Reduced delay for faster UI update
     };
 
     initializeApp();

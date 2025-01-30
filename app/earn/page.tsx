@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import "../../styles/earn.css";
-import { useTokenContext } from "../../context/TokenProvider"; // Import TokenProvider for session updates
 
 export default function EarnPage() {
-  const { updateTokensLocally } = useTokenContext();
   const [streak, setStreak] = useState(0);
   const [dailyReward, setDailyReward] = useState(10);
   const [lastClaimedDate, setLastClaimedDate] = useState("");
@@ -29,6 +27,14 @@ export default function EarnPage() {
       if (response.ok) {
         const { tokenCounts } = await response.json();
         setCasinoBalance(tokenCounts.casino_chips || 0);
+        
+        // Update session storage immediately
+        const updatedTokens = [
+          { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
+          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+        ];
+        sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
       }
     } catch (error) {
       console.error("Error fetching token balance:", error);
@@ -73,40 +79,38 @@ export default function EarnPage() {
   const updateUserCasinoBalance = async (tokens: number) => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
-  
+
     try {
-      // Fetch the current casino chip count from the database
+      // Fetch current balance
       const balanceResponse = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (!balanceResponse.ok) {
         console.error("Failed to fetch current token balance.");
         return;
       }
-  
+      
       const { tokenCounts } = await balanceResponse.json();
       const currentCasinoChips = tokenCounts.casino_chips || 0;
       const updatedCasinoChips = currentCasinoChips + tokens;
-  
-      // Update the casino chip count in the database
-      const response = await fetch("/api/update-tokens", {
+
+      // Update database
+      await fetch("/api/update-tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, tokens: tokens }), // Send only the newly earned tokens to update the DB correctly
+        body: JSON.stringify({ chatId, tokens: updatedCasinoChips }),
       });
-  
-      if (response.ok) {
-        setCasinoBalance(updatedCasinoChips);
-        updateTokensLocally({
-          casino_chips: updatedCasinoChips, // Store total casino chips in session storage
-          hol_tokens: tokenCounts.hol_tokens || 0,
-          withdraw_tokens: tokenCounts.withdraw_tokens || 0,
-        });
-      }
+
+      // Update session storage immediately
+      const updatedTokens = [
+        { id: 1, image: "/images/token1.png", count: updatedCasinoChips },
+        { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+        { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+      ];
+      sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
+      setCasinoBalance(updatedCasinoChips);
     } catch (error) {
       console.error("Error updating token balance:", error);
     }
   };
-  
-  
 
   return (
     <div className="earn-page">
