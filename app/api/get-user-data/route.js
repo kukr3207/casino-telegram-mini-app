@@ -17,8 +17,8 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Fetch user data
-    const user = await users.findOne({ chatId });
+    // Ensure chatId is stored as a string in MongoDB
+    const user = await users.findOne({ chatId: String(chatId) });
 
     if (!user) {
       return new Response(JSON.stringify({ error: "User not found" }), {
