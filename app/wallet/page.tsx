@@ -46,7 +46,7 @@ export default function WalletPage() {
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
-    if (amount < 50) {
+    if (amount < 0) {
       setErrorMessage("Minimum purchase amount is 50 tokens.");
       setTimeout(() => setErrorMessage(""), 4000);
       return;
@@ -144,7 +144,7 @@ export default function WalletPage() {
             placeholder="Enter custom amount (min 50)"
             value={buyAmount}
             onChange={(e) => setBuyAmount(Number(e.target.value))}
-            min="50"
+            min="0"
           />
           <button
             className="buy-button"
