@@ -10,6 +10,7 @@ export default function WalletPage() {
   const [isBuying, setIsBuying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfetti, setShowConfetti] = useState(false); // Confetti animation
+  const [processingChip, setProcessingChip] = useState<number | null>(null); // Track button loading state
 
   // Pricing Tiers
   const pricingTiers = [
@@ -52,6 +53,8 @@ export default function WalletPage() {
     }
 
     setIsBuying(true);
+    setProcessingChip(amount); // Show loading state for clicked button
+
     try {
       const chatId = sessionStorage.getItem("chat_id");
       const response = await fetch(`/api/create-invoice`, {
@@ -74,13 +77,16 @@ export default function WalletPage() {
           if (event.data.type === "update_tokens") {
             setShowConfetti(true); // Show confetti on successful payment
             setTimeout(() => setShowConfetti(false), 4000); // Hide after 4s
+            setProcessingChip(null); // Reset button loading state
           }
         });
       } else {
         console.error("Failed to create invoice.");
+        setProcessingChip(null);
       }
     } catch (error) {
       console.error("Error handling purchase:", error);
+      setProcessingChip(null);
     } finally {
       setIsBuying(false);
     }
@@ -89,6 +95,31 @@ export default function WalletPage() {
   return (
     <div className="wallet-page">
       {showConfetti && <Confetti numberOfPieces={200} />} {/* Confetti Animation on success */}
+
+      {/* Token Descriptions */}
+      <div className="description">
+        <div className="description-item">
+          <img src="/images/token1.png" alt="Casino Chips" />
+          <div className="description-content">
+            <h2>Casino Chips</h2>
+            <p>Your primary gaming currency. Use these to play games.</p>
+          </div>
+        </div>
+        <div className="description-item">
+          <img src="/images/token2.png" alt="Withdrawable Tokens" />
+          <div className="description-content">
+            <h2>Withdrawable Tokens</h2>
+            <p>Earned by winning games. Redeem them for rewards.</p>
+          </div>
+        </div>
+        <div className="description-item">
+          <img src="/images/token3.png" alt="HOL Tokens" />
+          <div className="description-content">
+            <h2>HOL Tokens</h2>
+            <p>Your leaderboard rank and rewards in the House of Luck.</p>
+          </div>
+        </div>
+      </div>
 
       {/* Buy Casino Chips Section */}
       <div className="buy-chips">
@@ -101,12 +132,38 @@ export default function WalletPage() {
               key={chips}
               className="buy-button"
               onClick={() => handleBuy(price, "Tier", chips + bonus)}
-              disabled={isBuying}
+              disabled={isBuying && processingChip === price}
             >
-              {isBuying ? "Processing..." : `${chips} Chips ${bonus > 0 ? `+ ${bonus} Bonus` : ""} 🌟 ${price} Stars`}
+              {processingChip === price ? "Processing..." : `${chips} Chips ${bonus > 0 ? `+ ${bonus} Bonus` : ""} 🌟 ${price} Stars`}
             </button>
           ))}
         </div>
+        <div className="custom-buy">
+          <input
+            type="number"
+            placeholder="Enter custom amount (min 50)"
+            value={buyAmount}
+            onChange={(e) => setBuyAmount(Number(e.target.value))}
+            min="50"
+          />
+          <button
+            className="buy-button"
+            onClick={() => handleBuy(buyAmount)}
+            disabled={isBuying}
+          >
+            {isBuying ? "Processing..." : "Buy"}
+          </button>
+        </div>
+      </div>
+
+      {/* Withdrawal Section */}
+      <div className="withdrawal">
+        <h3>Withdraw Tokens</h3>
+        <p>
+          Withdrawable tokens can be exchanged for Stars. Each token earns <strong>1.4 Stars</strong>. A 5%
+          withdrawal fee applies.
+        </p>
+        <button className="withdraw-button">Request Withdrawal</button>
       </div>
     </div>
   );
