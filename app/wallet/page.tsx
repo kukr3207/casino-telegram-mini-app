@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTokenContext } from "../../context/TokenProvider";
 import "../../styles/wallet.css";
 
 export default function WalletPage() {
+  const { updateTokensLocally } = useTokenContext();
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [buyAmount, setBuyAmount] = useState(50); // Minimum value set to 50
   const [isBuying, setIsBuying] = useState(false);
@@ -30,14 +32,11 @@ export default function WalletPage() {
       if (response.ok) {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
-
-        // Update session storage with new values
-        const updatedTokens = [
-          { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
-          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
-          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
-        ];
-        sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
+        updateTokensLocally({
+          casino_chips: tokenCounts.casino_chips || 0,
+          hol_tokens: tokenCounts.hol_tokens || 0,
+          withdraw_tokens: tokenCounts.withdraw_tokens || 0,
+        });
       } else {
         console.error("Failed to fetch token counts.");
       }
@@ -51,7 +50,7 @@ export default function WalletPage() {
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
-    if (amount < 0) {
+    if (amount < 50) {
       setErrorMessage("Minimum purchase amount is 50 tokens.");
       setTimeout(() => setErrorMessage(""), 4000);
       return;
@@ -60,34 +59,23 @@ export default function WalletPage() {
     setIsBuying(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
-      
-      // Fetch current token count
-      const balanceResponse = await fetch(`/api/get-token-counts?chatId=${chatId}`);
-      if (!balanceResponse.ok) {
-        console.error("Failed to fetch current token balance.");
-        return;
-      }
-      const { tokenCounts } = await balanceResponse.json();
-      const currentCasinoChips = tokenCounts.casino_chips || 0;
-      const updatedCasinoChips = currentCasinoChips + chipsBought;
-
-      // Update DB with new total token count
-      await fetch(`/api/update-tokens`, {
+      const response = await fetch(`/api/create-invoice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, tokens: updatedCasinoChips }),
+        body: JSON.stringify({ chatId, amount, packageType, chipsBought }),
       });
 
-      // Update session storage
-      const updatedTokens = [
-        { id: 1, image: "/images/token1.png", count: updatedCasinoChips },
-        { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
-        { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
-      ];
-      sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-      
-      // Fetch updated token balance to reflect immediately
-      await fetchTokenCounts();
+      if (response.ok) {
+        const { invoiceLink } = await response.json();
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+          tg.openLink(invoiceLink);
+        } else {
+          console.error("Telegram WebApp is not available.");
+        }
+      } else {
+        console.error("Failed to create invoice.");
+      }
     } catch (error) {
       console.error("Error handling purchase:", error);
     } finally {
@@ -145,7 +133,7 @@ export default function WalletPage() {
             placeholder="Enter custom amount (min 50)"
             value={buyAmount}
             onChange={(e) => setBuyAmount(Number(e.target.value))}
-            min="0"
+            min="50"
           />
           <button
             className="buy-button"
