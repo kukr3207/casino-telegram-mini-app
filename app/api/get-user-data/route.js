@@ -1,41 +1,49 @@
 import { MongoClient } from "mongodb";
 
-export default async function handler(req, res) {
-  if (req.method === "GET") {
-    const { chatId } = req.query;
+export async function GET(req) {
+  try {
+    // Get chatId from query parameters
+    const { searchParams } = new URL(req.url);
+    const chatId = searchParams.get("chatId");
 
     if (!chatId) {
-      return res.status(400).json({ error: "Missing chat ID" });
+      return new Response(JSON.stringify({ error: "Missing chat ID" }), {
+        status: 400,
+      });
     }
 
     const client = new MongoClient(process.env.MONGO_URI);
-    try {
-      await client.connect();
-      const db = client.db("casino-mini-app");
-      const users = db.collection("users");
+    await client.connect();
+    const db = client.db("casino-mini-app");
+    const users = db.collection("users");
 
-      // Fetch user data
-      const user = await users.findOne({ chatId });
+    // Fetch user data
+    const user = await users.findOne({ chatId });
 
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      // Fetch token counts (example logic)
-      const tokenCounts = {
-        casino_chips: user.casino_chips || 0,
-        withdraw_tokens: user.withdraw_tokens || 0,
-        hol_tokens: user.hol_tokens || 0,
-      };
-
-      res.status(200).json({ tokenCounts, userDetails: user });
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    } finally {
-      await client.close();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+      });
     }
-  } else {
-    res.status(405).json({ error: "Method Not Allowed" });
+
+    // Fetch token counts
+    const tokenCounts = {
+      casino_chips: user.casino_chips || 0,
+      withdraw_tokens: user.withdraw_tokens || 0,
+      hol_tokens: user.hol_tokens || 0,
+    };
+
+    await client.close();
+
+    return new Response(
+      JSON.stringify({ tokenCounts, userDetails: user }),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return new Response(
+      JSON.stringify({ error: "Internal Server Error" }),
+      { status: 500 }
+    );
   }
 }
