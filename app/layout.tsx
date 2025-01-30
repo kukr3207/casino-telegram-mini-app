@@ -33,36 +33,45 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           if (chatId) {
             console.log("Chat ID found:", chatId);
 
+            // Store chat ID in session storage
             sessionStorage.setItem("chat_id", chatId.toString());
 
             try {
-              // Check if user exists and store user in DB if new
-              await fetch(`/api/store-user-data`, {
+              // Step 1: Store user data in the database
+              const storeUserResponse = await fetch(`/api/save-user-data`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ chatId, firstName, username }),
               });
 
-              // Fetch user-related data
-              const response = await fetch(`/api/get-user-data?chatId=${chatId}`);
-              if (response.ok) {
-                const { tokenCounts, userDetails } = await response.json();
-
-                // Store token counts in session storage
-                const tokens = [
-                  { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
-                  { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
-                  { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
-                ];
-                sessionStorage.setItem("tokens", JSON.stringify(tokens));
-
-                // Store user details in session storage
-                sessionStorage.setItem("user_details", JSON.stringify(userDetails));
-
-                console.log("User data loaded and stored in session storage:", { tokens, userDetails });
-              } else {
-                console.error("Failed to fetch user data.");
+              if (!storeUserResponse.ok) {
+                console.error("Failed to store user data:", await storeUserResponse.text());
+                return;
               }
+
+              console.log("User data stored successfully.");
+
+              // Step 2: Fetch user-related data
+              const getUserResponse = await fetch(`/api/get-user-data?chatId=${chatId}`);
+              if (!getUserResponse.ok) {
+                console.error("Failed to fetch user data:", await getUserResponse.text());
+                return;
+              }
+
+              const { tokenCounts, userDetails } = await getUserResponse.json();
+
+              // Store token counts in session storage
+              const tokens = [
+                { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
+                { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+                { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+              ];
+              sessionStorage.setItem("tokens", JSON.stringify(tokens));
+
+              // Store user details in session storage
+              sessionStorage.setItem("user_details", JSON.stringify(userDetails));
+
+              console.log("User data loaded and stored in session storage:", { tokens, userDetails });
             } catch (error) {
               console.error("Error fetching or storing user data:", error);
             }
