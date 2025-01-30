@@ -18,12 +18,15 @@ export async function POST(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Find user document (handling different chatId formats)
-    let user = await users.findOne({ chatId: chatId });
+    // Convert chatId to number if possible
+    let queryChatId = isNaN(chatId) ? chatId : parseFloat(chatId);
+
+    // Try finding the user (number chatId or string)
+    let user = await users.findOne({ chatId: queryChatId });
 
     if (!user) {
-      console.warn("User not found with string chatId. Trying with number format...");
-      user = await users.findOne({ chatId: parseFloat(chatId) });
+      console.warn("User not found, retrying with alternative type...");
+      user = await users.findOne({ chatId: chatId.toString() });
     }
 
     if (!user) {
@@ -33,11 +36,13 @@ export async function POST(req) {
       );
     }
 
-    // Update the user's token count
-    const updatedCasinoChips = (user.casino_chips || 0) + tokens;
+    // Fetch existing casino chips balance
+    const currentCasinoChips = user.casino_chips || 0;
+    const updatedCasinoChips = currentCasinoChips + tokens;
 
+    // Update the user's token count
     await users.updateOne(
-      { _id: user._id }, // Update the found document
+      { _id: user._id }, // Ensure we update the correct record
       {
         $set: {
           casino_chips: updatedCasinoChips,

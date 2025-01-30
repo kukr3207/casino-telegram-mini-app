@@ -3,7 +3,7 @@ import { MongoClient } from "mongodb";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const chatId = searchParams.get("chatId");
+    let chatId = searchParams.get("chatId");
 
     if (!chatId) {
       return new Response(
@@ -21,15 +21,15 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Query with chatId as string
-    let user = await users.findOne({ chatId: chatId });
-    console.warn("User found with string chatId:", user);
+    // Convert chatId to a number if needed
+    chatId = isNaN(chatId) ? chatId : parseFloat(chatId);
 
-    // If not found, query with chatId as Double
+    // Try finding the user (string or number chatId)
+    let user = await users.findOne({ chatId });
+
     if (!user) {
-      console.warn("No user found with string chatId. Trying with Double...");
-      user = await users.findOne({ chatId: parseFloat(chatId) });
-      console.warn("User found with Double chatId:", user);
+      console.warn("User not found, retrying with alternative type...");
+      user = await users.findOne({ chatId: chatId.toString() });
     }
 
     if (!user) {
