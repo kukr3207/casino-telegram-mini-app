@@ -3,13 +3,29 @@ import { MongoClient } from "mongodb";
 export async function POST(req) {
   try {
     const update = await req.json();
-    console.log("Webhook event received:", update);
+    console.log("📩 Webhook event received:", JSON.stringify(update, null, 2));
 
-    if (update.message && update.message.successful_payment) {
-      let chatId = update.message.from.id;
+    // ✅ Handling Pre-Checkout Query (Telegram Payment Approval)
+    if (update.pre_checkout_query) {
+      console.log("🛒 Pre-checkout query received:", update.pre_checkout_query);
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          result: true,
+        }),
+        { status: 200 }
+      );
+    }
+
+    // ✅ Handling Successful Payment
+    if (update.message?.successful_payment) {
+      const chatId = Number(update.message.from.id); // Ensure chatId is a number
       const amountPaid = update.message.successful_payment.total_amount / 100;
       const invoicePayload = update.message.successful_payment.invoice_payload;
 
+      console.log(`💰 Payment successful for Chat ID: ${chatId}, Amount: ${amountPaid} Stars`);
+
+      // ✅ Connect to MongoDB
       const client = new MongoClient(process.env.MONGO_URI);
       await client.connect();
       const db = client.db("casino-mini-app");
@@ -17,39 +33,42 @@ export async function POST(req) {
       const payments = db.collection("payments");
       const users = db.collection("users");
 
-      chatId = parseFloat(chatId);
-
+      // ✅ Find the Transaction
       const transaction = await transactions.findOne({ payload: invoicePayload });
 
       if (!transaction) {
-        console.error("Transaction not found for payload:", invoicePayload);
+        console.error("❌ Transaction not found for payload:", invoicePayload);
         return new Response("Transaction not found", { status: 404 });
       }
 
+      // ✅ Find User in Database
       let user = await users.findOne({ chatId });
+      if (!user) user = await users.findOne({ chatId: chatId.toString() });
 
       if (!user) {
-        user = await users.findOne({ chatId: chatId.toString() });
-      }
-
-      if (!user) {
-        console.error("User not found in database. Aborting update.");
+        console.error("❌ User not found in DB. Aborting update.");
         return new Response("User not found", { status: 404 });
       }
 
+      // ✅ Calculate Updated Casino Chips
       const newCasinoChips = transaction.chipsBought;
       const updatedChips = (user.casino_chips || 0) + newCasinoChips;
 
+      // ✅ Update User's Token Balance
       await users.updateOne(
         { _id: user._id },
-        { $set: { casino_chips: updatedChips }, $currentDate: { updatedAt: true } }
+        {
+          $set: { casino_chips: updatedChips, updatedAt: new Date() },
+        }
       );
 
+      // ✅ Update Transaction Status
       await transactions.updateOne(
         { payload: invoicePayload },
         { $set: { status: "completed" } }
       );
 
+      // ✅ Insert Payment Record
       await payments.insertOne({
         chatId,
         transactionId: update.message.successful_payment.telegram_payment_charge_id,
@@ -59,9 +78,12 @@ export async function POST(req) {
         createdAt: new Date(),
       });
 
-      console.log(`✅ Payment processed successfully for chatId: ${chatId}, new chips: ${updatedChips}`);
+      console.log(`✅ Payment processed! Updated casino chips: ${updatedChips}`);
+
+      // ✅ Close Database Connection
       await client.close();
 
+      // ✅ Send Response with Updated Tokens
       return new Response(
         JSON.stringify({
           type: "update_tokens",
@@ -77,7 +99,7 @@ export async function POST(req) {
 
     return new Response("Webhook received", { status: 200 });
   } catch (error) {
-    console.error("❌ Error processing webhook:", error);
-    return new Response("Internal server error", { status: 500 });
+    console.error("❌ Webhook error:", error);
+    return new Response("Internal Server Error", { status: 500 });
   }
 }
