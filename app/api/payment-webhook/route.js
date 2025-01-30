@@ -97,25 +97,38 @@ export async function POST(req) {
 
       console.log(`✅ Payment processed! Updated casino chips: ${updatedChips}`);
 
+      // ✅ Send Confirmation Message to Telegram Chat
+      const messageText = `🎉 Payment received!\n\n💰 Amount: ${amountPaid * 100} Stars\n🎲 Casino Chips Added: ${newCasinoChips}\n✅ Your new balance: ${updatedChips} chips`;
+      
+      await fetch(
+        `https://api.telegram.org/bot7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: messageText,
+          }),
+        }
+      );
+
+      console.log(`📩 Confirmation message sent to user: ${chatId}`);
+
       // ✅ Close Database Connection
       await client.close();
 
-      // ✅ Store Updated Tokens in Session Storage (Handled in Frontend)
-      const updatedTokens = {
-        casino_chips: updatedChips,
-        withdraw_tokens: user.withdraw_tokens || 0,
-        hol_tokens: user.hol_tokens || 0,
-      };
-
-      // ✅ Notify the frontend for UI update & trigger confetti
-      console.log("🎉 Sending postMessage to trigger confetti effect...");
-if (typeof globalThis !== "undefined" && globalThis.window) {
-  globalThis.window.postMessage({
-    type: "update_tokens",
-    tokens: updatedTokens
-  }, "*");
-}
-
+      // ✅ Send Response with Updated Tokens
+      return new Response(
+        JSON.stringify({
+          type: "update_tokens",
+          tokens: {
+            casino_chips: updatedChips,
+            withdraw_tokens: user.withdraw_tokens || 0,
+            hol_tokens: user.hol_tokens || 0,
+          },
+        }),
+        { status: 200 }
+      );
     }
 
     return new Response("Webhook received", { status: 200 });
