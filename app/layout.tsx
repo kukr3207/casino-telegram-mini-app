@@ -28,16 +28,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         const initDataUnsafe = tg.initDataUnsafe;
 
         if (initDataUnsafe?.user) {
-          const { id: chatId } = initDataUnsafe.user;
+          const { id: chatId, first_name: firstName, username } = initDataUnsafe.user;
 
           if (chatId) {
             console.log("Chat ID found:", chatId);
 
-            // Save chatId in session storage
             sessionStorage.setItem("chat_id", chatId.toString());
 
-            // Fetch user-related data during splash screen
             try {
+              // Check if user exists and store user in DB if new
+              await fetch(`/api/store-user-data`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chatId, firstName, username }),
+              });
+
+              // Fetch user-related data
               const response = await fetch(`/api/get-user-data?chatId=${chatId}`);
               if (response.ok) {
                 const { tokenCounts, userDetails } = await response.json();
@@ -53,15 +59,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 // Store user details in session storage
                 sessionStorage.setItem("user_details", JSON.stringify(userDetails));
 
-                console.log("User data loaded and stored in session storage:", {
-                  tokens,
-                  userDetails,
-                });
+                console.log("User data loaded and stored in session storage:", { tokens, userDetails });
               } else {
                 console.error("Failed to fetch user data.");
               }
             } catch (error) {
-              console.error("Error fetching user data:", error);
+              console.error("Error fetching or storing user data:", error);
             }
           }
         } else {
@@ -71,13 +74,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         console.error("Telegram WebApp is not available.");
       }
 
-      // Hide the splash screen after initialization
+      // Hide splash screen after initialization
       const splashShown = sessionStorage.getItem("splash_shown");
       if (!splashShown) {
         setTimeout(() => {
           setIsSplashVisible(false);
           sessionStorage.setItem("splash_shown", "true");
-        }, 3000); // Keep splash visible for 3 seconds
+        }, 3000);
       } else {
         setIsSplashVisible(false);
       }

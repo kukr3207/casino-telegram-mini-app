@@ -75,20 +75,37 @@ export default function EarnPage() {
     if (!chatId) return;
   
     try {
+      // Fetch the current casino chip count from the database
+      const balanceResponse = await fetch(`/api/get-token-counts?chatId=${chatId}`);
+      if (!balanceResponse.ok) {
+        console.error("Failed to fetch current token balance.");
+        return;
+      }
+  
+      const { tokenCounts } = await balanceResponse.json();
+      const currentCasinoChips = tokenCounts.casino_chips || 0;
+      const updatedCasinoChips = currentCasinoChips + tokens;
+  
+      // Update the casino chip count in the database
       const response = await fetch("/api/update-tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, tokens }),
+        body: JSON.stringify({ chatId, tokens: tokens }), // Send only the newly earned tokens to update the DB correctly
       });
   
       if (response.ok) {
-        setCasinoBalance((prev) => prev + tokens);
-        updateTokensLocally({ casino_chips: casinoBalance + tokens, hol_tokens: 0, withdraw_tokens: 0 });
+        setCasinoBalance(updatedCasinoChips);
+        updateTokensLocally({
+          casino_chips: updatedCasinoChips, // Store total casino chips in session storage
+          hol_tokens: tokenCounts.hol_tokens || 0,
+          withdraw_tokens: tokenCounts.withdraw_tokens || 0,
+        });
       }
     } catch (error) {
       console.error("Error updating token balance:", error);
     }
   };
+  
   
 
   return (
