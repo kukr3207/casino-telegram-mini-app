@@ -8,7 +8,6 @@ import Header from "../components/Header";
 import BottomMenu from "../components/BottomMenu";
 import SplashScreen from "../components/SplashScreen";
 import { useEffect, useState } from "react";
-import TokenProvider, { useTokenContext } from "../context/TokenProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [viewportHeight, setViewportHeight] = useState("100vh");
@@ -35,14 +34,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             sessionStorage.setItem("chat_id", chatId.toString());
 
             try {
-              // Step 1: Store user data in the database
+              // Store user data in the database
               await fetch(`/api/save-user-data`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ chatId, firstName, username }),
               });
 
-              // Step 2: Fetch user-related data
+              // Fetch user-related data
               const getUserResponse = await fetch(`/api/get-user-data?chatId=${chatId}`);
               if (getUserResponse.ok) {
                 const { tokenCounts, userDetails } = await getUserResponse.json();
@@ -66,23 +65,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               console.error("Error fetching or storing user data:", error);
             }
           }
-        } else {
-          console.warn("No valid chat ID found in Telegram initDataUnsafe.");
         }
-      } else {
-        console.error("Telegram WebApp is not available.");
       }
 
       // Hide splash screen after initialization
-      const splashShown = sessionStorage.getItem("splash_shown");
-      if (!splashShown) {
-        setTimeout(() => {
-          setIsSplashVisible(false);
-          sessionStorage.setItem("splash_shown", "true");
-        }, 3000);
-      } else {
-        setIsSplashVisible(false);
-      }
+      setTimeout(() => setIsSplashVisible(false), 3000);
     };
 
     initializeApp();
@@ -93,33 +80,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
       </head>
-      <body
-        style={{
-          height: viewportHeight,
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "var(--bg-color)",
-          color: "var(--text-color)",
-        }}
-      >
-        <TokenProvider>
-          {isSplashVisible ? (
-            <SplashScreen
-              onFinish={() => {
-                setIsSplashVisible(false);
-                useTokenContext().refreshTokens(); // 🔹 Refresh tokens immediately after splash screen
-              }}
-            />
-          ) : (
-            <>
-              <Header />
-              <main style={{ flex: 1, overflowY: "auto", paddingBottom: "60px" }}>
-                {children}
-              </main>
-              <BottomMenu />
-            </>
-          )}
-        </TokenProvider>
+      <body style={{ height: viewportHeight, display: "flex", flexDirection: "column" }}>
+        {isSplashVisible ? (
+          <SplashScreen onFinish={() => setIsSplashVisible(false)} />
+        ) : (
+          <>
+            <Header />
+            <main style={{ flex: 1, overflowY: "auto", paddingBottom: "60px" }}>{children}</main>
+            <BottomMenu />
+          </>
+        )}
       </body>
     </html>
   );
