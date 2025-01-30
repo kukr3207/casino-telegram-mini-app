@@ -13,7 +13,7 @@ export async function POST(req) {
       try {
         // ✅ Approving the payment
         const response = await fetch(
-          `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`,
+          `https://api.telegram.org/bot7384344980:AAF6eFOEMZrgM-LvxP_hbSUrtjco5qasTaQ/answerPreCheckoutQuery`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
