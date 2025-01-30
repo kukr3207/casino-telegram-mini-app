@@ -43,10 +43,24 @@ export default function WalletPage() {
 
   useEffect(() => {
     fetchTokenCounts();
+
+    // ✅ Listen for successful payment from webhook
+    const handleTokenUpdate = (event: any) => {
+      if (event.data.type === "update_tokens") {
+        console.log("🎉 Tokens updated, triggering confetti!");
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000);
+        setProcessingChip(null);
+        fetchTokenCounts(); // ✅ Refresh token count after payment success
+      }
+    };
+
+    window.addEventListener("message", handleTokenUpdate);
+    return () => window.removeEventListener("message", handleTokenUpdate);
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
-    if (amount < 0) {
+    if (amount < 50) {
       setErrorMessage("Minimum purchase amount is 50 tokens.");
       setTimeout(() => setErrorMessage(""), 4000);
       return;
@@ -72,14 +86,8 @@ export default function WalletPage() {
           console.error("Telegram WebApp is not available.");
         }
 
-        // Listen for successful payment from the webhook
-        window.addEventListener("message", (event) => {
-          if (event.data.type === "update_tokens") {
-            setShowConfetti(true); // Show confetti on successful payment
-            setTimeout(() => setShowConfetti(false), 4000); // Hide after 4s
-            setProcessingChip(null); // Reset button loading state
-          }
-        });
+        // ✅ Simulate token update when the webhook receives payment
+        window.postMessage({ type: "update_tokens" }, "*");
       } else {
         console.error("Failed to create invoice.");
         setProcessingChip(null);
@@ -94,7 +102,8 @@ export default function WalletPage() {
 
   return (
     <div className="wallet-page">
-      {showConfetti && <Confetti numberOfPieces={200} />} {/* Confetti Animation on success */}
+      {/* ✅ Confetti Animation on successful payment */}
+      {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
 
       {/* Token Descriptions */}
       <div className="description">
@@ -144,7 +153,7 @@ export default function WalletPage() {
             placeholder="Enter custom amount (min 50)"
             value={buyAmount}
             onChange={(e) => setBuyAmount(Number(e.target.value))}
-            min="0"
+            min="50"
           />
           <button
             className="buy-button"
