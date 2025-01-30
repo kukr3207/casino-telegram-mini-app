@@ -1,0 +1,131 @@
+/* Earn Page */
+.earn-page {
+    padding: 20px;
+    color: #f0f0f0;
+    background-color: #121212;
+    font-family: 'Arial', sans-serif;
+    min-height: 100vh;
+    text-align: center;
+  }
+  
+  .earn-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 20px;
+  }
+  
+  /* Earn Sections */
+  .earn-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    text-align: center;
+    transition: opacity 0.3s ease;
+  }
+
+  .earn-section.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+  }
+  
+  .earn-section h4 {
+    font-size: 18px;
+    color: #ffd700;
+    margin-bottom: 10px;
+  }
+
+  
+  /* Earn Button */
+  .earn-btn {
+    background: linear-gradient(145deg, #ffd700, #e5b800);
+    color: #000;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .earn-btn:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Spin Wheel */
+  .wheel {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(145deg, #ffd700, #e5b800);
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 10px auto;
+    cursor: pointer;
+  }
+  
+  .spinning {
+    animation: spin 1.5s infinite linear;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Tasks */
+  .tasks ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .tasks ul li {
+    font-size: 16px;
+    color: #bbb;
+    margin: 5px 0;
+  }
+  
+  /* Mystery Box */
+  .mystery-box {
+    text-align: center;
+  }
+  
+  .result {
+    font-size: 18px;
+    color: #ffd700;
+    margin-top: 10px;
+  }
+  
+  /* Reward Tag */
+  .reward-tag {
+    background-color: #ffd700;
+    color: black;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-left: 5px;
+  }
+  
+  .earn-btn {
+    background: linear-gradient(145deg, #ffd700, #e5b800);
+    color: #000;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .earn-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .strike {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }

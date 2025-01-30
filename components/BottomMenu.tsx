@@ -21,7 +21,7 @@ const BottomMenu: React.FC = () => {
           </Link>
         </li>
         <li>
-          <Link href="/tasks" className="flex flex-col items-center">
+          <Link href="/earn" className="flex flex-col items-center">
             <span>💰</span>
             <span className="text-sm">Earn</span>
           </Link>
