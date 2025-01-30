@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import "../../styles/wallet.css";
+import Confetti from "react-confetti";
 
 export default function WalletPage() {
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [buyAmount, setBuyAmount] = useState(50);
   const [isBuying, setIsBuying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showConfetti, setShowConfetti] = useState(false); // Confetti animation
 
   // Pricing Tiers
   const pricingTiers = [
@@ -30,14 +32,6 @@ export default function WalletPage() {
       if (response.ok) {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
-
-        // Update session storage immediately
-        const updatedTokens = [
-          { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
-          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
-          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
-        ];
-        sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
       } else {
         console.error("Failed to fetch token counts.");
       }
@@ -51,7 +45,7 @@ export default function WalletPage() {
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
-    if (amount < 0) {
+    if (amount < 50) {
       setErrorMessage("Minimum purchase amount is 50 tokens.");
       setTimeout(() => setErrorMessage(""), 4000);
       return;
@@ -74,6 +68,14 @@ export default function WalletPage() {
         } else {
           console.error("Telegram WebApp is not available.");
         }
+
+        // Listen for successful payment from the webhook
+        window.addEventListener("message", (event) => {
+          if (event.data.type === "update_tokens") {
+            setShowConfetti(true); // Show confetti on successful payment
+            setTimeout(() => setShowConfetti(false), 4000); // Hide after 4s
+          }
+        });
       } else {
         console.error("Failed to create invoice.");
       }
@@ -86,30 +88,7 @@ export default function WalletPage() {
 
   return (
     <div className="wallet-page">
-      {/* Token Descriptions */}
-      <div className="description">
-        <div className="description-item">
-          <img src="/images/token1.png" alt="Casino Chips" />
-          <div className="description-content">
-            <h2>Casino Chips</h2>
-            <p>Your primary gaming currency. Use these to play games.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token2.png" alt="Withdrawable Tokens" />
-          <div className="description-content">
-            <h2>Withdrawable Tokens</h2>
-            <p>Earned by winning games. Redeem them for rewards.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token3.png" alt="HOL Tokens" />
-          <div className="description-content">
-            <h2>HOL Tokens</h2>
-            <p>Your leaderboard rank and rewards in the House of Luck.</p>
-          </div>
-        </div>
-      </div>
+      {showConfetti && <Confetti numberOfPieces={200} />} {/* Confetti Animation on success */}
 
       {/* Buy Casino Chips Section */}
       <div className="buy-chips">
@@ -124,36 +103,10 @@ export default function WalletPage() {
               onClick={() => handleBuy(price, "Tier", chips + bonus)}
               disabled={isBuying}
             >
-              {chips} Chips {bonus > 0 && `+ ${bonus} Bonus`} 🌟 {price} Stars
+              {isBuying ? "Processing..." : `${chips} Chips ${bonus > 0 ? `+ ${bonus} Bonus` : ""} 🌟 ${price} Stars`}
             </button>
           ))}
         </div>
-        <div className="custom-buy">
-          <input
-            type="number"
-            placeholder="Enter custom amount (min 50)"
-            value={buyAmount}
-            onChange={(e) => setBuyAmount(Number(e.target.value))}
-            min="0"
-          />
-          <button
-            className="buy-button"
-            onClick={() => handleBuy(buyAmount)}
-            disabled={isBuying}
-          >
-            Buy
-          </button>
-        </div>
-      </div>
-
-      {/* Withdrawal Section */}
-      <div className="withdrawal">
-        <h3>Withdraw Tokens</h3>
-        <p>
-          Withdrawable tokens can be exchanged for Stars. Each token earns <strong>1.4 Stars</strong>. A 5%
-          withdrawal fee applies.
-        </p>
-        <button className="withdraw-button">Request Withdrawal</button>
       </div>
     </div>
   );
