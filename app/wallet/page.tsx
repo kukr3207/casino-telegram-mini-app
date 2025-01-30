@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTokenContext } from "../../context/TokenProvider";
 import "../../styles/wallet.css";
 
 export default function WalletPage() {
-  const { updateTokensLocally } = useTokenContext();
   const [casinoChips, setCasinoChips] = useState("Loading...");
-  const [buyAmount, setBuyAmount] = useState(50); // Minimum value set to 50
+  const [buyAmount, setBuyAmount] = useState(50);
   const [isBuying, setIsBuying] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Warning message
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Pricing Tiers
   const pricingTiers = [
@@ -32,11 +30,14 @@ export default function WalletPage() {
       if (response.ok) {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
-        updateTokensLocally({
-          casino_chips: tokenCounts.casino_chips || 0,
-          hol_tokens: tokenCounts.hol_tokens || 0,
-          withdraw_tokens: tokenCounts.withdraw_tokens || 0,
-        });
+
+        // Update session storage immediately
+        const updatedTokens = [
+          { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
+          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+        ];
+        sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
       } else {
         console.error("Failed to fetch token counts.");
       }
