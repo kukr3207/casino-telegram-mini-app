@@ -42,24 +42,26 @@ export default function WalletPage() {
   };
 
   useEffect(() => {
-    // ✅ Define the correct type for the event parameter
     const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === "update_tokens") {
-        console.log("✅ Payment success detected. Updating UI...");
+      console.log("📩 Received message from webhook:", event.data);
   
-        // ✅ Update session storage with the new token data
+      if (event.data && event.data.type === "update_tokens") {
+        console.log("✅ Payment success detected. Updating UI & triggering confetti...");
+  
+        // ✅ Store updated tokens in session storage
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
   
         // ✅ Show confetti animation
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
-        setProcessingChip(null); // ✅ Reset button loading state
+        setProcessingChip(null); // Reset button loading state
       }
     };
   
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+  
   
   
 
