@@ -7,14 +7,31 @@ export async function POST(req) {
 
     // ✅ Handling Pre-Checkout Query (Telegram Payment Approval)
     if (update.pre_checkout_query) {
+      const queryId = update.pre_checkout_query.id;
       console.log("🛒 Pre-checkout query received:", update.pre_checkout_query);
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          result: true,
-        }),
-        { status: 200 }
-      );
+
+      try {
+        // ✅ Approving the payment
+        const response = await fetch(
+          `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pre_checkout_query_id: queryId,
+              ok: true,
+            }),
+          }
+        );
+
+        const data = await response.json();
+        console.log("✅ Pre-checkout query approved:", data);
+      } catch (error) {
+        console.error("❌ Error approving pre-checkout query:", error);
+        return new Response("Error approving pre-checkout query", { status: 500 });
+      }
+
+      return new Response("Pre-checkout query approved", { status: 200 });
     }
 
     // ✅ Handling Successful Payment
