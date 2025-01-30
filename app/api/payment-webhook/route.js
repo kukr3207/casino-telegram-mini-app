@@ -100,15 +100,19 @@ export async function POST(req) {
       // ✅ Close Database Connection
       await client.close();
 
-      // ✅ Send Response with Updated Tokens
+      // ✅ Store Updated Tokens in Session Storage (Handled in Frontend)
+      const updatedTokens = {
+        casino_chips: updatedChips,
+        withdraw_tokens: user.withdraw_tokens || 0,
+        hol_tokens: user.hol_tokens || 0,
+      };
+
+      // ✅ Notify the frontend for UI update & trigger confetti
+      console.log("🎉 Sending postMessage to trigger confetti effect...");
       return new Response(
         JSON.stringify({
           type: "update_tokens",
-          tokens: [
-            { id: 1, image: "/images/token1.png", count: updatedChips },
-            { id: 2, image: "/images/token2.png", count: user.withdraw_tokens || 0 },
-            { id: 3, image: "/images/token3.png", count: user.hol_tokens || 0 },
-          ],
+          tokens: updatedTokens,
         }),
         { status: 200 }
       );

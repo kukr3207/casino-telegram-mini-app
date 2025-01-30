@@ -42,22 +42,26 @@ export default function WalletPage() {
   };
 
   useEffect(() => {
-    fetchTokenCounts();
-
-    // ✅ Listen for successful payment from webhook
-    const handleTokenUpdate = (event: any) => {
-      if (event.data.type === "update_tokens") {
-        console.log("🎉 Tokens updated, triggering confetti!");
+    // ✅ Define the correct type for the event parameter
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === "update_tokens") {
+        console.log("✅ Payment success detected. Updating UI...");
+  
+        // ✅ Update session storage with the new token data
+        sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
+  
+        // ✅ Show confetti animation
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
-        setProcessingChip(null);
-        fetchTokenCounts(); // ✅ Refresh token count after payment success
+        setProcessingChip(null); // ✅ Reset button loading state
       }
     };
-
-    window.addEventListener("message", handleTokenUpdate);
-    return () => window.removeEventListener("message", handleTokenUpdate);
+  
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
+  
+  
 
   const handleBuy = async (amount: number, packageType: string = "Normal", chipsBought: number = amount) => {
     if (amount < 0) {
@@ -100,7 +104,48 @@ export default function WalletPage() {
   return (
     <div className="wallet-page">
       {/* ✅ Confetti Animation AFTER successful payment confirmation */}
-      {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
+      {showConfetti && (
+  <>
+    {/* Left Side Confetti */}
+    <Confetti
+      numberOfPieces={150} // 150 pieces from the left
+      recycle={false} // Stops after one burst
+      gravity={0.3} // Slow fall
+      initialVelocityX={{ min: 5, max: 15 }} // Moves toward center
+      initialVelocityY={{ min: -10, max: -5 }} // Moves slightly upward
+      colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]} // Bright colors
+      wind={0} // No extra movement
+      width={window.innerWidth} // Full width
+      height={window.innerHeight} // Full height
+      confettiSource={{ x: 0, y: window.innerHeight / 2, w: 10, h: 10 }} // From left side
+      drawShape={(ctx) => {
+        ctx.beginPath();
+        ctx.arc(0, 0, 2, 0, 2 * Math.PI); // Small paper size
+        ctx.fill();
+      }}
+    />
+
+    {/* Right Side Confetti */}
+    <Confetti
+      numberOfPieces={150} // 150 pieces from the right
+      recycle={false} // Stops after one burst
+      gravity={0.3} // Slow fall
+      initialVelocityX={{ min: -15, max: -5 }} // Moves toward center
+      initialVelocityY={{ min: -10, max: -5 }} // Moves slightly upward
+      colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]} // Bright colors
+      wind={0} // No extra movement
+      width={window.innerWidth} // Full width
+      height={window.innerHeight} // Full height
+      confettiSource={{ x: window.innerWidth, y: window.innerHeight / 2, w: 10, h: 10 }} // From right side
+      drawShape={(ctx) => {
+        ctx.beginPath();
+        ctx.arc(0, 0, 2, 0, 2 * Math.PI); // Small paper size
+        ctx.fill();
+      }}
+    />
+  </>
+)}
+
 
       {/* Token Descriptions */}
       <div className="description">
