@@ -15,6 +15,7 @@ export default function DiceRollPage() {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
+  const [isDiceRolled, setIsDiceRolled] = useState(false); // New State for Fix
   const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
@@ -69,6 +70,8 @@ export default function DiceRollPage() {
   const confirmBet = async () => {
     setShowConfirmation(false);
     setShowDicePopup(true); // Show Dice Popup
+    setIsRolling(true);
+    setIsDiceRolled(false); // Reset when starting the roll
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -98,6 +101,7 @@ export default function DiceRollPage() {
         setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
+        setIsDiceRolled(true); // Mark as rolled
         setHasResult(true);
       }, 3000);
     } catch (error) {
@@ -291,9 +295,9 @@ export default function DiceRollPage() {
 {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
+            <h3>{isRolling ? "Rolling Dice..." : isDiceRolled ? "Dice Result 🎲" : ""}</h3>
             <div className="dice-container">
-              {diceResult.map((value, index) => (
+              {(isRolling ? rollingDice : diceResult).map((value, index) => (
                 <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
                   {[...Array(9)].map((_, i) => (
                     <div key={i} className={`dot ${i + 1 === value ? "visible" : ""}`} />
@@ -301,7 +305,7 @@ export default function DiceRollPage() {
                 </div>
               ))}
             </div>
-\          </div>
+          </div>
         </div>
       )}
 
