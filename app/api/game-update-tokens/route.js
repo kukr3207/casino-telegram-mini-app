@@ -36,7 +36,7 @@ export async function POST(req) {
     }
 
     const updatedCasinoChips = tokens.casino_chips ?? user.casino_chips;
-    const updatedWithdrawalTokens = tokens.withdrawal_tokens ?? user.withdrawal_tokens;
+    const updatedWithdrawalTokens = tokens.withdraw_tokens ?? user.withdraw_tokens;
     const updatedHolTokens = tokens.hol_tokens ?? user.hol_tokens;
 
     await users.updateOne(
@@ -44,7 +44,7 @@ export async function POST(req) {
       {
         $set: {
           casino_chips: updatedCasinoChips,
-          withdrawal_tokens: updatedWithdrawalTokens,
+          withdraw_tokens: updatedWithdrawalTokens,
           hol_tokens: updatedHolTokens,
           updatedAt: new Date(),
         },
@@ -59,7 +59,7 @@ export async function POST(req) {
         success: true,
         newBalances: {
           casino_chips: updatedCasinoChips,
-          withdrawal_tokens: updatedWithdrawalTokens,
+          withdraw_tokens: updatedWithdrawalTokens,
           hol_tokens: updatedHolTokens,
         },
       }),

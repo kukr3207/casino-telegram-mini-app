@@ -18,8 +18,9 @@ export default function DiceRollPage() {
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
   const [casinoChips, setCasinoChips] = useState<number>(0);
+  const [showPopup, setShowPopup] = useState(false);
+  const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
   const [showCollectButton, setShowCollectButton] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -28,11 +29,11 @@ export default function DiceRollPage() {
     evenodd: ["Even", "Odd"],
   };
 
-  const payoutRatios: Record<string, string> = {
-    ranges: "1.95x",
-    exact: "5x",
-    pairs: "25x",
-    evenodd: "1.95x",
+  const payoutRatios: Record<string, number> = {
+    ranges: 1.95,
+    exact: 5,
+    pairs: 25,
+    evenodd: 1.95,
   };
 
   useEffect(() => {
@@ -42,6 +43,8 @@ export default function DiceRollPage() {
       setCasinoChips(parsedTokens[0]?.count || 0);
     }
   }, []);
+
+  const randomFace = () => Math.floor(Math.random() * 6) + 1;
 
   const handleBetSelect = (category: string, option: string): void => {
     const existingBet = selectedBets.find((bet: Bet) => bet.category === category && bet.option === option);
@@ -58,13 +61,8 @@ export default function DiceRollPage() {
     setSelectedBets(updatedBets);
   };
 
-  const handleRollDice = () => {
+  const handleRollDice = async () => {
     if (selectedBets.length === 0 || isRolling) return;
-    setShowConfirmation(true); // Show confirmation modal
-  };
-
-  const confirmBet = async () => {
-    setShowConfirmation(false);
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -72,18 +70,26 @@ export default function DiceRollPage() {
       return;
     }
 
-    // Deduct chips
+    const confirmBet = window.confirm(`You are betting a total of ${totalBetAmount} chips. Do you want to continue?`);
+    if (!confirmBet) return;
+
     const updatedChips = casinoChips - totalBetAmount;
     setCasinoChips(updatedChips);
-    await updateTokens(updatedChips, 0, 0);
+    await updateTokens(updatedChips, 0, 0); // Deduct chips
 
     setIsRolling(true);
+    setShowPopup(true);
+
+    const rollingInterval = setInterval(() => {
+      setRollingDice([randomFace(), randomFace()]);
+    }, 100);
 
     try {
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
       setTimeout(() => {
+        clearInterval(rollingInterval);
         setDiceResult([dice1, dice2]);
         setRollHash(hash);
         setVerificationSeed(seed);
@@ -93,6 +99,7 @@ export default function DiceRollPage() {
       }, 3000);
     } catch (error) {
       console.error("Error rolling dice:", error);
+      clearInterval(rollingInterval);
       setIsRolling(false);
     }
   };
@@ -114,7 +121,7 @@ export default function DiceRollPage() {
         chatId,
         tokens: {
           casino_chips: tokens[0].count,
-          withdrawal_tokens: tokens[1].count,
+          withdraw_tokens: tokens[1].count,
           hol_tokens: tokens[2].count,
         },
       }),
@@ -124,9 +131,15 @@ export default function DiceRollPage() {
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
-      .reduce((total, bet) => total + bet.amount, 0);
+      .reduce((total, bet) => {
+        const payout = payoutRatios[bet.category] || 1;
+        return total + bet.amount * payout;
+      }, 0);
 
-    await updateTokens(casinoChips, winnings, winnings);
+    const holTokens = winnings;
+    const withdrawalTokens = winnings;
+
+    await updateTokens(casinoChips, withdrawalTokens, holTokens);
 
     resetGame();
   };
@@ -136,16 +149,17 @@ export default function DiceRollPage() {
     setDiceResult([1, 1]);
     setRollHash(null);
     setVerificationSeed(null);
+    setShowPopup(false);
     setShowCollectButton(false);
   };
 
   const highlightBets = (dice1: number, dice2: number): void => {
     const total = dice1 + dice2;
     setSelectedBets((prevBets) =>
-      prevBets.map((bet: Bet) => ({
-        ...bet,
-        isWin: checkBetWin(bet, dice1, dice2, total),
-      }))
+      prevBets.map((bet: Bet) => {
+        const isWin = checkBetWin(bet, dice1, dice2, total);
+        return { ...bet, isWin };
+      })
     );
   };
 
@@ -189,7 +203,7 @@ export default function DiceRollPage() {
                 </button>
               ))}
             </div>
-            <p className="payout-ratio">Payout: {payoutRatios[category]}</p>
+            <p className="payout-ratio">Payout: {payoutRatios[category]}x</p>
           </div>
         ))}
       </div>
@@ -221,17 +235,6 @@ export default function DiceRollPage() {
           {isRolling ? "Rolling Dice..." : "Roll Dice"}
         </button>
       </div>
-
-      {showConfirmation && (
-        <div className="popup-overlay">
-          <div className="popup-content">
-            <h3>Confirm Your Bet</h3>
-            <p>Total Bet: {selectedBets.reduce((sum, bet) => sum + bet.amount, 0)} Chips</p>
-            <button onClick={confirmBet} className="confirm-button">Yes, Confirm</button>
-            <button onClick={() => setShowConfirmation(false)} className="cancel-button">No, Go Back</button>
-          </div>
-        </div>
-      )}
 
       {!isRolling && rollHash && (
         <div className="dice-result">
