@@ -18,15 +18,8 @@ export default function DiceRollPage() {
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
   const [casinoChips, setCasinoChips] = useState<number>(0);
-  const [showPopup, setShowPopup] = useState(false); // Popup control
-
-  useEffect(() => {
-    const tokens = sessionStorage.getItem("tokens");
-    if (tokens) {
-      const parsedTokens = JSON.parse(tokens);
-      setCasinoChips(parsedTokens[0]?.count || 0);
-    }
-  }, []);
+  const [showPopup, setShowPopup] = useState(false);
+  const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -41,6 +34,16 @@ export default function DiceRollPage() {
     pairs: "25x",
     evenodd: "1.95x",
   };
+
+  useEffect(() => {
+    const tokens = sessionStorage.getItem("tokens");
+    if (tokens) {
+      const parsedTokens = JSON.parse(tokens);
+      setCasinoChips(parsedTokens[0]?.count || 0);
+    }
+  }, []);
+
+  const randomFace = () => Math.floor(Math.random() * 6) + 1;
 
   const handleBetSelect = (category: string, option: string): void => {
     const existingBet = selectedBets.find((bet: Bet) => bet.category === category && bet.option === option);
@@ -67,21 +70,27 @@ export default function DiceRollPage() {
     }
 
     setIsRolling(true);
-    setShowPopup(true); // Show dice roll popup
+    setShowPopup(true);
+
+    const rollingInterval = setInterval(() => {
+      setRollingDice([randomFace(), randomFace()]);
+    }, 100);
 
     try {
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
-      setRollHash(hash);
-      setVerificationSeed(seed);
       setTimeout(() => {
+        clearInterval(rollingInterval);
         setDiceResult([dice1, dice2]);
+        setRollHash(hash);
+        setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
-      }, 3000); // Stop animation after 3 seconds
+      }, 3000);
     } catch (error) {
       console.error("Error rolling dice:", error);
+      clearInterval(rollingInterval);
       setIsRolling(false);
     }
   };
@@ -180,9 +189,9 @@ export default function DiceRollPage() {
       {showPopup && (
         <div className="popup-overlay" onClick={() => setShowPopup(false)}>
           <div className="popup-content">
-            <div className={`dice-container ${isRolling ? "rolling" : ""}`}>
-              {[0, 1].map((index) => (
-                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={diceResult[index]}>
+            <div className="dice-container">
+              {(isRolling ? rollingDice : diceResult).map((value, index) => (
+                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
                   {[...Array(9)].map((_, dotIndex) => (
                     <div key={dotIndex} className="dot"></div>
                   ))}

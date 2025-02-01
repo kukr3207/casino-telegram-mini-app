@@ -69,7 +69,6 @@
 }
 
 /* Selected Bets */
-/* Selected Bets Section */
 .selected-bets {
   margin-top: 20px;
   padding: 15px;
@@ -84,7 +83,6 @@
   margin-bottom: 15px;
 }
 
-/* No Bets Message */
 .no-bets {
   text-align: center;
   font-size: 16px;
@@ -92,14 +90,12 @@
   padding: 10px;
 }
 
-/* Bet List Grid */
 .bet-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 15px;
 }
 
-/* Individual Bet Cards */
 .bet-card {
   background: linear-gradient(145deg, #252525, #2e2e2e);
   border-radius: 12px;
@@ -118,7 +114,7 @@
   color: #ffd700;
 }
 
-/* Bet Amount Input */
+/* Bet Input */
 .bet-input {
   width: 80px;
   padding: 8px;
@@ -136,7 +132,6 @@
   background-color: #292929;
 }
 
-/* Responsive Design */
 @media (max-width: 600px) {
   .bet-list {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -146,7 +141,6 @@
     width: 70px;
   }
 }
-
 
 /* Place Bet */
 .place-bet {
@@ -168,12 +162,14 @@
   transform: scale(1.05);
 }
 
+/* Dice Result */
 .dice-result {
   margin-top: 20px;
   text-align: center;
   background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
   padding: 15px;
   border-radius: 15px;
+  overflow-wrap: break-word;
 }
 
 /* Popup Overlay */
@@ -192,7 +188,7 @@
 }
 
 .popup-content {
-  background: #1e1e1e;
+  background: rgba(30, 30, 30, 0.9);
   padding: 30px;
   border-radius: 15px;
   text-align: center;
@@ -200,139 +196,6 @@
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
   cursor: default;
 }
-
-/* Dice Animation */
-/* Popup Overlay */
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  cursor: pointer;
-}
-
-.popup-content {
-  background: rgba(30, 30, 30, 0.9); /* Transparent background */
-  padding: 30px;
-  border-radius: 15px;
-  text-align: center;
-  color: #ffd700;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-  cursor: default;
-}
-
-/* Dice Animation */
-.popup-dice-animation {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.roll-animation {
-  width: 60px;
-  height: 60px;
-  background-color: #ffd700;
-  border-radius: 10px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Highlight Bets */
-.win {
-  background-color: #4caf50 !important;
-  opacity: 1;
-}
-
-.lose {
-  background-color: #f44336 !important;
-  opacity: 0.6; /* Dimming effect */
-}
-
-/* Result Section */
-.dice-result {
-  margin-top: 20px;
-  text-align: center;
-  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
-  padding: 15px;
-  border-radius: 15px;
-  overflow-wrap: break-word; /* Handle long text */
-}
-
-
-.verify-instructions {
-  font-size: 12px;
-  color: #bbb;
-  margin-top: 10px;
-  text-align: center;
-}
-
-
-
-/* Highlight Winning Bets */
-.win {
-  background: linear-gradient(145deg, #2e7d32, #4caf50); /* Green gradient */
-  border: 2px solid #76ff03;
-  box-shadow: 0 0 15px rgba(118, 255, 3, 0.8); /* Green glow */
-  transition: all 0.3s ease-in-out;
-  color: #fff;
-  transform: scale(1.05);
-}
-
-/* Highlight Losing Bets */
-.lose {
-  background: linear-gradient(145deg, #b71c1c, #f44336); /* Red gradient */
-  border: 2px solid #ff1744;
-  box-shadow: 0 0 15px rgba(255, 23, 68, 0.8); /* Red glow */
-  transition: all 0.3s ease-in-out;
-  color: #fff;
-  transform: scale(0.95); /* Slight shrink effect */
-}
-
-/* Glowing Animation for Winning Bets */
-@keyframes glowWin {
-  0% {
-    box-shadow: 0 0 5px rgba(118, 255, 3, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(118, 255, 3, 1);
-  }
-  100% {
-    box-shadow: 0 0 5px rgba(118, 255, 3, 0.6);
-  }
-}
-
-.win {
-  animation: glowWin 1.5s infinite alternate;
-}
-
-/* Glowing Animation for Losing Bets */
-@keyframes glowLose {
-  0% {
-    box-shadow: 0 0 5px rgba(255, 23, 68, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(255, 23, 68, 1);
-  }
-  100% {
-    box-shadow: 0 0 5px rgba(255, 23, 68, 0.6);
-  }
-}
-
-.lose {
-  animation: glowLose 1.5s infinite alternate;
-}
-
 
 /* Dice Container */
 .dice-container {
@@ -346,44 +209,6 @@
 .dice {
   width: 80px;
   height: 80px;
-  background: #fff;
-  border-radius: 12px;
-  border: 2px solid #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-  position: relative;
-  transition: transform 1s ease-in-out;
-}
-
-/* Dice Roll Animation */
-.rolling {
-  animation: rollAnimation 1s infinite;
-}
-
-@keyframes rollAnimation {
-  0% {
-    transform: rotateX(0deg) rotateY(0deg);
-  }
-  50% {
-    transform: rotateX(180deg) rotateY(180deg);
-  }
-  100% {
-    transform: rotateX(360deg) rotateY(360deg);
-  }
-}
-
-/* Dice Face */
-.dice-container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.dice {
-  width: 80px;
-  height: 80px;
   background: white;
   border: 2px solid black;
   border-radius: 10px;
@@ -392,9 +217,10 @@
   grid-template-rows: repeat(3, 1fr);
   padding: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  transition: transform 1s;
+  transition: transform 0.5s ease-in-out;
 }
 
+/* Dots on Dice */
 .dot {
   width: 15px;
   height: 15px;
@@ -402,10 +228,10 @@
   border-radius: 50%;
   justify-self: center;
   align-self: center;
-  opacity: 0; /* Hidden by default */
+  opacity: 0;
 }
 
-/* Dice Faces */
+/* Dice Face Values */
 .dice[data-value="1"] .dot:nth-child(5),
 .dice[data-value="2"] .dot:nth-child(1),
 .dice[data-value="2"] .dot:nth-child(9),
@@ -427,37 +253,49 @@
 .dice[data-value="6"] .dot:nth-child(6),
 .dice[data-value="6"] .dot:nth-child(7),
 .dice[data-value="6"] .dot:nth-child(9) {
-  opacity: 1; /* Show dot for corresponding dice face */
+  opacity: 1;
 }
 
-/* Rolling Animation */
-.rolling {
-  animation: roll 1s infinite;
-}
-
-@keyframes roll {
+/* Dice Rolling Animation */
+@keyframes rollAnimation {
   0% { transform: rotate(0deg); }
   50% { transform: rotate(180deg); }
   100% { transform: rotate(360deg); }
 }
 
-
-
-/* Popup Dice Animation */
-.popup-dice-container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
+.rolling {
+  animation: rollAnimation 0.5s infinite ease-in-out;
 }
 
-
-/* Win/Lose Highlight */
+/* Winning & Losing Bets Highlight */
 .win {
-  border: 2px solid green;
-  box-shadow: 0 0 15px green;
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  border: 2px solid #76ff03;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+  color: white;
+  transform: scale(1.05);
+  transition: all 0.3s ease-in-out;
+  animation: glowWin 1.5s infinite alternate;
+}
+
+@keyframes glowWin {
+  0% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.6); }
+  50% { box-shadow: 0 0 20px rgba(76, 175, 80, 1); }
+  100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.6); }
 }
 
 .lose {
-  border: 2px solid red;
-  box-shadow: 0 0 15px red;
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  border: 2px solid #ff1744;
+  box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
+  color: white;
+  transform: scale(0.95);
+  transition: all 0.3s ease-in-out;
+  animation: glowLose 1.5s infinite alternate;
+}
+
+@keyframes glowLose {
+  0% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.6); }
+  50% { box-shadow: 0 0 20px rgba(244, 67, 54, 1); }
+  100% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.6); }
 }
