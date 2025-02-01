@@ -75,9 +75,8 @@ export default function DiceRollPage() {
 
       setRollHash(hash);
       setVerificationSeed(seed);
-      setDiceResult([dice1, dice2]);
-
       setTimeout(() => {
+        setDiceResult([dice1, dice2]);
         highlightBets(dice1, dice2);
         setIsRolling(false);
       }, 3000); // Stop animation after 3 seconds
@@ -181,14 +180,15 @@ export default function DiceRollPage() {
       {showPopup && (
         <div className="popup-overlay" onClick={() => setShowPopup(false)}>
           <div className="popup-content">
-            {!isRolling ? (
-              <h2>🎲 Result: {diceResult[0]} + {diceResult[1]}</h2>
-            ) : (
-              <div className="popup-dice-container">
-                <div className="dice rolling" data-value="1"></div>
-                <div className="dice rolling" data-value="1"></div>
-              </div>
-            )}
+            <div className={`dice-container ${isRolling ? "rolling" : ""}`}>
+              {[0, 1].map((index) => (
+                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={diceResult[index]}>
+                  {[...Array(9)].map((_, dotIndex) => (
+                    <div key={dotIndex} className="dot"></div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

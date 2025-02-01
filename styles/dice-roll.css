@@ -375,28 +375,37 @@
 }
 
 /* Dice Face */
-.dot-container {
+.dice-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.dice {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border: 2px solid black;
+  border-radius: 10px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 5px;
-  width: 100%;
-  height: 100%;
   padding: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 1s;
 }
 
-/* Dice Dot */
 .dot {
   width: 15px;
   height: 15px;
-  background: #000;
+  background: black;
   border-radius: 50%;
   justify-self: center;
   align-self: center;
   opacity: 0; /* Hidden by default */
 }
 
-/* Show Dice Face Based on Data Attribute */
+/* Dice Faces */
 .dice[data-value="1"] .dot:nth-child(5),
 .dice[data-value="2"] .dot:nth-child(1),
 .dice[data-value="2"] .dot:nth-child(9),
@@ -418,29 +427,10 @@
 .dice[data-value="6"] .dot:nth-child(6),
 .dice[data-value="6"] .dot:nth-child(7),
 .dice[data-value="6"] .dot:nth-child(9) {
-  opacity: 1; /* Show the dot */
+  opacity: 1; /* Show dot for corresponding dice face */
 }
 
-/* Popup Dice Animation */
-.popup-dice-container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.dice {
-  width: 60px;
-  height: 60px;
-  background: white;
-  border: 2px solid black;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  transition: transform 1s;
-}
-
+/* Rolling Animation */
 .rolling {
   animation: roll 1s infinite;
 }
@@ -450,6 +440,16 @@
   50% { transform: rotate(180deg); }
   100% { transform: rotate(360deg); }
 }
+
+
+
+/* Popup Dice Animation */
+.popup-dice-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
 
 /* Win/Lose Highlight */
 .win {
