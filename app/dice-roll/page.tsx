@@ -68,7 +68,7 @@ export default function DiceRollPage() {
 
   const confirmBet = async () => {
     setShowConfirmation(false);
-    setShowDicePopup(true); // Show Dice Animation Popup
+    setShowDicePopup(true); // Show Dice Popup
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -99,13 +99,11 @@ export default function DiceRollPage() {
         highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-        setShowDicePopup(false); // Hide Dice Popup after roll
       }, 3000);
     } catch (error) {
       console.error("Error rolling dice:", error);
       clearInterval(rollingInterval);
       setIsRolling(false);
-      setShowDicePopup(false);
     }
   };
 
@@ -291,19 +289,22 @@ export default function DiceRollPage() {
       )}
 
 {showDicePopup && (
-  <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
-    <div className="dice-animation-popup" onClick={(e) => e.stopPropagation()}>
-      <h3>Rolling Dice 🎲</h3>
-      <div className="dice-container">
-        {[rollingDice[0], rollingDice[1]].map((value, index) => (
-          <div key={index} className={`dice ${isRolling ? 'rolling' : ''}`} data-value={value}>
-            {[...Array(9)].map((_, i) => <div key={i} className="dot" />)}
+        <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
+          <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
+            <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
+            <div className="dice-container">
+              {diceResult.map((value, index) => (
+                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
+                  {[...Array(9)].map((_, i) => (
+                    <div key={i} className={`dot ${i + 1 === value ? "visible" : ""}`} />
+                  ))}
+                </div>
+              ))}
+            </div>
+            {!isRolling && <p>Click anywhere to close</p>}
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
+        </div>
+      )}
 
 
       {!isRolling && rollHash && (
