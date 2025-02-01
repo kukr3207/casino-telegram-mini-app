@@ -108,38 +108,62 @@ export default function DiceRollPage() {
   const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
     const chatId = sessionStorage.getItem("chat_id");
     const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
-
+  
     tokens[0].count = casinoChips;
     tokens[1].count += withdrawalTokens;
     tokens[2].count += holTokens;
-
+  
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
-
-    await fetch("/api/game-update-tokens", {
+  
+    const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
+    const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
+    const lossAmount = betAmount - winAmount;
+  
+    const wonBets = selectedBets.filter(bet => bet.isWin);
+    const lostBets = selectedBets.filter(bet => !bet.isWin);
+  
+    const payload = {
+      chatId,
+      tokens: {
+        casino_chips: tokens[0].count,
+        withdraw_tokens: tokens[1].count,
+        hol_tokens: tokens[2].count,
+      },
+      dice1: diceResult[0],
+      dice2: diceResult[1],
+      hash: rollHash,
+      seed: verificationSeed,
+      placedBets: selectedBets,
+      wonBets,
+      lostBets,
+      betAmount,
+      winAmount,
+      lossAmount,
+    };
+  
+    const response = await fetch("/api/game-update-tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chatId,
-        tokens: {
-          casino_chips: tokens[0].count,
-          withdraw_tokens: tokens[1].count,
-          hol_tokens: tokens[2].count,
-        },
-      }),
+      body: JSON.stringify(payload),
     });
+  
+    if (!response.ok) {
+      console.error("Failed to update tokens", await response.json());
+    }
   };
+  
 
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
-
+  
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
-
+  
     await updateTokens(casinoChips, winnings, holdTokens);
-
     resetGame();
   };
+  
 
   const resetGame = () => {
     setSelectedBets([]);
