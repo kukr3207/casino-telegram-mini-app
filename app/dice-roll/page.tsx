@@ -221,7 +221,7 @@ export default function DiceRollPage() {
               <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}>
                 <span className="bet-text">{bet.category} - {bet.option}</span>
                 {bet.isWin !== undefined ? (
-                  <span>{bet.isWin ? `Won: ${bet.winAmount}` : `Lost: ${bet.amount}`}</span>
+                  <p>{bet.isWin ? `Won: ${bet.winAmount} tokens` : `Lost: ${bet.amount} tokens`}</p>
                 ) : (
                   <input
                     type="number"

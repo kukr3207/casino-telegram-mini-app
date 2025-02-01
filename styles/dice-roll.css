@@ -410,3 +410,32 @@ button {
     transform: translateY(0);
   }
 }
+
+
+.bet-card {
+  background: linear-gradient(145deg, #252525, #2c2c2c);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  margin: 10px;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.bet-text {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 5px;
+}
+
+.win {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  color: white;
+  border: 2px solid #76ff03;
+}
+
+.lose {
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  color: white;
+  border: 2px solid #ff1744;
+}
