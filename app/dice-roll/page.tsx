@@ -18,6 +18,7 @@ export default function DiceRollPage() {
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
   const [casinoChips, setCasinoChips] = useState<number>(0);
+  const [showPopup, setShowPopup] = useState(false); // Popup control
 
   useEffect(() => {
     const tokens = sessionStorage.getItem("tokens");
@@ -66,6 +67,7 @@ export default function DiceRollPage() {
     }
 
     setIsRolling(true);
+    setShowPopup(true); // Show dice roll popup
 
     try {
       const response = await fetch("/api/dice-roll", { method: "POST" });
@@ -168,8 +170,22 @@ export default function DiceRollPage() {
       {!isRolling && rollHash && (
         <div className="dice-result">
           <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
-          <p><strong>Fairness Proof:</strong> {rollHash}</p>
-          <p><strong>Verification Seed:</strong> {verificationSeed}</p>
+          <p><strong>Fairness Proof:</strong> <span className="proof-text">{rollHash}</span></p>
+          <p><strong>Verification Seed:</strong> <span className="proof-text">{verificationSeed}</span></p>
+          <p className="verify-instructions">To verify: Apply SHA256(seed + result) and match it with the fairness proof.</p>
+        </div>
+      )}
+
+      {/* Dice Roll Popup */}
+      {showPopup && (
+        <div className="popup-overlay" onClick={() => setShowPopup(false)}>
+          <div className="popup-content">
+            <h2>🎲 Rolling Dice...</h2>
+            <div className="popup-dice-animation">
+              <div className="dice roll-animation" data-value={diceResult[0]}></div>
+              <div className="dice roll-animation" data-value={diceResult[1]}></div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -176,4 +176,75 @@
   border-radius: 15px;
 }
 
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.popup-content {
+  background: #1e1e1e;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  cursor: default;
+}
+
+/* Dice Animation */
+.popup-dice-animation {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.roll-animation {
+  width: 60px;
+  height: 60px;
+  background-color: #ffd700;
+  border-radius: 10px;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Highlight Bets */
+.win {
+  background-color: #4caf50 !important;
+}
+
+.lose {
+  background-color: #f44336 !important;
+}
+
+/* Proof Text Styling */
+.proof-text {
+  word-wrap: break-word;
+  display: block;
+  max-width: 90%;
+  margin: 5px auto;
+  color: #ff9800;
+  font-size: 14px;
+}
+
+.verify-instructions {
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 10px;
+  text-align: center;
+}
 
