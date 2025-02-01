@@ -76,12 +76,15 @@ export default function DiceRollPage() {
       setRollHash(hash);
       setVerificationSeed(seed);
       setDiceResult([dice1, dice2]);
-      highlightBets(dice1, dice2);
+
+      setTimeout(() => {
+        highlightBets(dice1, dice2);
+        setIsRolling(false);
+      }, 3000); // Stop animation after 3 seconds
     } catch (error) {
       console.error("Error rolling dice:", error);
+      setIsRolling(false);
     }
-
-    setIsRolling(false);
   };
 
   const highlightBets = (dice1: number, dice2: number): void => {
@@ -146,7 +149,7 @@ export default function DiceRollPage() {
         ) : (
           <div className="bet-list">
             {selectedBets.map((bet, index) => (
-              <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : "lose"}`}>
+              <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin === true ? "win" : bet.isWin === false ? "lose" : ""}`}>
                 <span className="bet-text">{bet.category} - {bet.option}</span>
                 <input
                   type="number"
@@ -170,9 +173,8 @@ export default function DiceRollPage() {
       {!isRolling && rollHash && (
         <div className="dice-result">
           <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
-          <p><strong>Fairness Proof:</strong> <span className="proof-text">{rollHash}</span></p>
-          <p><strong>Verification Seed:</strong> <span className="proof-text">{verificationSeed}</span></p>
-          <p className="verify-instructions">To verify: Apply SHA256(seed + result) and match it with the fairness proof.</p>
+          <p><strong>Fairness Proof:</strong> {rollHash}</p>
+          <p><strong>Verification Seed:</strong> {verificationSeed}</p>
         </div>
       )}
 
@@ -180,11 +182,19 @@ export default function DiceRollPage() {
       {showPopup && (
         <div className="popup-overlay" onClick={() => setShowPopup(false)}>
           <div className="popup-content">
-            <h2>🎲 Rolling Dice...</h2>
-            <div className="popup-dice-animation">
-              <div className="dice roll-animation" data-value={diceResult[0]}></div>
-              <div className="dice roll-animation" data-value={diceResult[1]}></div>
-            </div>
+            {!isRolling ? (
+              <>
+                <h2>🎲 Result: {diceResult[0]} + {diceResult[1]}</h2>
+              </>
+            ) : (
+              <>
+                <h2>🎲 Rolling Dice...</h2>
+                <div className="popup-dice-animation">
+                  <div className="dice roll-animation"></div>
+                  <div className="dice roll-animation"></div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

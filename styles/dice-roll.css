@@ -202,6 +202,32 @@
 }
 
 /* Dice Animation */
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.popup-content {
+  background: rgba(30, 30, 30, 0.9); /* Transparent background */
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  cursor: default;
+}
+
+/* Dice Animation */
 .popup-dice-animation {
   display: flex;
   gap: 20px;
@@ -214,7 +240,7 @@
   height: 60px;
   background-color: #ffd700;
   border-radius: 10px;
-  animation: spin 1.5s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -225,21 +251,24 @@
 /* Highlight Bets */
 .win {
   background-color: #4caf50 !important;
+  opacity: 1;
 }
 
 .lose {
   background-color: #f44336 !important;
+  opacity: 0.6; /* Dimming effect */
 }
 
-/* Proof Text Styling */
-.proof-text {
-  word-wrap: break-word;
-  display: block;
-  max-width: 90%;
-  margin: 5px auto;
-  color: #ff9800;
-  font-size: 14px;
+/* Result Section */
+.dice-result {
+  margin-top: 20px;
+  text-align: center;
+  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+  padding: 15px;
+  border-radius: 15px;
+  overflow-wrap: break-word; /* Handle long text */
 }
+
 
 .verify-instructions {
   font-size: 12px;
