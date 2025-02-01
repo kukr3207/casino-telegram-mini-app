@@ -1,13 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../styles/dice-roll.css";
 
+interface Bet {
+  category: string;
+  option: string;
+  amount: number;
+  isWin?: boolean;
+}
+
 export default function DiceRollPage() {
-  const [selectedBets, setSelectedBets] = useState<{ category: string; option: string; amount: number }[]>([]);
+  const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
-  const [diceResult, setDiceResult] = useState<number[]>([1, 1]); // Default dice values
+  const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
+  const [rollHash, setRollHash] = useState<string | null>(null);
+  const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
+  const [casinoChips, setCasinoChips] = useState<number>(0);
+
+  useEffect(() => {
+    const tokens = sessionStorage.getItem("tokens");
+    if (tokens) {
+      const parsedTokens = JSON.parse(tokens);
+      setCasinoChips(parsedTokens[0]?.count || 0);
+    }
+  }, []);
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -23,39 +41,78 @@ export default function DiceRollPage() {
     evenodd: "1.95x",
   };
 
-  const handleBetSelect = (category: string, option: string) => {
-    const existingBet = selectedBets.find((bet) => bet.category === category && bet.option === option);
+  const handleBetSelect = (category: string, option: string): void => {
+    const existingBet = selectedBets.find((bet: Bet) => bet.category === category && bet.option === option);
     if (existingBet) {
-      setSelectedBets(selectedBets.filter((bet) => bet !== existingBet));
+      setSelectedBets(selectedBets.filter((bet: Bet) => bet !== existingBet));
     } else {
       setSelectedBets([...selectedBets, { category, option, amount: betAmount }]);
     }
   };
 
-  const handleBetAmountChange = (amount: number, index: number) => {
+  const handleBetAmountChange = (amount: number, index: number): void => {
     const updatedBets = [...selectedBets];
     updatedBets[index].amount = amount;
     setSelectedBets(updatedBets);
   };
 
-  const handleRollDice = () => {
+  const handleRollDice = async () => {
     if (selectedBets.length === 0 || isRolling) return;
 
-    setIsRolling(true);
-    setTimeout(() => {
-      const dice1 = Math.floor(Math.random() * 6) + 1;
-      const dice2 = Math.floor(Math.random() * 6) + 1;
-      setDiceResult([dice1, dice2]);
+    const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
+    if (totalBetAmount > casinoChips) {
+      alert("Insufficient balance! Adjust your bet amount.");
+      return;
+    }
 
-      setIsRolling(false);
-    }, 2000);
+    setIsRolling(true);
+
+    try {
+      const response = await fetch("/api/dice-roll", { method: "POST" });
+      const { dice1, dice2, hash, seed } = await response.json();
+
+      setRollHash(hash);
+      setVerificationSeed(seed);
+      setDiceResult([dice1, dice2]);
+      highlightBets(dice1, dice2);
+    } catch (error) {
+      console.error("Error rolling dice:", error);
+    }
+
+    setIsRolling(false);
+  };
+
+  const highlightBets = (dice1: number, dice2: number): void => {
+    const total = dice1 + dice2;
+    setSelectedBets((prevBets) =>
+      prevBets.map((bet: Bet) => {
+        const isWin = checkBetWin(bet, dice1, dice2, total);
+        return { ...bet, isWin };
+      })
+    );
+  };
+
+  const checkBetWin = (bet: Bet, dice1: number, dice2: number, total: number): boolean => {
+    switch (bet.category) {
+      case "ranges":
+        return (bet.option === "Low (2-6)" && total >= 2 && total <= 6) ||
+               (bet.option === "High (8-12)" && total >= 8 && total <= 12);
+      case "exact":
+        return total === parseInt(bet.option);
+      case "pairs":
+        return bet.option === `Double ${dice1}s` && dice1 === dice2;
+      case "evenodd":
+        return (bet.option === "Even" && total % 2 === 0) ||
+               (bet.option === "Odd" && total % 2 !== 0);
+      default:
+        return false;
+    }
   };
 
   return (
     <div className="dice-roll-page">
       <h3 className="dice-roll-title">Place Your Bets and Roll the Dice 🎲</h3>
 
-      {/* Bet Categories */}
       <div className="category-options">
         {Object.keys(betOptions).map((category) => (
           <div key={category} className="category">
@@ -65,7 +122,7 @@ export default function DiceRollPage() {
                 <button
                   key={option}
                   className={`bet-button ${
-                    selectedBets.find((bet) => bet.category === category && bet.option === option)
+                    selectedBets.some((bet: Bet) => bet.category === category && bet.option === option)
                       ? "selected"
                       : ""
                   }`}
@@ -80,7 +137,6 @@ export default function DiceRollPage() {
         ))}
       </div>
 
-      {/* Selected Bets */}
       <div className="selected-bets">
         <h3>Your Bets</h3>
         {selectedBets.length === 0 ? (
@@ -88,7 +144,7 @@ export default function DiceRollPage() {
         ) : (
           <div className="bet-list">
             {selectedBets.map((bet, index) => (
-              <div key={`${bet.category}-${bet.option}`} className="bet-card">
+              <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : "lose"}`}>
                 <span className="bet-text">{bet.category} - {bet.option}</span>
                 <input
                   type="number"
@@ -103,27 +159,17 @@ export default function DiceRollPage() {
         )}
       </div>
 
-      {/* Dice Animation */}
-      <div className="dice-container">
-        <div className={`dice ${isRolling ? "rolling" : ""}`} data-value={diceResult[0]}>
-          <div className="dot-container"></div>
-        </div>
-        <div className={`dice ${isRolling ? "rolling" : ""}`} data-value={diceResult[1]}>
-          <div className="dot-container"></div>
-        </div>
-      </div>
-
-      {/* Place Bet Button */}
       <div className="place-bet">
         <button className="place-bet-button" onClick={handleRollDice} disabled={selectedBets.length === 0 || isRolling}>
           {isRolling ? "Rolling Dice..." : "Roll Dice"}
         </button>
       </div>
 
-      {/* Dice Roll Result */}
-      {!isRolling && (
+      {!isRolling && rollHash && (
         <div className="dice-result">
-          <h2>Result: {diceResult[0] + diceResult[1]}</h2>
+          <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
+          <p><strong>Fairness Proof:</strong> {rollHash}</p>
+          <p><strong>Verification Seed:</strong> {verificationSeed}</p>
         </div>
       )}
     </div>
