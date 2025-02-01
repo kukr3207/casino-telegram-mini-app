@@ -2,6 +2,9 @@ import { MongoClient } from "mongodb";
 
 export async function POST(req) {
   try {
+    console.log("Incoming request to game-update-tokens API");  // Add this log
+    const data = await req.json();
+    console.log("Request Data:", data);  // Log the incoming data
     const {
       chatId,
       tokens,
@@ -82,6 +85,7 @@ export async function POST(req) {
     );
   } catch (error) {
     console.error("Error:", error);
+    console.error("API Error:", error);
     return new Response(
       JSON.stringify({ error: "Internal Server Error" }),
       { status: 500 }
