@@ -20,6 +20,7 @@ export default function DiceRollPage() {
   const [casinoChips, setCasinoChips] = useState<number>(0);
   const [showPopup, setShowPopup] = useState(false);
   const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
+  const [showCollectButton, setShowCollectButton] = useState(false);
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -69,6 +70,13 @@ export default function DiceRollPage() {
       return;
     }
 
+    const confirmBet = window.confirm(`You are betting a total of ${totalBetAmount} chips. Do you want to continue?`);
+    if (!confirmBet) return;
+
+    const updatedChips = casinoChips - totalBetAmount;
+    setCasinoChips(updatedChips);
+    await updateTokens(updatedChips, 0, 0); // Deduct chips
+
     setIsRolling(true);
     setShowPopup(true);
 
@@ -87,12 +95,59 @@ export default function DiceRollPage() {
         setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
+        setShowCollectButton(true);
       }, 3000);
     } catch (error) {
       console.error("Error rolling dice:", error);
       clearInterval(rollingInterval);
       setIsRolling(false);
     }
+  };
+
+  const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
+    const chatId = sessionStorage.getItem("chat_id");
+    const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
+
+    tokens[0].count = casinoChips;
+    tokens[1].count += withdrawalTokens;
+    tokens[2].count += holTokens;
+
+    sessionStorage.setItem("tokens", JSON.stringify(tokens));
+
+    await fetch("/api/update-tokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId,
+        tokens: {
+          casino_chips: tokens[0].count,
+          withdrawal_tokens: tokens[1].count,
+          hol_tokens: tokens[2].count,
+        },
+      }),
+    });
+  };
+
+  const handleCollectRewards = async () => {
+    const winnings = selectedBets
+      .filter((bet) => bet.isWin)
+      .reduce((total, bet) => total + bet.amount, 0);
+
+    const holTokens = winnings; // Add win amount to HOL tokens
+    const withdrawalTokens = winnings; // Add win amount to withdrawal tokens
+
+    await updateTokens(casinoChips, withdrawalTokens, holTokens);
+
+    resetGame();
+  };
+
+  const resetGame = () => {
+    setSelectedBets([]);
+    setDiceResult([1, 1]);
+    setRollHash(null);
+    setVerificationSeed(null);
+    setShowPopup(false);
+    setShowCollectButton(false);
   };
 
   const highlightBets = (dice1: number, dice2: number): void => {
@@ -121,6 +176,7 @@ export default function DiceRollPage() {
         return false;
     }
   };
+
 
   return (
     <div className="dice-roll-page">
@@ -186,19 +242,9 @@ export default function DiceRollPage() {
         </div>
       )}
 
-      {showPopup && (
-        <div className="popup-overlay" onClick={() => setShowPopup(false)}>
-          <div className="popup-content">
-            <div className="dice-container">
-              {(isRolling ? rollingDice : diceResult).map((value, index) => (
-                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
-                  {[...Array(9)].map((_, dotIndex) => (
-                    <div key={dotIndex} className="dot"></div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
+      {showCollectButton && (
+        <div className="collect-reward">
+          <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
         </div>
       )}
     </div>

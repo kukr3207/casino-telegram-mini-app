@@ -299,3 +299,20 @@
   50% { box-shadow: 0 0 20px rgba(244, 67, 54, 1); }
   100% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.6); }
 }
+
+.collect-button {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
+}
+
+.collect-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+}
