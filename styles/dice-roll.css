@@ -277,3 +277,58 @@
   text-align: center;
 }
 
+
+
+/* Highlight Winning Bets */
+.win {
+  background: linear-gradient(145deg, #2e7d32, #4caf50); /* Green gradient */
+  border: 2px solid #76ff03;
+  box-shadow: 0 0 15px rgba(118, 255, 3, 0.8); /* Green glow */
+  transition: all 0.3s ease-in-out;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Highlight Losing Bets */
+.lose {
+  background: linear-gradient(145deg, #b71c1c, #f44336); /* Red gradient */
+  border: 2px solid #ff1744;
+  box-shadow: 0 0 15px rgba(255, 23, 68, 0.8); /* Red glow */
+  transition: all 0.3s ease-in-out;
+  color: #fff;
+  transform: scale(0.95); /* Slight shrink effect */
+}
+
+/* Glowing Animation for Winning Bets */
+@keyframes glowWin {
+  0% {
+    box-shadow: 0 0 5px rgba(118, 255, 3, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(118, 255, 3, 1);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(118, 255, 3, 0.6);
+  }
+}
+
+.win {
+  animation: glowWin 1.5s infinite alternate;
+}
+
+/* Glowing Animation for Losing Bets */
+@keyframes glowLose {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 23, 68, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 23, 68, 1);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 23, 68, 0.6);
+  }
+}
+
+.lose {
+  animation: glowLose 1.5s infinite alternate;
+}
