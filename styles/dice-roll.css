@@ -135,35 +135,67 @@
   background-color: #292929;
 }
 
-/* WIN & LOSS Styling */
-.win {
-  background: linear-gradient(145deg, #4caf50, #2e7d32);
-  border: 2px solid #76ff03;
-  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
-  color: white;
+/* Button Styles */
+button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+/* Roll Dice Button */
+.place-bet-button {
+  background: linear-gradient(145deg, #ffd700, #ffb300);
+  color: #000;
+  box-shadow: 0 4px 10px rgba(255, 215, 0, 0.5);
+}
+
+.place-bet-button:hover {
   transform: scale(1.05);
-  animation: glowWin 1.5s infinite alternate;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 1);
 }
 
-@keyframes glowWin {
-  0% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.6); }
-  50% { box-shadow: 0 0 20px rgba(76, 175, 80, 1); }
-  100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.6); }
+/* Collect Rewards Button */
+.collect-button {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
 }
 
-.lose {
-  background: linear-gradient(145deg, #f44336, #b71c1c);
-  border: 2px solid #ff1744;
-  box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
+.collect-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+}
+
+/* Confirm Button (Popup) */
+.confirm-button {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
   color: white;
-  transform: scale(0.95);
-  animation: glowLose 1.5s infinite alternate;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
+  padding: 12px 20px;
+  border-radius: 12px;
 }
 
-@keyframes glowLose {
-  0% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.6); }
-  50% { box-shadow: 0 0 20px rgba(244, 67, 54, 1); }
-  100% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.6); }
+.confirm-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+}
+
+/* Cancel Button (Popup) */
+.cancel-button {
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  color: white;
+  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.5);
+  padding: 12px 20px;
+  border-radius: 12px;
+}
+
+.cancel-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(244, 67, 54, 1);
 }
 
 /* Dice Result */
@@ -283,4 +315,99 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85); /* Slightly darker for better contrast */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px); /* Adds a blur effect for the background */
+}
+
+/* Confirmation Popup Content */
+.popup-content {
+  background: #1e1e1e; /* Solid dark background */
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  color: #ffd700;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); /* Stronger glowing border */
+  animation: fadeIn 0.4s ease-in-out;
+  max-width: 350px;
+  width: 90%;
+  border: 2px solid #ffd700; /* Golden border for better separation */
+}
+
+/* Popup Title */
+.popup-content h3 {
+  margin-bottom: 15px;
+  font-size: 24px;
+  color: #ffeb3b;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8); /* Glowing effect */
+}
+
+/* Popup Description */
+.popup-content p {
+  margin: 10px 0;
+  color: #f0f0f0;
+  font-size: 16px;
+}
+
+/* Popup Buttons Layout */
+.popup-content button {
+  margin: 10px 5px;
+  width: 45%;
+  padding: 12px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Confirm Button */
+.confirm-button {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.6);
+  border: none;
+  border-radius: 12px;
+}
+
+.confirm-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+}
+
+/* Cancel Button */
+.cancel-button {
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  color: white;
+  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.6);
+  border: none;
+  border-radius: 12px;
+}
+
+.cancel-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(244, 67, 54, 1);
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
