@@ -22,6 +22,7 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
   const [hasResult, setHasResult] = useState(false);
+  const [showDicePopup, setShowDicePopup] = useState(false);
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -67,6 +68,7 @@ export default function DiceRollPage() {
 
   const confirmBet = async () => {
     setShowConfirmation(false);
+    setShowDicePopup(true);  // Show the dice animation popup
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -76,7 +78,6 @@ export default function DiceRollPage() {
 
     const updatedChips = casinoChips - totalBetAmount;
     setCasinoChips(updatedChips);
-    await updateTokens(updatedChips, 0, 0);
 
     setIsRolling(true);
     setRollingDice([1, 1]);
@@ -97,11 +98,13 @@ export default function DiceRollPage() {
         highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
+        setShowDicePopup(false);  // Hide the popup after the result
       }, 3000);
     } catch (error) {
       console.error("Error rolling dice:", error);
       clearInterval(rollingInterval);
       setIsRolling(false);
+      setShowDicePopup(false);
     }
   };
 
@@ -284,6 +287,19 @@ export default function DiceRollPage() {
             <p>Total Bet: {selectedBets.reduce((sum, bet) => sum + bet.amount, 0)} Chips</p>
             <button onClick={confirmBet} className="confirm-button">Yes, Confirm</button>
             <button onClick={() => setShowConfirmation(false)} className="cancel-button">No, Go Back</button>
+          </div>
+        </div>
+      )}
+
+      {showDicePopup && (  // 🎯 Dice Animation Popup
+        <div className="popup-overlay">
+          <div className="dice-animation-popup">
+            <h3>Rolling Dice... 🎲</h3>
+            <div className="dice-container">
+              {rollingDice.map((value, index) => (
+                <div key={index} className={`dice dice-${value}`}>{value}</div>
+              ))}
+            </div>
           </div>
         </div>
       )}
