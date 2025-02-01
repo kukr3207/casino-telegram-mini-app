@@ -2,9 +2,9 @@ import { MongoClient } from "mongodb";
 
 export async function POST(req) {
   try {
-    const { chatId, tokens } = await req.json();
+    const { chatId, tokens, dice1, dice2, hash, seed, placedBets, wonBets, lostBets, betAmount, winAmount, lossAmount } = await req.json();
 
-    if (!chatId || !tokens) {
+    if (!chatId || !tokens || dice1 === undefined || dice2 === undefined) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { status: 400 }
@@ -16,10 +16,11 @@ export async function POST(req) {
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("casino-mini-app");
+
     const users = db.collection("users");
+    const rolls = db.collection("dice-rolls");  // ✅ New collection for dice rolls
 
     const chatIdAsNumber = parseFloat(chatId);
-
     let user = await users.findOne({ chatId: chatIdAsNumber });
 
     if (!user) {
@@ -51,8 +52,24 @@ export async function POST(req) {
       }
     );
 
+    // ✅ Store Game Data in dice-rolls Collection
+    await rolls.insertOne({
+      chatId: chatId,
+      dice1,
+      dice2,
+      verificationHash: hash,
+      verificationSeed: seed,
+      placedBets,
+      wonBets,
+      lostBets,
+      betAmount,
+      winAmount,
+      lossAmount,
+      gameTimestamp: new Date(),
+    });
+
     await client.close();
-    console.log("Updated tokens successfully.");
+    console.log("Updated tokens and stored game data successfully.");
 
     return new Response(
       JSON.stringify({
@@ -66,7 +83,7 @@ export async function POST(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error updating tokens:", error);
+    console.error("Error updating tokens or storing game data:", error);
     return new Response(
       JSON.stringify({ error: "Internal Server Error" }),
       { status: 500 }
