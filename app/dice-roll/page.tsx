@@ -178,22 +178,16 @@ export default function DiceRollPage() {
         </div>
       )}
 
-      {/* Dice Roll Popup */}
       {showPopup && (
         <div className="popup-overlay" onClick={() => setShowPopup(false)}>
           <div className="popup-content">
             {!isRolling ? (
-              <>
-                <h2>🎲 Result: {diceResult[0]} + {diceResult[1]}</h2>
-              </>
+              <h2>🎲 Result: {diceResult[0]} + {diceResult[1]}</h2>
             ) : (
-              <>
-                <h2>🎲 Rolling Dice...</h2>
-                <div className="popup-dice-animation">
-                  <div className="dice roll-animation"></div>
-                  <div className="dice roll-animation"></div>
-                </div>
-              </>
+              <div className="popup-dice-container">
+                <div className="dice rolling" data-value="1"></div>
+                <div className="dice rolling" data-value="1"></div>
+              </div>
             )}
           </div>
         </div>
