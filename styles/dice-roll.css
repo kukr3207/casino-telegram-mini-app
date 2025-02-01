@@ -104,10 +104,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 15px;
+  justify-content: center;
 }
 
+/* Fix for Bet Card & Input Alignment */
 .bet-card {
-  background: linear-gradient(145deg, #252525, #2e2e2e);
+  background: linear-gradient(145deg, #252525, #2c2c2c);
   border-radius: 12px;
   padding: 12px;
   text-align: center;
@@ -117,6 +119,8 @@
   gap: 8px;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
   transition: transform 0.3s ease;
+  max-width: 200px;
+  margin: auto;
 }
 
 .bet-card:hover {
@@ -129,61 +133,23 @@
   color: #ffd700;
 }
 
-/* Winning & Losing Bets Highlight */
-.win {
-  background: linear-gradient(145deg, #4caf50, #2e7d32);
-  border: 2px solid #76ff03;
-  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
-  color: white;
-  transform: scale(1.05);
-  transition: all 0.3s ease-in-out;
-  animation: glowWin 1.5s infinite alternate;
-}
-
-@keyframes glowWin {
-  0% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.6); }
-  50% { box-shadow: 0 0 20px rgba(76, 175, 80, 1); }
-  100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.6); }
-}
-
-.lose {
-  background: linear-gradient(145deg, #f44336, #b71c1c);
-  border: 2px solid #ff1744;
-  box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
-  color: white;
-  transform: scale(0.95);
-  transition: all 0.3s ease-in-out;
-  animation: glowLose 1.5s infinite alternate;
-}
-
-@keyframes glowLose {
-  0% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.6); }
-  50% { box-shadow: 0 0 20px rgba(244, 67, 54, 1); }
-  100% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.6); }
-}
-
-/* Place Bet */
-.place-bet {
-  margin-top: 20px;
-}
-
-.place-bet-button,
-.collect-button {
-  background: linear-gradient(145deg, #ffd700, #e5b800);
-  color: #000;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-weight: bold;
-  cursor: pointer;
+.bet-input {
+  width: 80%;
+  padding: 8px;
+  font-size: 14px;
+  text-align: center;
+  border-radius: 8px;
+  border: 2px solid #ffd700;
+  background: #1e1e1e;
+  color: #fff;
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+  outline: none;
   transition: all 0.3s ease;
-  margin: 10px;
-  box-shadow: 0 4px 10px rgba(255, 215, 0, 0.5);
 }
 
-.place-bet-button:hover,
-.collect-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+.bet-input:focus {
+  border-color: #e5b800;
+  background-color: #292929;
 }
 
 /* Dice Result */
@@ -196,7 +162,7 @@
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
-/* Confirmation Modal */
+/* Popup Overlay for Dice Roll */
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -230,41 +196,7 @@
   }
 }
 
-/* Confirmation Buttons */
-.confirm-button,
-.cancel-button {
-  padding: 10px 20px;
-  margin: 10px;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.confirm-button {
-  background: linear-gradient(145deg, #4caf50, #2e7d32);
-  color: white;
-  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
-}
-
-.confirm-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
-}
-
-.cancel-button {
-  background: linear-gradient(145deg, #f44336, #b71c1c);
-  color: white;
-  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.5);
-}
-
-.cancel-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
-}
-
-/* Dice Animation */
+/* Dice Roll Animation */
 .dice-container {
   display: flex;
   justify-content: center;
@@ -288,7 +220,7 @@
 }
 
 .rolling {
-  animation: rollAnimation 0.5s infinite ease-in-out;
+  animation: rollAnimation 0.8s infinite ease-in-out;
 }
 
 @keyframes rollAnimation {
@@ -330,4 +262,57 @@
 .dice[data-value="6"] .dot:nth-child(7),
 .dice[data-value="6"] .dot:nth-child(9) {
   opacity: 1;
+}
+
+/* Collect Button */
+.collect-button {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
+  margin: 10px;
+}
+
+.collect-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+}
+
+/* Confirmation Buttons */
+.confirm-button,
+.cancel-button {
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-button {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
+}
+
+.confirm-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+}
+
+.cancel-button {
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  color: white;
+  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.5);
+}
+
+.cancel-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
 }
