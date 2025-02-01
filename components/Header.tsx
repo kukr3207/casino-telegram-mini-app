@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+// Function to format large numbers (e.g., 1.1K, 10K, 1M)
+const formatCount = (count: number) => {
+  if (count < 1000) return count;
+  if (count < 1000000) return (count / 1000).toFixed(count % 1000 >= 100 ? 1 : 0) + "K";
+  return (count / 1000000).toFixed(count % 1000000 >= 100000 ? 1 : 0) + "M";
+};
+
 export default function Header() {
   const [tokens, setTokens] = useState([
     { id: 1, image: "/images/token1.png", count: 0 },
@@ -18,7 +25,7 @@ export default function Header() {
     };
 
     updateTokensFromSession();
-    const interval = setInterval(updateTokensFromSession, 1000); // Fetch tokens every 1 second
+    const interval = setInterval(updateTokensFromSession, 1000); // Update tokens every second
 
     return () => clearInterval(interval);
   }, []);
@@ -35,7 +42,9 @@ export default function Header() {
             alt={`Token ${token.id}`}
             className="w-6 h-6 mr-2"
           />
-          <span className="text-yellow-400 font-semibold">{token.count}</span>
+          <span className="text-yellow-400 font-semibold">
+            {formatCount(token.count)}
+          </span>
         </div>
       ))}
     </header>

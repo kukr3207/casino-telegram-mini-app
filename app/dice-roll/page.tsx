@@ -136,7 +136,7 @@ export default function DiceRollPage() {
 
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
 
-    await updateTokens(casinoChips + winnings, winnings, holdTokens);
+    await updateTokens(casinoChips, winnings, holdTokens);
 
     resetGame();
   };
