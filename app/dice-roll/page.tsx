@@ -301,8 +301,7 @@ export default function DiceRollPage() {
                 </div>
               ))}
             </div>
-            {!isRolling && <p>Click anywhere to close</p>}
-          </div>
+\          </div>
         </div>
       )}
 

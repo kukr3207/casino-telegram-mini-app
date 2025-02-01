@@ -411,3 +411,38 @@ button {
     transform: translateY(0);
   }
 }
+
+/* WIN & LOSS Styling */
+.win {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  border: 2px solid #76ff03;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+  color: white;
+}
+
+.lose {
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  border: 2px solid #ff1744;
+  box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
+  color: white;
+}
+
+/* Dice Popup */
+.popup-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1000;
+}
+
+.dice-popup-content {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  text-align: center;
+  color: #ffd700;
+}
