@@ -22,7 +22,7 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
   const [hasResult, setHasResult] = useState(false);
-  const [showDicePopup, setShowDicePopup] = useState(false);
+  const [showDicePopup, setShowDicePopup] = useState(false); // New for Dice Animation
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -68,7 +68,7 @@ export default function DiceRollPage() {
 
   const confirmBet = async () => {
     setShowConfirmation(false);
-    setShowDicePopup(true);  // Show the dice animation popup
+    setShowDicePopup(true); // Show Dice Animation Popup
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -78,6 +78,7 @@ export default function DiceRollPage() {
 
     const updatedChips = casinoChips - totalBetAmount;
     setCasinoChips(updatedChips);
+    await updateTokens(updatedChips, 0, 0);
 
     setIsRolling(true);
     setRollingDice([1, 1]);
@@ -98,7 +99,7 @@ export default function DiceRollPage() {
         highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-        setShowDicePopup(false);  // Hide the popup after the result
+        setShowDicePopup(false); // Hide Dice Popup after roll
       }, 3000);
     } catch (error) {
       console.error("Error rolling dice:", error);
@@ -111,20 +112,20 @@ export default function DiceRollPage() {
   const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
     const chatId = sessionStorage.getItem("chat_id");
     const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
-  
+
     tokens[0].count = casinoChips;
     tokens[1].count += withdrawalTokens;
     tokens[2].count += holTokens;
-  
+
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
-  
+
     const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
     const lossAmount = betAmount - winAmount;
-  
+
     const wonBets = selectedBets.filter(bet => bet.isWin);
     const lostBets = selectedBets.filter(bet => !bet.isWin);
-  
+
     const payload = {
       chatId,
       tokens: {
@@ -143,30 +144,28 @@ export default function DiceRollPage() {
       winAmount,
       lossAmount,
     };
-  
+
     const response = await fetch("/api/game-update-tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-  
+
     if (!response.ok) {
       console.error("Failed to update tokens", await response.json());
     }
   };
-  
 
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
-  
+
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
-  
+
     await updateTokens(casinoChips, winnings, holdTokens);
     resetGame();
   };
-  
 
   const resetGame = () => {
     setSelectedBets([]);
@@ -291,18 +290,21 @@ export default function DiceRollPage() {
         </div>
       )}
 
-      {showDicePopup && (  // 🎯 Dice Animation Popup
-        <div className="popup-overlay">
-          <div className="dice-animation-popup">
-            <h3>Rolling Dice... 🎲</h3>
-            <div className="dice-container">
-              {rollingDice.map((value, index) => (
-                <div key={index} className={`dice dice-${value}`}>{value}</div>
-              ))}
-            </div>
+{showDicePopup && (
+  <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
+    <div className="dice-animation-popup" onClick={(e) => e.stopPropagation()}>
+      <h3>Rolling Dice 🎲</h3>
+      <div className="dice-container">
+        {[rollingDice[0], rollingDice[1]].map((value, index) => (
+          <div key={index} className={`dice ${isRolling ? 'rolling' : ''}`} data-value={value}>
+            {[...Array(9)].map((_, i) => <div key={i} className="dot" />)}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+
 
       {!isRolling && rollHash && (
         <div className="dice-result">
