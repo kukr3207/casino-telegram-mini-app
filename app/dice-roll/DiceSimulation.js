@@ -1,4 +1,4 @@
-import * as CANNON from 'https://cdn.skypack.dev/cannon-es';
+import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
