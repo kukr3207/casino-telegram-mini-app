@@ -328,7 +328,6 @@ import "../../styles/dice-roll.css";
 // New imports for the dice animation integration
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-// Import BufferGeometryUtils from the Three.js examples.
 import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils";
 
 // Declare the custom property on window.
@@ -428,7 +427,7 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    // Begin a dummy rolling interval (if needed)
+    // Dummy rolling interval to update state (if needed)
     const rollingInterval = setInterval(() => {
       setRollingDice([Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)]);
     }, 100);
@@ -437,7 +436,6 @@ export default function DiceRollPage() {
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
-      // After 3 seconds, clear dummy interval and update results
       setTimeout(() => {
         clearInterval(rollingInterval);
         setDiceResult([dice1, dice2]);
@@ -568,9 +566,9 @@ export default function DiceRollPage() {
   const hasWon = selectedBets.some((bet) => bet.isWin);
 
   // ============================================================================
-  // New useEffect hook to integrate the NEW Three.js/Cannon-es dice roll animation.
-  // The new design: larger dice that bounce and roll until physics sleep,
-  // then the simulation reports the face value.
+  // NEW: UseEffect to integrate the new Three.js/Cannon-es dice roll animation.
+  // The new design features larger dice that bounce and roll until physics sleep.
+  // Once settled, the dice face (result) is determined and sent back.
   // ============================================================================
   useEffect(() => {
     if (!showDicePopup) return;
@@ -591,8 +589,7 @@ export default function DiceRollPage() {
       edgeRadius: 0.07,
       notchRadius: 0.12,
       notchDepth: 0.1,
-      // New scale factor for bigger dice.
-      scale: 2,
+      scale: 2, // Increase dice size.
     };
     const diceArray: any[] = [];
 
@@ -607,7 +604,7 @@ export default function DiceRollPage() {
         allowSleep: true,
         gravity: new CANNON.Vec3(0, -50, 0),
       });
-      // Increase restitution so dice bounce more.
+      // Increase restitution for more bounce.
       physicsWorld.defaultContactMaterial.restitution = 0.8;
     }
 
@@ -622,14 +619,14 @@ export default function DiceRollPage() {
 
       scene = new THREE.Scene();
 
-      // Adjust camera so the bigger dice are well framed.
+      // Position the camera to frame the larger dice.
       camera = new THREE.PerspectiveCamera(
         45,
         canvas.clientWidth / canvas.clientHeight,
         0.1,
         300
       );
-      camera.position.set(0, 3, 8);
+      camera.position.set(0, 4, 10);
       updateSceneSize();
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -643,7 +640,7 @@ export default function DiceRollPage() {
       diceMesh = createDiceMesh();
       for (let i = 0; i < simParams.numberOfDice; i++) {
         const dice = createDice();
-        // Scale the dice mesh to be larger.
+        // Scale dice to be larger.
         dice.mesh.scale.set(simParams.scale, simParams.scale, simParams.scale);
         diceArray.push(dice);
         addDiceEvents(dice);
@@ -790,7 +787,22 @@ export default function DiceRollPage() {
 
       boxGeometry.deleteAttribute("normal");
       boxGeometry.deleteAttribute("uv");
-      boxGeometry = BufferGeometryUtils.mergeVertices(boxGeometry) as any as THREE.BufferGeometry;
+      const mergedGeometry = BufferGeometryUtils.mergeVertices(boxGeometry);
+      const newBoxGeometry = new THREE.BoxGeometry(
+        (boxGeometry.parameters as any).width,
+        (boxGeometry.parameters as any).height,
+        (boxGeometry.parameters as any).depth,
+        (boxGeometry.parameters as any).widthSegments,
+        (boxGeometry.parameters as any).heightSegments,
+        (boxGeometry.parameters as any).depthSegments
+      );
+
+      // Copy attributes from merged geometry to new box geometry
+      newBoxGeometry.setAttribute('position', mergedGeometry.getAttribute('position'));
+      newBoxGeometry.computeVertexNormals();
+
+      boxGeometry = newBoxGeometry;
+
       (boxGeometry as any).parameters = origParameters;
       boxGeometry.computeVertexNormals();
       return boxGeometry;
@@ -910,14 +922,12 @@ export default function DiceRollPage() {
           0,
           2 * Math.PI * Math.random()
         );
-        // Copy quaternion from the mesh into the body.
         d.body.quaternion.copy(new CANNON.Quaternion(
           d.mesh.quaternion.x,
           d.mesh.quaternion.y,
           d.mesh.quaternion.z,
           d.mesh.quaternion.w
         ));
-        // Apply a larger impulse to create a dramatic roll and bounce.
         const force = 8 + 4 * Math.random();
         d.body.applyImpulse(
           new CANNON.Vec3(-force, force, 0),
@@ -1053,11 +1063,14 @@ export default function DiceRollPage() {
 
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
-          <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="dice-popup-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* NEW: Only show the simulation canvas for the new dice design */}
             <canvas
               id="dice-animation-canvas"
-              style={{ width: "600px", height: "600px" }}
+              style={{ width: "100%", height: "100%" }}
             ></canvas>
           </div>
         </div>
