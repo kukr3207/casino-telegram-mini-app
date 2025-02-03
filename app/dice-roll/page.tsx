@@ -101,7 +101,6 @@ export default function DiceRollPage() {
         setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
-        setIsDiceRolled(true); // Mark as rolled
         setHasResult(true);
       }, 3000);
     } catch (error) {
@@ -215,10 +214,6 @@ export default function DiceRollPage() {
     <div className="dice-roll-page">
       <h3 className="dice-roll-title">Place Your Bets and Roll the Dice 🎲</h3>
 
-      <button className="place-bet-button" onClick={handleRollDice} disabled={isRolling}>
-        {isRolling ? "Rolling Dice..." : "Roll Dice"}
-      </button>
-
       <div className="category-options">
         {Object.keys(betOptions).map((category) => (
           <div key={category} className="category">
@@ -296,23 +291,22 @@ export default function DiceRollPage() {
         </div>
       )}
 
-      {showDicePopup && (
-              <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
-                <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-                  <h3>{isRolling ? "Rolling Dice..." : isDiceRolled ? "Dice Result 🎲" : ""}</h3>
-                  <div className="dice-table">
-                    {(isRolling ? rollingDice : diceResult).map((value, index) => (
-                      <div key={index} className={`dice ${isRolling ? "falling" : "stopped"}`} data-value={value}>
-                        {[...Array(9)].map((_, i) => (
-                          <div key={i} className={`dot ${i + 1 === value ? "visible" : ""}`} />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                  {!isRolling && isDiceRolled && <p>Click anywhere to close</p>}
+{showDicePopup && (
+        <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
+          <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
+            <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
+            <div className="dice-container">
+              {diceResult.map((value, index) => (
+                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
+                  {[...Array(9)].map((_, i) => (
+                    <div key={i} className={`dot ${i + 1 === value ? "visible" : ""}`} />
+                  ))}
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {!isRolling && rollHash && (
