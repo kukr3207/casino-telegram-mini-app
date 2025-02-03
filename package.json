@@ -11,6 +11,7 @@
   "dependencies": {
     "@telegram-apps/sdk-react": "^2.0.25",
     "body-parser": "^1.20.3",
+    "cannon-es": "^0.20.0",
     "express": "^4.21.2",
     "framer-motion": "^12.0.6",
     "mongodb": "^6.12.0",
@@ -18,7 +19,8 @@
     "node-telegram-bot-api": "^0.66.0",
     "react": "^18.2.0",
     "react-confetti": "^6.2.2",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "three": "^0.173.0"
   },
   "devDependencies": {
     "@types/node": "^20.5.6",
