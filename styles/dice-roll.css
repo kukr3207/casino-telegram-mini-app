@@ -455,14 +455,14 @@ button {
   padding: 20px;
   box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
   align-items: center;
   min-height: 200px;
   position: relative;
   overflow: hidden;
 }
 
-/* Dice Falling Animation */
+/* Dice Style */
 .dice {
   width: 60px;
   height: 60px;
@@ -479,41 +479,6 @@ button {
   top: -100px;
 }
 
-/* Falling & Bouncing */
-.falling {
-  animation: fallBounce 2s cubic-bezier(0.3, 0.5, 0.3, 1.1);
-}
-
-@keyframes fallBounce {
-  0% {
-    top: -100px;
-    transform: rotate(0deg);
-  }
-  50% {
-    top: 150px;
-    transform: rotate(720deg);
-  }
-  70% {
-    top: 120px;
-    transform: rotate(800deg);
-  }
-  85% {
-    top: 140px;
-    transform: rotate(850deg);
-  }
-  100% {
-    top: 130px;
-    transform: rotate(900deg);
-  }
-}
-
-/* Dice Stops After Rolling */
-.stopped {
-  top: 130px;
-  transform: rotate(0deg);
-  transition: transform 0.5s ease-in-out;
-}
-
 /* Dice Dots */
 .dot {
   width: 10px;
@@ -527,4 +492,72 @@ button {
 
 .dot.visible {
   opacity: 1;
+}
+
+/* Dice Falling & Bouncing */
+.falling {
+  animation: fallBounce 2s ease-in-out, rolling 2s ease-in-out 1s;
+}
+
+@keyframes fallBounce {
+  0% {
+    top: -100px;
+    transform: rotate(0deg);
+  }
+  50% {
+    top: 150px;
+    transform: rotate(360deg);
+  }
+  70% {
+    top: 130px;
+    transform: rotate(450deg);
+  }
+  85% {
+    top: 140px;
+    transform: rotate(500deg);
+  }
+  100% {
+    top: 135px;
+    transform: rotate(540deg);
+  }
+}
+
+/* Dice Rolling on the Table */
+@keyframes rolling {
+  0% {
+    transform: rotate(540deg);
+  }
+  100% {
+    transform: rotate(720deg);
+  }
+}
+
+/* Dice Stops After Rolling */
+.stopped {
+  top: 135px;
+  transform: rotate(0deg);
+  transition: transform 0.5s ease-in-out;
+}
+
+/* Popup */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dice-popup-content {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  text-align: center;
+  color: #ffd700;
 }
