@@ -313,14 +313,14 @@ export default function DiceRollPage() {
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
             <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
             <div className="dice-table">
-              {[0, 1].map((_, index) => (
+              {diceResult.map((value, index) => (
                 <div
                   key={index}
-                  className={`dice ${isRolling ? "falling rolling" : "stopped"}`}
-                  data-value={diceResult[index]}
+                  className={`dice ${isRolling ? "rolling" : ""}`}
+                  data-value={value}
                 >
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className={`face face-${i + 1}`}></div>
+                  {[...Array(9)].map((_, i) => (
+                    <div key={i} className={`dot ${getDotClass(value, i + 1)}`} />
                   ))}
                 </div>
               ))}
@@ -341,3 +341,15 @@ export default function DiceRollPage() {
     </div>
   );
 }
+
+const getDotClass = (value: number, dotIndex: number) => {
+  const dotPatterns: Record<number, number[]> = {
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9],
+  };
+  return dotPatterns[value]?.includes(dotIndex) ? "visible" : "";
+};
