@@ -548,3 +548,82 @@ button {
     transform: translateY(0);
   }
 }
+
+
+/* Dice Container */
+.dice-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+  height: 200px; 
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Dice Styling */
+.dice {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border: 2px solid black;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.5s ease-in-out;
+}
+
+/* Rolling Animation */
+.rolling .dice {
+  animation: fall-and-roll 3s ease-in-out;
+}
+
+@keyframes fall-and-roll {
+  0% {
+    transform: translateY(-200px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(0) rotate(720deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+/* Dice Dots */
+.dot {
+  width: 10px;
+  height: 10px;
+  background: black;
+  border-radius: 50%;
+  justify-self: center;
+  align-self: center;
+  opacity: 0;
+}
+
+.dice[data-value="1"] .dot:nth-child(5),
+.dice[data-value="2"] .dot:nth-child(1),
+.dice[data-value="2"] .dot:nth-child(9),
+.dice[data-value="3"] .dot:nth-child(1),
+.dice[data-value="3"] .dot:nth-child(5),
+.dice[data-value="3"] .dot:nth-child(9),
+.dice[data-value="4"] .dot:nth-child(1),
+.dice[data-value="4"] .dot:nth-child(3),
+.dice[data-value="4"] .dot:nth-child(7),
+.dice[data-value="4"] .dot:nth-child(9),
+.dice[data-value="5"] .dot:nth-child(1),
+.dice[data-value="5"] .dot:nth-child(3),
+.dice[data-value="5"] .dot:nth-child(5),
+.dice[data-value="5"] .dot:nth-child(7),
+.dice[data-value="5"] .dot:nth-child(9),
+.dice[data-value="6"] .dot:nth-child(1),
+.dice[data-value="6"] .dot:nth-child(3),
+.dice[data-value="6"] .dot:nth-child(4),
+.dice[data-value="6"] .dot:nth-child(6),
+.dice[data-value="6"] .dot:nth-child(7),
+.dice[data-value="6"] .dot:nth-child(9) {
+  opacity: 1;
+}
