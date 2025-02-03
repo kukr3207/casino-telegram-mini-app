@@ -296,15 +296,16 @@ export default function DiceRollPage() {
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
             <h3>{isRolling ? "Rolling Dice..." : isDiceRolled ? "Dice Result 🎲" : ""}</h3>
-            <div className="dice-container">
+            <div className="dice-table">
               {(isRolling ? rollingDice : diceResult).map((value, index) => (
-                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
+                <div key={index} className={`dice ${isRolling ? "falling" : "stopped"}`} data-value={value}>
                   {[...Array(9)].map((_, i) => (
                     <div key={i} className={`dot ${i + 1 === value ? "visible" : ""}`} />
                   ))}
                 </div>
               ))}
             </div>
+            {!isRolling && isDiceRolled && <p>Click anywhere to close</p>}
           </div>
         </div>
       )}
