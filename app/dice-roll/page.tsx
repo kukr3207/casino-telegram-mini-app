@@ -33,10 +33,10 @@ export default function DiceRollPage() {
   };
 
   const payoutRatios: Record<string, number> = {
-    ranges: 1.9,
-    exact: 10,
+    ranges: 2,
+    exact: 11,
     pairs: 15,
-    evenodd: 1.9,
+    evenodd: 2,
   };
 
   useEffect(() => {
