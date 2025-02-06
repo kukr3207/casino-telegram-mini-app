@@ -15,22 +15,22 @@ interface Bet {
   winAmount?: number;
 }
 
-// Given a dice result (1–6), return the target rotation as a tuple so that the proper face is on top.
-// (Standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6)
+// Given a dice result (1–6), return the target rotation as a tuple so that the correct face is up.
+// Using standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6.
 function getTargetRotation(result: number): [number, number, number] {
   switch (result) {
     case 1:
-      return [0, 0, 0];
+      return [0, 0, 0]; // Top shows face 1
     case 2:
-      return [-Math.PI / 2, 0, 0];
+      return [-Math.PI / 2, 0, 0]; // Front becomes top
     case 3:
-      return [0, 0, Math.PI / 2];
+      return [0, 0, Math.PI / 2]; // Right becomes top
     case 4:
-      return [0, 0, -Math.PI / 2];
+      return [0, 0, -Math.PI / 2]; // Left becomes top
     case 5:
-      return [Math.PI / 2, 0, 0];
+      return [Math.PI / 2, 0, 0]; // Back becomes top
     case 6:
-      return [Math.PI, 0, 0];
+      return [Math.PI, 0, 0]; // Bottom becomes top
     default:
       return [0, 0, 0];
   }
@@ -43,8 +43,7 @@ interface DiceProps {
   targetPosition: [number, number, number];
 }
 
-// Use data URI–encoded SVG images for dice faces.
-// (These are simple images: dice1 shows one pip in the center; dice2 shows pips at top‑left and bottom‑right, etc.)
+// Data URI–encoded SVG images for dice faces (very basic)
 const dice1 =
   "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice2 =
@@ -54,21 +53,32 @@ const dice3 =
 const dice4 =
   "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice5 =
-  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice6 =
   "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='75'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='75'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 
-const diceTextures = [dice1, dice2, dice3, dice4, dice5, dice6];
+// Our logical order is [dice1, dice2, dice3, dice4, dice5, dice6] (faces 1–6)
+// But BoxGeometry expects materials in order: [right, left, top, bottom, front, back].
+// To match our desired dice convention (top=1, front=2, right=3, left=4, back=5, bottom=6), reorder as follows:
+const orderedDiceTextures = [
+  dice3, // right face → dice face 3
+  dice4, // left face  → dice face 4
+  dice1, // top face   → dice face 1
+  dice6, // bottom face→ dice face 6
+  dice2, // front face → dice face 2
+  dice5, // back face  → dice face 5
+];
 
 function Dice({ result, released, initialPosition, targetPosition }: DiceProps) {
   const mesh = useRef<any>();
-  const textures = useTexture(diceTextures);
+  // Use Drei's useTexture to load our ordered textures.
+  const textures = useTexture(orderedDiceTextures);
   const materials = textures.map(
     (texture: any) => new MeshStandardMaterial({ map: texture })
   );
 
   const finalRotation = getTargetRotation(result);
-  // Animate both position and rotation using react-spring.
+  // Animate both position and rotation from the initial (hand-held) to the target (table) state.
   const { pos, rot } = useSpring({
     pos: released ? targetPosition : initialPosition,
     rot: released ? finalRotation : [0, 0, 0],
@@ -76,12 +86,7 @@ function Dice({ result, released, initialPosition, targetPosition }: DiceProps) 
   });
 
   return (
-    <a.mesh
-      ref={mesh}
-      material={materials}
-      position={pos}
-      rotation={rot.to((x, y, z) => [x, y, z]) as any}
-    >
+    <a.mesh ref={mesh} material={materials} position={pos} rotation={rot.to((x, y, z) => [x, y, z]) as any}>
       <boxGeometry args={[2, 2, 2]} />
     </a.mesh>
   );
@@ -98,7 +103,7 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
-  // New state to indicate when the hand releases the dice.
+  // State for when the hand releases the dice.
   const [handReleased, setHandReleased] = useState(false);
 
   useEffect(() => {
@@ -149,27 +154,26 @@ export default function DiceRollPage() {
     setShowConfirmation(false);
     setShowDicePopup(true);
     setIsRolling(true);
-    setHandReleased(false); // Initially, the hand is holding the dice
+    setHandReleased(false);
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
       alert("Insufficient balance! Adjust your bet amount.");
       return;
     }
-
     const updatedChips = casinoChips - totalBetAmount;
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
     try {
-      // Immediately fetch the result
+      // Immediately fetch the result from the backend.
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
       setDiceResult([dice1, dice2]);
       setRollHash(hash);
       setVerificationSeed(seed);
       highlightBets(dice1, dice2);
-      // After 1 second, simulate the hand releasing the dice:
+      // After 1 second, simulate the hand releasing the dice.
       setTimeout(() => {
         setHandReleased(true);
         setIsRolling(false);
@@ -388,22 +392,20 @@ export default function DiceRollPage() {
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
             <h3>{!handReleased ? "Hand Holding Dice..." : "Dice Result 🎲"}</h3>
-            {/* Hand overlay image */}
+            {/* Display the hand image when not released */}
             {!handReleased && (
-              <img src="/images/token1.png" alt="Hand Holding Dice" className="hand-overlay" />
+              <img src="/assets/hand.png" alt="Hand Holding Dice" className="hand-overlay" />
             )}
             <div className="dice-canvas">
               <Canvas>
                 <ambientLight intensity={0.5} />
                 <directionalLight intensity={0.8} position={[10, 10, 5]} />
-                {/* Left Dice: initial position is [-1, 3, 0] and final (target) is [-2, 0, 0] */}
                 <Dice
                   result={diceResult[0]}
                   released={handReleased}
                   initialPosition={[-1, 3, 0]}
                   targetPosition={[-2, 0, 0]}
                 />
-                {/* Right Dice: initial position is [1, 3, 0] and final is [2, 0, 0] */}
                 <Dice
                   result={diceResult[1]}
                   released={handReleased}
