@@ -1,13 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useTexture } from "@react-three/drei";
-import { MeshStandardMaterial } from "three";
-import { useSpring, animated as a } from "@react-spring/three";
 import "../../styles/dice-roll.css";
 
-// ----- Types -----
 interface Bet {
   category: string;
   option: string;
@@ -16,74 +11,77 @@ interface Bet {
   winAmount?: number;
 }
 
-// ----- Dice Orientation Mapping -----
-// BoxGeometry maps materials in order: [right, left, top, bottom, front, back].
-// We want standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6.
-// So we reorder our textures accordingly.
-function getTargetRotation(result: number): [number, number, number] {
-  switch (result) {
-    case 1:
-      return [0, 0, 0];             // Face 1 on top.
-    case 2:
-      return [-Math.PI / 2, 0, 0];    // Rotate so that front (face 2) becomes top.
-    case 3:
-      return [0, 0, Math.PI / 2];     // Rotate so that right (face 3) becomes top.
-    case 4:
-      return [0, 0, -Math.PI / 2];    // Rotate so that left (face 4) becomes top.
-    case 5:
-      return [Math.PI / 2, 0, 0];     // Rotate so that back (face 5) becomes top.
-    case 6:
-      return [Math.PI, 0, 0];         // Rotate so that bottom (face 6) becomes top.
-    default:
-      return [0, 0, 0];
-  }
+// A realistic 3D dice cube with dotted faces
+interface DiceCubeProps {
+  style: React.CSSProperties;
+  rolling: boolean;
 }
-
-interface DiceProps {
-  result: number;
-  falling: boolean;
-  initialPosition: [number, number, number];
-  targetPosition: [number, number, number];
-}
-
-// ----- Dice Textures -----
-// These data URI–encoded SVG images represent dice faces.
-// Logical order: diceFace1 for face 1, diceFace2 for face 2, … diceFace6 for face 6.
-const diceFace1 =
-  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3C/svg%3E";
-const diceFace2 =
-  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
-const diceFace3 =
-  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
-const diceFace4 =
-  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
-const diceFace5 =
-  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
-const diceFace6 =
-  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='75'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='75'%20r='10'%20fill='black'/%3E%3C/svg%3E";
-
-// Logical order: [diceFace1, diceFace2, diceFace3, diceFace4, diceFace5, diceFace6].
-// To match BoxGeometry's material order ([right, left, top, bottom, front, back]),
-// we reorder to: [diceFace3, diceFace4, diceFace1, diceFace6, diceFace2, diceFace5].
-const orderedDiceTextures = [diceFace3, diceFace4, diceFace1, diceFace6, diceFace2, diceFace5];
-
-function Dice({ result, falling, initialPosition, targetPosition }: DiceProps) {
-  const textures = useTexture(orderedDiceTextures);
-  const materials = textures.map((texture: any) => new MeshStandardMaterial({ map: texture }));
-  const finalRotation = getTargetRotation(result);
-  // Animate dice falling from a high Y position to target position and rotating to show the correct face.
-  // We use a slower spring config for approximately 0.5× speed.
-  const { pos, rot } = useSpring({
-    pos: falling ? targetPosition : initialPosition,
-    rot: falling ? finalRotation : [0, 0, 0],
-    config: { tension: 80, friction: 30 },
-  });
-  // Scale dice down (0.7×) so they are smaller.
+function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
-    <a.mesh material={materials} position={pos} rotation={rot.to((x, y, z) => [x, y, z]) as any} scale={[0.7, 0.7, 0.7]}>
-      <boxGeometry args={[1, 1, 1]} />
-    </a.mesh>
+    <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
+      {/* Face numbering: front = 1, back = 6, right = 3, left = 4, top = 2, bottom = 5 */}
+      <div className="face front">
+        {/* Face 1: single pip in center */}
+        <div className="pip pip-center"></div>
+      </div>
+      <div className="face back">
+        {/* Face 6: two columns of three pips */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-middle-left"></div>
+        <div className="pip pip-bottom-left"></div>
+        <div className="pip pip-top-right"></div>
+        <div className="pip pip-middle-right"></div>
+        <div className="pip pip-bottom-right"></div>
+      </div>
+      <div className="face right">
+        {/* Face 3: pips at top-left, center, bottom-right */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-center"></div>
+        <div className="pip pip-bottom-right"></div>
+      </div>
+      <div className="face left">
+        {/* Face 4: pips at top-left, top-right, bottom-left, bottom-right */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-top-right"></div>
+        <div className="pip pip-bottom-left"></div>
+        <div className="pip pip-bottom-right"></div>
+      </div>
+      <div className="face top">
+        {/* Face 2: pips at top-left and bottom-right */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-bottom-right"></div>
+      </div>
+      <div className="face bottom">
+        {/* Face 5: four corner pips and one in center */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-top-right"></div>
+        <div className="pip pip-bottom-left"></div>
+        <div className="pip pip-bottom-right"></div>
+        <div className="pip pip-center"></div>
+      </div>
+    </div>
   );
+}
+
+// Mapping function to compute the final transform so that the correct face is on top.
+// (These values are chosen by trial to give distinct rotations. Adjust as needed.)
+function getDiceCubeTransform(value: number): string {
+  switch (value) {
+    case 1:
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";
+    case 2:
+      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+    case 3:
+      return "rotateX(0deg) rotateY(0deg) rotateZ(90deg)";
+    case 4:
+      return "rotateX(0deg) rotateY(0deg) rotateZ(-90deg)";
+    case 5:
+      return "rotateX(180deg) rotateY(0deg) rotateZ(0deg)";
+    case 6:
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";
+    default:
+      return "";
+  }
 }
 
 export default function DiceRollPage() {
@@ -97,6 +95,18 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
+
+  // Holds the inline transform for each dice cube (final orientation when result arrives)
+  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
+
+  // Initial style (the cube is already on the table)
+  const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+
+  useEffect(() => {
+    if (showDicePopup) {
+      setDiceCubeStyles([initialDiceCubeStyle, initialDiceCubeStyle]);
+    }
+  }, [showDicePopup]);
 
   useEffect(() => {
     const tokens = sessionStorage.getItem("tokens");
@@ -152,33 +162,34 @@ export default function DiceRollPage() {
       alert("Insufficient balance! Adjust your bet amount.");
       return;
     }
+
     const updatedChips = casinoChips - totalBetAmount;
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
+    // Start continuous realistic roll (the dice cubes have the "rolling" class).
     try {
-      // Immediately fetch dice result from the backend.
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
-      setDiceResult([dice1, dice2]);
-      setRollHash(hash);
-      setVerificationSeed(seed);
-      // After 500ms, trigger the dice drop animation.
+
+      // After a continuous roll (animation runs for a couple of seconds), stop the rolling
       setTimeout(() => {
+        // Set each cube’s inline style so that the correct face is on top.
+        setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
+        setDiceResult([dice1, dice2]);
+        setRollHash(hash);
+        setVerificationSeed(seed);
+        highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-      }, 500);
+      }, 2500); // Adjust the duration (in ms) as needed for a realistic roll
     } catch (error) {
       console.error("Error rolling dice:", error);
       setIsRolling(false);
     }
   };
 
-  const updateTokens = async (
-    casinoChips: number,
-    withdrawalTokens: number,
-    holTokens: number
-  ) => {
+  const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
     const chatId = sessionStorage.getItem("chat_id");
     const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
 
@@ -189,11 +200,13 @@ export default function DiceRollPage() {
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
 
     const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
-    const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
+    const winAmount = selectedBets
+      .filter((bet) => bet.isWin)
+      .reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
     const lossAmount = betAmount - winAmount;
 
-    const wonBets = selectedBets.filter(bet => bet.isWin);
-    const lostBets = selectedBets.filter(bet => !bet.isWin);
+    const wonBets = selectedBets.filter((bet) => bet.isWin);
+    const lostBets = selectedBets.filter((bet) => !bet.isWin);
 
     const payload = {
       chatId,
@@ -230,7 +243,8 @@ export default function DiceRollPage() {
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
 
-    const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
+    const holdTokens =
+      winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
 
     await updateTokens(casinoChips, winnings, holdTokens);
     resetGame();
@@ -262,8 +276,10 @@ export default function DiceRollPage() {
   const checkBetWin = (bet: Bet, dice1: number, dice2: number, total: number): boolean => {
     switch (bet.category) {
       case "ranges":
-        return (bet.option === "Low (2-6)" && total >= 2 && total <= 6) ||
-               (bet.option === "High (8-12)" && total >= 8 && total <= 12);
+        return (
+          (bet.option === "Low (2-6)" && total >= 2 && total <= 6) ||
+          (bet.option === "High (8-12)" && total >= 8 && total <= 12)
+        );
       case "exact":
         return total === parseInt(bet.option);
       case "pairs":
@@ -312,8 +328,13 @@ export default function DiceRollPage() {
         ) : (
           <div className="bet-list">
             {selectedBets.map((bet, index) => (
-              <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}>
-                <span className="bet-text">{bet.category} - {bet.option}</span>
+              <div
+                key={`${bet.category}-${bet.option}`}
+                className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}
+              >
+                <span className="bet-text">
+                  {bet.category} - {bet.option}
+                </span>
                 {bet.isWin !== undefined ? (
                   <p>{bet.isWin ? `Won: ${bet.winAmount} tokens` : `Lost: ${bet.amount} tokens`}</p>
                 ) : (
@@ -339,11 +360,15 @@ export default function DiceRollPage() {
         )}
 
         {hasResult && hasWon && (
-          <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
+          <button className="collect-button" onClick={handleCollectRewards}>
+            Collect Rewards
+          </button>
         )}
 
         {hasResult && !hasWon && (
-          <button className="reset-button" onClick={resetGame}>Reset</button>
+          <button className="reset-button" onClick={resetGame}>
+            Reset
+          </button>
         )}
       </div>
 
@@ -352,8 +377,12 @@ export default function DiceRollPage() {
           <div className="popup-content">
             <h3>Confirm Your Bet</h3>
             <p>Total Bet: {selectedBets.reduce((sum, bet) => sum + bet.amount, 0)} Chips</p>
-            <button onClick={confirmBet} className="confirm-button">Yes, Confirm</button>
-            <button onClick={() => setShowConfirmation(false)} className="cancel-button">No, Go Back</button>
+            <button onClick={confirmBet} className="confirm-button">
+              Yes, Confirm
+            </button>
+            <button onClick={() => setShowConfirmation(false)} className="cancel-button">
+              No, Go Back
+            </button>
           </div>
         </div>
       )}
@@ -361,25 +390,16 @@ export default function DiceRollPage() {
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Dice Result 🎲</h3>
-            <div className="dice-canvas">
-              <Canvas>
-                <ambientLight intensity={0.5} />
-                <directionalLight intensity={0.8} position={[10, 10, 5]} />
-                <Dice
-                  result={diceResult[0]}
-                  falling={hasResult}
-                  initialPosition={[-0.5, 5, 0]}
-                  targetPosition={[-0.5, 0, 0]}
-                />
-                <Dice
-                  result={diceResult[1]}
-                  falling={hasResult}
-                  initialPosition={[0.5, 5, 0]}
-                  targetPosition={[0.5, 0, 0]}
-                />
-                <OrbitControls enableZoom={false} enablePan={false} />
-              </Canvas>
+            <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
+            <div className="dice-container">
+              <DiceCube
+                style={{ transform: diceCubeStyles[0] || initialDiceCubeStyle }}
+                rolling={isRolling}
+              />
+              <DiceCube
+                style={{ transform: diceCubeStyles[1] || initialDiceCubeStyle }}
+                rolling={isRolling}
+              />
             </div>
           </div>
         </div>
@@ -387,9 +407,15 @@ export default function DiceRollPage() {
 
       {!isRolling && rollHash && (
         <div className="dice-result">
-          <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
-          <p><strong>Fairness Proof:</strong> {rollHash}</p>
-          <p><strong>Verification Seed:</strong> {verificationSeed}</p>
+          <h2>
+            Result: {diceResult[0]} + {diceResult[1]}
+          </h2>
+          <p>
+            <strong>Fairness Proof:</strong> {rollHash}
+          </p>
+          <p>
+            <strong>Verification Seed:</strong> {verificationSeed}
+          </p>
         </div>
       )}
     </div>
