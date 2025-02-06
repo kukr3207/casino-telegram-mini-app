@@ -63,13 +63,13 @@ function getDiceCubeTransform(value: number): string {
     case 1:
       return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";      // Front (face 1)
     case 2:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";     // Top (face 2) becomes front
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";     // Top (face 2) becomes front
     case 3:
       return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";    // Right (face 3) becomes front
     case 4:
       return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";     // Left (face 4) becomes front
     case 5:
-      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";    // Bottom (face 5) becomes front
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";    // Bottom (face 5) becomes front
     case 6:
       return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";    // Back (face 6) becomes front
     default:
