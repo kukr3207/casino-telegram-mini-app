@@ -17,23 +17,23 @@ interface Bet {
 }
 
 // ----- Dice Orientation Mapping -----
-// BoxGeometry maps materials in this order: [right, left, top, bottom, front, back].
-// For a standard dice with: top=1, front=2, right=3, left=4, back=5, bottom=6,
-// we reorder our textures accordingly.
+// BoxGeometry maps materials in order: [right, left, top, bottom, front, back].
+// We want standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6.
+// So we reorder our textures accordingly.
 function getTargetRotation(result: number): [number, number, number] {
   switch (result) {
     case 1:
-      return [0, 0, 0]; // Face 1 on top.
+      return [0, 0, 0];             // Face 1 on top.
     case 2:
-      return [-Math.PI / 2, 0, 0]; // Face 2 rotates up.
+      return [-Math.PI / 2, 0, 0];    // Rotate so that front (face 2) becomes top.
     case 3:
-      return [0, 0, Math.PI / 2]; // Face 3 rotates up.
+      return [0, 0, Math.PI / 2];     // Rotate so that right (face 3) becomes top.
     case 4:
-      return [0, 0, -Math.PI / 2]; // Face 4 rotates up.
+      return [0, 0, -Math.PI / 2];    // Rotate so that left (face 4) becomes top.
     case 5:
-      return [Math.PI / 2, 0, 0]; // Face 5 rotates up.
+      return [Math.PI / 2, 0, 0];     // Rotate so that back (face 5) becomes top.
     case 6:
-      return [Math.PI, 0, 0]; // Face 6 rotates up.
+      return [Math.PI, 0, 0];         // Rotate so that bottom (face 6) becomes top.
     default:
       return [0, 0, 0];
   }
@@ -47,7 +47,8 @@ interface DiceProps {
 }
 
 // ----- Dice Textures -----
-// These data URI–encoded SVGs are simple dice faces. Replace them with your own images if desired.
+// These data URI–encoded SVG images represent dice faces.
+// Logical order: diceFace1 for face 1, diceFace2 for face 2, … diceFace6 for face 6.
 const diceFace1 =
   "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const diceFace2 =
@@ -61,24 +62,23 @@ const diceFace5 =
 const diceFace6 =
   "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='75'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='75'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 
-// Logical order: [diceFace1, diceFace2, diceFace3, diceFace4, diceFace5, diceFace6]
-// To match BoxGeometry's order ([right, left, top, bottom, front, back]), reorder as:
+// Logical order: [diceFace1, diceFace2, diceFace3, diceFace4, diceFace5, diceFace6].
+// To match BoxGeometry's material order ([right, left, top, bottom, front, back]),
+// we reorder to: [diceFace3, diceFace4, diceFace1, diceFace6, diceFace2, diceFace5].
 const orderedDiceTextures = [diceFace3, diceFace4, diceFace1, diceFace6, diceFace2, diceFace5];
 
 function Dice({ result, falling, initialPosition, targetPosition }: DiceProps) {
   const textures = useTexture(orderedDiceTextures);
   const materials = textures.map((texture: any) => new MeshStandardMaterial({ map: texture }));
-
   const finalRotation = getTargetRotation(result);
-  // Animate dice falling from above: start at a high Y (e.g., 5) then fall to target position.
-  // Adjust the spring config for 0.5x speed (slower).
+  // Animate dice falling from a high Y position to target position and rotating to show the correct face.
+  // We use a slower spring config for approximately 0.5× speed.
   const { pos, rot } = useSpring({
     pos: falling ? targetPosition : initialPosition,
     rot: falling ? finalRotation : [0, 0, 0],
     config: { tension: 80, friction: 30 },
   });
-
-  // Make dice slightly smaller.
+  // Scale dice down (0.7×) so they are smaller.
   return (
     <a.mesh material={materials} position={pos} rotation={rot.to((x, y, z) => [x, y, z]) as any} scale={[0.7, 0.7, 0.7]}>
       <boxGeometry args={[1, 1, 1]} />
@@ -189,9 +189,7 @@ export default function DiceRollPage() {
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
 
     const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
-    const winAmount = selectedBets
-      .filter(bet => bet.isWin)
-      .reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
+    const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
     const lossAmount = betAmount - winAmount;
 
     const wonBets = selectedBets.filter(bet => bet.isWin);
