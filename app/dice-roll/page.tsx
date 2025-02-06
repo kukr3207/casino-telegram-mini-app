@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Canvas, useLoader } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { TextureLoader, MeshStandardMaterial, Euler } from "three";
+import { useSpring, a } from "@react-spring/three";
 import "../../styles/dice-roll.css";
 
 interface Bet {
@@ -11,80 +15,86 @@ interface Bet {
   winAmount?: number;
 }
 
-// A realistic 3D dice cube with dotted faces
-interface DiceCubeProps {
-  style: React.CSSProperties;
-  rolling: boolean;
-}
-function DiceCube({ style, rolling }: DiceCubeProps) {
-  return (
-    <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
-      {/* Face numbering: front = 1, back = 6, right = 3, left = 4, top = 2, bottom = 5 */}
-      <div className="face front">
-        {/* Face 1: single pip in center */}
-        <div className="pip pip-center"></div>
-      </div>
-      <div className="face back">
-        {/* Face 6: two columns of three pips */}
-        <div className="pip pip-top-left"></div>
-        <div className="pip pip-middle-left"></div>
-        <div className="pip pip-bottom-left"></div>
-        <div className="pip pip-top-right"></div>
-        <div className="pip pip-middle-right"></div>
-        <div className="pip pip-bottom-right"></div>
-      </div>
-      <div className="face right">
-        {/* Face 3: pips at top-left, center, bottom-right */}
-        <div className="pip pip-top-left"></div>
-        <div className="pip pip-center"></div>
-        <div className="pip pip-bottom-right"></div>
-      </div>
-      <div className="face left">
-        {/* Face 4: pips at top-left, top-right, bottom-left, bottom-right */}
-        <div className="pip pip-top-left"></div>
-        <div className="pip pip-top-right"></div>
-        <div className="pip pip-bottom-left"></div>
-        <div className="pip pip-bottom-right"></div>
-      </div>
-      <div className="face top">
-        {/* Face 2: pips at top-left and bottom-right */}
-        <div className="pip pip-top-left"></div>
-        <div className="pip pip-bottom-right"></div>
-      </div>
-      <div className="face bottom">
-        {/* Face 5: four corner pips and one in center */}
-        <div className="pip pip-top-left"></div>
-        <div className="pip pip-top-right"></div>
-        <div className="pip pip-bottom-left"></div>
-        <div className="pip pip-bottom-right"></div>
-        <div className="pip pip-center"></div>
-      </div>
-    </div>
-  );
-}
-
-// Mapping function to compute the final transform so that the correct face is on top.
-// (These values are chosen by trial to give distinct rotations. Adjust as needed.)
-function getDiceCubeTransform(value: number): string {
-  switch (value) {
+// Returns the target rotation as a tuple so that the proper face is on top.
+function getTargetRotation(result: number): [number, number, number] {
+  switch (result) {
     case 1:
-      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";
+      return [0, 0, 0];
     case 2:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+      return [-Math.PI / 2, 0, 0];
     case 3:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(90deg)";
+      return [0, 0, Math.PI / 2];
     case 4:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(-90deg)";
+      return [0, 0, -Math.PI / 2];
     case 5:
-      return "rotateX(180deg) rotateY(0deg) rotateZ(0deg)";
+      return [Math.PI / 2, 0, 0];
     case 6:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";
+      return [Math.PI, 0, 0];
     default:
-      return "";
+      return [0, 0, 0];
   }
 }
 
+interface DiceProps {
+  result: number;
+  rolling: boolean;
+  position: [number, number, number];
+}
+
+const diceTexturesUrls = [
+  "https://upload.wikimedia.org/wikipedia/commons/1/16/Dice-1-b.svg", // Face 1
+  "https://upload.wikimedia.org/wikipedia/commons/4/4e/Dice-2-b.svg", // Face 2
+  "https://upload.wikimedia.org/wikipedia/commons/7/72/Dice-3-b.svg", // Face 3
+  "https://upload.wikimedia.org/wikipedia/commons/8/8d/Dice-4-b.svg", // Face 4
+  "https://upload.wikimedia.org/wikipedia/commons/5/5f/Dice-5-b.svg", // Face 5
+  "https://upload.wikimedia.org/wikipedia/commons/f/f4/Dice-6-b.svg"  // Face 6
+];
+
+function Dice({ result, rolling, position }: DiceProps) {
+  const mesh = useRef<any>();
+  const textures = useLoader(TextureLoader, diceTexturesUrls);
+  const materials = textures.map(
+    (texture: any) => new MeshStandardMaterial({ map: texture })
+  );
+
+  const target = getTargetRotation(result);
+  // Set up a spring that animates the rotation as an array of three numbers.
+  const [spring, springApi] = useSpring<{ rotation: [number, number, number] }>(() => ({
+    rotation: [0, 0, 0],
+  }));
+
+  useEffect(() => {
+    if (rolling) {
+      const interval = setInterval(() => {
+        springApi.start({
+          rotation: [
+            Math.random() * Math.PI,
+            Math.random() * Math.PI,
+            Math.random() * Math.PI,
+          ],
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    } else {
+      springApi.start({ rotation: target });
+    }
+  }, [rolling, target, springApi]);
+
+  return (
+    <a.mesh
+      ref={mesh}
+      position={position}
+      material={materials}
+      // Here we use .to() with three parameters (x, y, z) rather than a single array parameter.
+      rotation={spring.rotation.to((x: number, y: number, z: number) => [x, y, z]) as any}
+    >
+      <boxBufferGeometry args={[2, 2, 2]} />
+    </a.mesh>
+  );
+}
+
 export default function DiceRollPage() {
+  // ... your DiceRollPage component remains unchanged ...
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
@@ -95,18 +105,6 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
-
-  // Holds the inline transform for each dice cube (final orientation when result arrives)
-  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
-
-  // Initial style (the cube is already on the table)
-  const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
-
-  useEffect(() => {
-    if (showDicePopup) {
-      setDiceCubeStyles([initialDiceCubeStyle, initialDiceCubeStyle]);
-    }
-  }, [showDicePopup]);
 
   useEffect(() => {
     const tokens = sessionStorage.getItem("tokens");
@@ -167,29 +165,29 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    // Start continuous realistic roll (the dice cubes have the "rolling" class).
     try {
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
-      // After a continuous roll (animation runs for a couple of seconds), stop the rolling
       setTimeout(() => {
-        // Set each cube’s inline style so that the correct face is on top.
-        setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
         setDiceResult([dice1, dice2]);
         setRollHash(hash);
         setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-      }, 2500); // Adjust the duration (in ms) as needed for a realistic roll
+      }, 3000);
     } catch (error) {
       console.error("Error rolling dice:", error);
       setIsRolling(false);
     }
   };
 
-  const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
+  const updateTokens = async (
+    casinoChips: number,
+    withdrawalTokens: number,
+    holTokens: number
+  ) => {
     const chatId = sessionStorage.getItem("chat_id");
     const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
 
@@ -201,12 +199,12 @@ export default function DiceRollPage() {
 
     const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     const winAmount = selectedBets
-      .filter((bet) => bet.isWin)
+      .filter(bet => bet.isWin)
       .reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
     const lossAmount = betAmount - winAmount;
 
-    const wonBets = selectedBets.filter((bet) => bet.isWin);
-    const lostBets = selectedBets.filter((bet) => !bet.isWin);
+    const wonBets = selectedBets.filter(bet => bet.isWin);
+    const lostBets = selectedBets.filter(bet => !bet.isWin);
 
     const payload = {
       chatId,
@@ -391,15 +389,14 @@ export default function DiceRollPage() {
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
             <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
-            <div className="dice-container">
-              <DiceCube
-                style={{ transform: diceCubeStyles[0] || initialDiceCubeStyle }}
-                rolling={isRolling}
-              />
-              <DiceCube
-                style={{ transform: diceCubeStyles[1] || initialDiceCubeStyle }}
-                rolling={isRolling}
-              />
+            <div className="dice-canvas">
+              <Canvas>
+                <ambientLight intensity={0.5} />
+                <directionalLight intensity={0.8} position={[10, 10, 5]} />
+                <Dice result={diceResult[0]} rolling={isRolling} position={[-3, 0, 0]} />
+                <Dice result={diceResult[1]} rolling={isRolling} position={[3, 0, 0]} />
+                <OrbitControls enableZoom={false} enablePan={false} />
+              </Canvas>
             </div>
           </div>
         </div>
