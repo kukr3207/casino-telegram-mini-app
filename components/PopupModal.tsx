@@ -27,6 +27,12 @@ const gameDetails: Record<string, GameDetails> = {
     animationClass: "slot-machine-animation",
     route: "/slot-machine",
   },
+  "blackjack": {
+    name: "Slot Machine",
+    description: "Spin the slots and win big!",
+    animationClass: "slot-machine-animation",
+    route: "/blackjack",
+  },
 };
 
 interface PopupModalProps {

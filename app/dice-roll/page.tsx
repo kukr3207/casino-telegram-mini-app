@@ -11,11 +11,49 @@ interface Bet {
   winAmount?: number;
 }
 
+// --- New: DiceCube component for a 3D dice cube ---
+interface DiceCubeProps {
+  style: React.CSSProperties;
+}
+function DiceCube({ style }: DiceCubeProps) {
+  return (
+    <div className="dice-cube" style={style}>
+      <div className="face face1">1</div>
+      <div className="face face2">2</div>
+      <div className="face face3">3</div>
+      <div className="face face4">4</div>
+      <div className="face face5">5</div>
+      <div className="face face6">6</div>
+    </div>
+  );
+}
+
+// --- Mapping function to return the final transform for a dice value ---
+function getDiceCubeTransform(value: number): string {
+  // The mapping is set so that the final transform brings the desired face front.
+  // You can tweak these rotations as needed for your visual design.
+  switch (value) {
+    case 1:
+      return "translateY(0) rotateX(0deg) rotateY(0deg)";
+    case 2:
+      return "translateY(0) rotateX(0deg) rotateY(-90deg)";
+    case 3:
+      return "translateY(0) rotateX(90deg) rotateY(0deg)";
+    case 4:
+      return "translateY(0) rotateX(-90deg) rotateY(0deg)";
+    case 5:
+      return "translateY(0) rotateX(0deg) rotateY(90deg)";
+    case 6:
+      return "translateY(0) rotateX(0deg) rotateY(180deg)";
+    default:
+      return "translateY(0) rotateX(0deg) rotateY(0deg)";
+  }
+}
+
 export default function DiceRollPage() {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
-  const [isDiceRolled, setIsDiceRolled] = useState(false); // New State for Fix
   const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
@@ -23,7 +61,28 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
   const [hasResult, setHasResult] = useState(false);
-  const [showDicePopup, setShowDicePopup] = useState(false); // New for Dice Animation
+  const [showDicePopup, setShowDicePopup] = useState(false);
+
+  // New state for the inline transform styles for each dice cube.
+  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
+
+  // This is the starting style (off‐screen with a “falling” rotation)
+  const initialDiceCubeStyle = "translateY(-300px) rotateX(60deg) rotateY(60deg)";
+
+  // When the dice popup opens, set both dice to start off-screen.
+  useEffect(() => {
+    if (showDicePopup) {
+      setDiceCubeStyles([initialDiceCubeStyle, initialDiceCubeStyle]);
+    }
+  }, [showDicePopup]);
+
+  useEffect(() => {
+    const tokens = sessionStorage.getItem("tokens");
+    if (tokens) {
+      const parsedTokens = JSON.parse(tokens);
+      setCasinoChips(parsedTokens[0]?.count || 0);
+    }
+  }, []);
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -39,16 +98,10 @@ export default function DiceRollPage() {
     evenodd: 2,
   };
 
-  useEffect(() => {
-    const tokens = sessionStorage.getItem("tokens");
-    if (tokens) {
-      const parsedTokens = JSON.parse(tokens);
-      setCasinoChips(parsedTokens[0]?.count || 0);
-    }
-  }, []);
-
   const handleBetSelect = (category: string, option: string): void => {
-    const existingBet = selectedBets.find((bet) => bet.category === category && bet.option === option);
+    const existingBet = selectedBets.find(
+      (bet) => bet.category === category && bet.option === option
+    );
     if (existingBet) {
       setSelectedBets(selectedBets.filter((bet) => bet !== existingBet));
     } else {
@@ -71,7 +124,6 @@ export default function DiceRollPage() {
     setShowConfirmation(false);
     setShowDicePopup(true); // Show Dice Popup
     setIsRolling(true);
-    setIsDiceRolled(false); // Reset when starting the roll
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -83,34 +135,36 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    setIsRolling(true);
-    setRollingDice([1, 1]);
-
-    const rollingInterval = setInterval(() => {
-      setRollingDice([Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)]);
-    }, 100);
-
+    // (Optional: you could start a "rolling" interval here if you want a spinner effect)
     try {
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
+      // After a short delay, update the dice cubes from the initial (off-screen) state to the final transform.
       setTimeout(() => {
-        clearInterval(rollingInterval);
+        setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
+      }, 100); // slight delay so the CSS transition triggers
+
+      // Use a timeout to simulate the falling duration before stopping the roll.
+      setTimeout(() => {
         setDiceResult([dice1, dice2]);
         setRollHash(hash);
         setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-      }, 3000);
+      }, 1500);
     } catch (error) {
       console.error("Error rolling dice:", error);
-      clearInterval(rollingInterval);
       setIsRolling(false);
     }
   };
 
-  const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
+  const updateTokens = async (
+    casinoChips: number,
+    withdrawalTokens: number,
+    holTokens: number
+  ) => {
     const chatId = sessionStorage.getItem("chat_id");
     const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
 
@@ -121,11 +175,13 @@ export default function DiceRollPage() {
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
 
     const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
-    const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
+    const winAmount = selectedBets
+      .filter((bet) => bet.isWin)
+      .reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
     const lossAmount = betAmount - winAmount;
 
-    const wonBets = selectedBets.filter(bet => bet.isWin);
-    const lostBets = selectedBets.filter(bet => !bet.isWin);
+    const wonBets = selectedBets.filter((bet) => bet.isWin);
+    const lostBets = selectedBets.filter((bet) => !bet.isWin);
 
     const payload = {
       chatId,
@@ -162,7 +218,8 @@ export default function DiceRollPage() {
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
 
-    const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
+    const holdTokens =
+      winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
 
     await updateTokens(casinoChips, winnings, holdTokens);
     resetGame();
@@ -191,18 +248,24 @@ export default function DiceRollPage() {
     );
   };
 
-  const checkBetWin = (bet: Bet, dice1: number, dice2: number, total: number): boolean => {
+  const checkBetWin = (
+    bet: Bet,
+    dice1: number,
+    dice2: number,
+    total: number
+  ): boolean => {
     switch (bet.category) {
       case "ranges":
-        return (bet.option === "Low (2-6)" && total >= 2 && total <= 6) ||
-               (bet.option === "High (8-12)" && total >= 8 && total <= 12);
+        return (
+          (bet.option === "Low (2-6)" && total >= 2 && total <= 6) ||
+          (bet.option === "High (8-12)" && total >= 8 && total <= 12)
+        );
       case "exact":
         return total === parseInt(bet.option);
       case "pairs":
         return bet.option === `Double ${dice1}s` && dice1 === dice2;
       case "evenodd":
-        return (bet.option === "Even" && total % 2 === 0) ||
-               (bet.option === "Odd" && total % 2 !== 0);
+        return (bet.option === "Even" && total % 2 === 0) || (bet.option === "Odd" && total % 2 !== 0);
       default:
         return false;
     }
@@ -245,8 +308,15 @@ export default function DiceRollPage() {
         ) : (
           <div className="bet-list">
             {selectedBets.map((bet, index) => (
-              <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}>
-                <span className="bet-text">{bet.category} - {bet.option}</span>
+              <div
+                key={`${bet.category}-${bet.option}`}
+                className={`bet-card ${
+                  bet.isWin ? "win" : bet.isWin === false ? "lose" : ""
+                }`}
+              >
+                <span className="bet-text">
+                  {bet.category} - {bet.option}
+                </span>
                 {bet.isWin !== undefined ? (
                   <p>{bet.isWin ? `Won: ${bet.winAmount} tokens` : `Lost: ${bet.amount} tokens`}</p>
                 ) : (
@@ -266,17 +336,25 @@ export default function DiceRollPage() {
 
       <div className="place-bet">
         {!hasResult && (
-          <button className="place-bet-button" onClick={handleRollDice} disabled={selectedBets.length === 0 || isRolling}>
+          <button
+            className="place-bet-button"
+            onClick={handleRollDice}
+            disabled={selectedBets.length === 0 || isRolling}
+          >
             {isRolling ? "Rolling Dice..." : "Roll Dice"}
           </button>
         )}
 
         {hasResult && hasWon && (
-          <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
+          <button className="collect-button" onClick={handleCollectRewards}>
+            Collect Rewards
+          </button>
         )}
 
         {hasResult && !hasWon && (
-          <button className="reset-button" onClick={resetGame}>Reset</button>
+          <button className="reset-button" onClick={resetGame}>
+            Reset
+          </button>
         )}
       </div>
 
@@ -285,24 +363,31 @@ export default function DiceRollPage() {
           <div className="popup-content">
             <h3>Confirm Your Bet</h3>
             <p>Total Bet: {selectedBets.reduce((sum, bet) => sum + bet.amount, 0)} Chips</p>
-            <button onClick={confirmBet} className="confirm-button">Yes, Confirm</button>
-            <button onClick={() => setShowConfirmation(false)} className="cancel-button">No, Go Back</button>
+            <button onClick={confirmBet} className="confirm-button">
+              Yes, Confirm
+            </button>
+            <button onClick={() => setShowConfirmation(false)} className="cancel-button">
+              No, Go Back
+            </button>
           </div>
         </div>
       )}
 
-{showDicePopup && (
+      {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{isRolling ? "Rolling Dice..." : isDiceRolled ? "Dice Result 🎲" : ""}</h3>
+            <h3>
+              {isRolling
+                ? "Rolling Dice..."
+                : "Dice Result 🎲"}
+            </h3>
             <div className="dice-container">
-              {(isRolling ? rollingDice : diceResult).map((value, index) => (
-                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
-                  {[...Array(9)].map((_, i) => (
-                    <div key={i} className={`dot ${i + 1 === value ? "visible" : ""}`} />
-                  ))}
-                </div>
-              ))}
+              <DiceCube
+                style={{ transform: diceCubeStyles[0] || initialDiceCubeStyle }}
+              />
+              <DiceCube
+                style={{ transform: diceCubeStyles[1] || initialDiceCubeStyle }}
+              />
             </div>
           </div>
         </div>
@@ -310,9 +395,15 @@ export default function DiceRollPage() {
 
       {!isRolling && rollHash && (
         <div className="dice-result">
-          <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
-          <p><strong>Fairness Proof:</strong> {rollHash}</p>
-          <p><strong>Verification Seed:</strong> {verificationSeed}</p>
+          <h2>
+            Result: {diceResult[0]} + {diceResult[1]}
+          </h2>
+          <p>
+            <strong>Fairness Proof:</strong> {rollHash}
+          </p>
+          <p>
+            <strong>Verification Seed:</strong> {verificationSeed}
+          </p>
         </div>
       )}
     </div>

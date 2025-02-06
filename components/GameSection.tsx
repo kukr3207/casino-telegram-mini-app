@@ -25,6 +25,12 @@ const games = [
     description: "Spin the slots!",
     animationClass: "slot-machine-animation",
   },
+  {
+    id: "blackjack",
+    title: "blackjack",
+    description: "Spin the slots!",
+    animationClass: "slot-machine-animation",
+  },
 ];
 
 const GameSection: React.FC<GameSectionProps> = ({ showPopup }) => {
