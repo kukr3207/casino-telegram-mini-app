@@ -404,7 +404,7 @@ export default function DiceRollPage() {
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{handState === "hidden" ? "Dice Result 🎲" : "Hand Holding Dice..."}</h3>
+            <h3>{handState === "hidden" ? "Dice Result 🎲" : ""}</h3>
             {/* Hand overlay with animated transitions */}
             {handState !== "hidden" && (
               <aWeb.img
