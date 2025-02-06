@@ -1,13 +1,14 @@
-/* General Page Styles */
+/* Dice Roll Page */
 .dice-roll-page {
   padding: 20px;
   color: #f0f0f0;
   background-color: #121212;
-  font-family: Arial, sans-serif;
+  font-family: 'Arial', sans-serif;
   min-height: 100vh;
   text-align: center;
 }
 
+/* Title */
 .dice-roll-title {
   font-size: 28px;
   font-weight: bold;
@@ -15,7 +16,7 @@
   margin-bottom: 20px;
 }
 
-/* Category Options and Bets */
+/* Category Options */
 .category-options {
   display: flex;
   flex-wrap: wrap;
@@ -71,6 +72,7 @@
   transform: scale(1.1);
 }
 
+/* Payout Ratio */
 .payout-ratio {
   font-size: 14px;
   color: #bbb;
@@ -86,6 +88,7 @@
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
+/* Bet Cards */
 .bet-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -143,6 +146,7 @@ button {
   outline: none;
 }
 
+/* Roll Dice Button */
 .place-bet-button {
   background: linear-gradient(145deg, #ffd700, #ffb300);
   color: #000;
@@ -154,6 +158,7 @@ button {
   box-shadow: 0 0 20px rgba(255, 215, 0, 1);
 }
 
+/* Collect Rewards Button */
 .collect-button {
   background: linear-gradient(145deg, #4caf50, #2e7d32);
   color: #fff;
@@ -165,6 +170,7 @@ button {
   box-shadow: 0 0 20px rgba(76, 175, 80, 1);
 }
 
+/* Confirm Button (Popup) */
 .confirm-button {
   background: linear-gradient(145deg, #4caf50, #2e7d32);
   color: white;
@@ -178,6 +184,7 @@ button {
   box-shadow: 0 0 20px rgba(76, 175, 80, 1);
 }
 
+/* Cancel Button (Popup) */
 .cancel-button {
   background: linear-gradient(145deg, #f44336, #b71c1c);
   color: white;
@@ -207,66 +214,155 @@ button {
   margin: 5px 0;
 }
 
-/* Popup Overlay & Content */
+/* Popup Overlay */
 .popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   cursor: pointer;
-  backdrop-filter: blur(5px);
 }
 
-.popup-content,
-.dice-popup-content {
-  position: relative; /* Ensure absolute children are positioned relative to this */
+/* Dice Animation Popup */
+.dice-animation-popup {
   background: #1e1e1e;
   padding: 20px;
   border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
   text-align: center;
   color: #ffd700;
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+  animation: fadeIn 0.3s ease-in-out;
+  cursor: default;
+}
+
+/* Dice Container */
+.dice-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Dice Style */
+.dice {
+  width: 60px;
+  height: 60px;
+  background: white;
+  border: 2px solid black;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.5s ease-in-out;
+}
+
+/* Dice Dots */
+.dot {
+  width: 10px;
+  height: 10px;
+  background: black;
+  border-radius: 50%;
+  justify-self: center;
+  align-self: center;
+  opacity: 0;
+}
+
+/* Dice Face Values */
+.dice[data-value="1"] .dot:nth-child(5),
+.dice[data-value="2"] .dot:nth-child(1),
+.dice[data-value="2"] .dot:nth-child(9),
+.dice[data-value="3"] .dot:nth-child(1),
+.dice[data-value="3"] .dot:nth-child(5),
+.dice[data-value="3"] .dot:nth-child(9),
+.dice[data-value="4"] .dot:nth-child(1),
+.dice[data-value="4"] .dot:nth-child(3),
+.dice[data-value="4"] .dot:nth-child(7),
+.dice[data-value="4"] .dot:nth-child(9),
+.dice[data-value="5"] .dot:nth-child(1),
+.dice[data-value="5"] .dot:nth-child(3),
+.dice[data-value="5"] .dot:nth-child(5),
+.dice[data-value="5"] .dot:nth-child(7),
+.dice[data-value="5"] .dot:nth-child(9),
+.dice[data-value="6"] .dot:nth-child(1),
+.dice[data-value="6"] .dot:nth-child(3),
+.dice[data-value="6"] .dot:nth-child(4),
+.dice[data-value="6"] .dot:nth-child(6),
+.dice[data-value="6"] .dot:nth-child(7),
+.dice[data-value="6"] .dot:nth-child(9) {
+  opacity: 1;
+}
+
+/* Rolling Animation */
+.rolling {
+  animation: rollAnimation 1s infinite ease-in-out;
+}
+
+@keyframes rollAnimation {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85); /* Slightly darker for better contrast */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px); /* Adds a blur effect for the background */
+}
+
+/* Confirmation Popup Content */
+.popup-content {
+  background: #1e1e1e; /* Solid dark background */
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  color: #ffd700;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); /* Stronger glowing border */
   animation: fadeIn 0.4s ease-in-out;
-  max-width: 300px;
+  max-width: 350px;
   width: 90%;
-  border: 2px solid #ffd700;
-  overflow: hidden;
+  border: 2px solid #ffd700; /* Golden border for better separation */
 }
 
-
-/* Hand Overlay: Increase z-index so it appears above the canvas */
-.hand-overlay {
-  position: absolute;
-  top: -75%;
-  left: 20%;
-  transform: translate(-50%, -0%);
-  width: 350px; /* adjust as needed */
-  z-index: 20; /* Higher than dice canvas */
-  pointer-events: none;
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.popup-content h3,
-.dice-popup-content h3 {
+/* Popup Title */
+.popup-content h3 {
   margin-bottom: 15px;
-  font-size: 22px;
+  font-size: 24px;
   color: #ffeb3b;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8); /* Glowing effect */
 }
 
-.popup-content p,
-.dice-popup-content p {
+/* Popup Description */
+.popup-content p {
   margin: 10px 0;
   color: #f0f0f0;
   font-size: 16px;
 }
 
+/* Popup Buttons Layout */
 .popup-content button {
   margin: 10px 5px;
   width: 45%;
@@ -276,14 +372,32 @@ button {
   transition: all 0.3s ease;
 }
 
-/* Dice Canvas */
-.dice-canvas {
-  width: 300px;
-  height: 300px;
-  margin: 20px auto 0 auto;
-  position: relative;
-  overflow: hidden;
-  z-index: 1; /* Lower than hand overlay */
+/* Confirm Button */
+.confirm-button {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.6);
+  border: none;
+  border-radius: 12px;
+}
+
+.confirm-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+}
+
+/* Cancel Button */
+.cancel-button {
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  color: white;
+  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.6);
+  border: none;
+  border-radius: 12px;
+}
+
+.cancel-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(244, 67, 54, 1);
 }
 
 /* Fade-in Animation */
@@ -312,3 +426,25 @@ button {
   box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
   color: white;
 }
+
+/* Dice Popup */
+.popup-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1000;
+}
+
+.dice-popup-content {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  text-align: center;
+  color: #ffd700;
+}
+
+
