@@ -141,34 +141,9 @@ export default function DiceRollPage() {
     setSelectedBets(updatedBets);
   };
 
-  const handleRollDice = async () => {
-    if (isRolling) return;
-
-    setShowDicePopup(true);
-    setIsRolling(true);
-
-    const rollingInterval = setInterval(() => {
-      setDiceCubeStyles([
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
-      ]);
-    }, 100);
-
-    try {
-      const response = await fetch("/api/dice-roll", { method: "POST" });
-      const { dice1, dice2 } = await response.json();
-
-      setTimeout(() => {
-        clearInterval(rollingInterval);
-        setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
-        setDiceResult([dice1, dice2]);
-        setIsRolling(false);
-      }, 2500);
-    } catch (error) {
-      console.error("Error rolling dice:", error);
-      clearInterval(rollingInterval);
-      setIsRolling(false);
-    }
+  const handleRollDice = () => {
+    if (selectedBets.length === 0 || isRolling) return;
+    setShowConfirmation(true);
   };
 
   const confirmBet = async () => {
@@ -406,7 +381,6 @@ export default function DiceRollPage() {
               <DiceCube style={{ transform: diceCubeStyles[0] || initialDiceCubeStyle }} rolling={isRolling} />
               <DiceCube style={{ transform: diceCubeStyles[1] || initialDiceCubeStyle }} rolling={isRolling} />
             </div>
-            <p>Final Result: {diceResult[0]} + {diceResult[1]}</p>
           </div>
         </div>
       )}
