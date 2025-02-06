@@ -181,16 +181,17 @@ export default function DiceRollPage() {
 
       setTimeout(() => {
         clearInterval(rollingInterval);
-        // Force final transform update on the next animation frame
+        // Remove the rolling animation first then apply the final transforms.
         requestAnimationFrame(() => {
-          // Now set the exact transforms based on the result.
-          setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
-          setDiceResult([dice1, dice2]);
-          setRollHash(hash);
-          setVerificationSeed(seed);
-          highlightBets(dice1, dice2);
           setIsRolling(false);
-          setHasResult(true);
+          requestAnimationFrame(() => {
+            setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
+            setDiceResult([dice1, dice2]);
+            setRollHash(hash);
+            setVerificationSeed(seed);
+            highlightBets(dice1, dice2);
+            setHasResult(true);
+          });
         });
       }, 2500);
     } catch (error) {
