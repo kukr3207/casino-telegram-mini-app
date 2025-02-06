@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
-import { TextureLoader, MeshStandardMaterial, Euler } from "three";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useTexture } from "@react-three/drei";
+import { MeshStandardMaterial, Euler } from "three";
 import { useSpring, a } from "@react-spring/three";
 import "../../styles/dice-roll.css";
 
@@ -16,6 +16,7 @@ interface Bet {
 }
 
 // Returns the target rotation as a tuple so that the proper face is on top.
+// Standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6.
 function getTargetRotation(result: number): [number, number, number] {
   switch (result) {
     case 1:
@@ -41,24 +42,30 @@ interface DiceProps {
   position: [number, number, number];
 }
 
-const diceTexturesUrls = [
-  "https://upload.wikimedia.org/wikipedia/commons/1/16/Dice-1-b.svg", // Face 1
-  "https://upload.wikimedia.org/wikipedia/commons/4/4e/Dice-2-b.svg", // Face 2
-  "https://upload.wikimedia.org/wikipedia/commons/7/72/Dice-3-b.svg", // Face 3
-  "https://upload.wikimedia.org/wikipedia/commons/8/8d/Dice-4-b.svg", // Face 4
-  "https://upload.wikimedia.org/wikipedia/commons/5/5f/Dice-5-b.svg", // Face 5
-  "https://upload.wikimedia.org/wikipedia/commons/f/f4/Dice-6-b.svg"  // Face 6
-];
+// Define data URIs for dice textures (simple SVG images).
+const dice1 =
+  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+const dice2 =
+  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+const dice3 =
+  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+const dice4 =
+  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+const dice5 =
+  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+const dice6 =
+  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'25'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'25'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'75'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'75'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+
+const diceTextures = [dice1, dice2, dice3, dice4, dice5, dice6];
 
 function Dice({ result, rolling, position }: DiceProps) {
   const mesh = useRef<any>();
-  const textures = useLoader(TextureLoader, diceTexturesUrls);
+  const textures = useTexture(diceTextures);
   const materials = textures.map(
     (texture: any) => new MeshStandardMaterial({ map: texture })
   );
 
   const target = getTargetRotation(result);
-  // Set up a spring that animates the rotation as an array of three numbers.
   const [spring, springApi] = useSpring<{ rotation: [number, number, number] }>(() => ({
     rotation: [0, 0, 0],
   }));
@@ -85,16 +92,17 @@ function Dice({ result, rolling, position }: DiceProps) {
       ref={mesh}
       position={position}
       material={materials}
-      // Here we use .to() with three parameters (x, y, z) rather than a single array parameter.
-      rotation={spring.rotation.to((x: number, y: number, z: number) => [x, y, z]) as any}
+      rotation={spring.rotation.to(
+        (x: number, y: number, z: number) => new Euler(x, y, z)
+      ) as any}
     >
-      <boxBufferGeometry args={[2, 2, 2]} />
+      {/* Use <boxGeometry> instead of <boxBufferGeometry> */}
+      <boxGeometry args={[2, 2, 2]} />
     </a.mesh>
   );
 }
 
 export default function DiceRollPage() {
-  // ... your DiceRollPage component remains unchanged ...
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
