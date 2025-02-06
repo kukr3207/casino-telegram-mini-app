@@ -166,8 +166,12 @@ export default function DiceRollPage() {
     const rollingInterval = setInterval(() => {
       // For spinning effect, we update diceCubeStyles randomly.
       setDiceCubeStyles([
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
+          Math.random() * 360
+        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
+          Math.random() * 360
+        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
       ]);
     }, 100);
 
@@ -177,14 +181,17 @@ export default function DiceRollPage() {
 
       setTimeout(() => {
         clearInterval(rollingInterval);
-        // Now set the exact transforms based on the result.
-        setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
-        setDiceResult([dice1, dice2]);
-        setRollHash(hash);
-        setVerificationSeed(seed);
-        highlightBets(dice1, dice2);
-        setIsRolling(false);
-        setHasResult(true);
+        // Force final transform update on the next animation frame
+        requestAnimationFrame(() => {
+          // Now set the exact transforms based on the result.
+          setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
+          setDiceResult([dice1, dice2]);
+          setRollHash(hash);
+          setVerificationSeed(seed);
+          highlightBets(dice1, dice2);
+          setIsRolling(false);
+          setHasResult(true);
+        });
       }, 2500);
     } catch (error) {
       console.error("Error rolling dice:", error);
