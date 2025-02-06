@@ -4,9 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import { MeshStandardMaterial, Euler } from "three";
-import { useSpring, a } from "@react-spring/three";
+import { useSpring, animated as a } from "@react-spring/three";
+import { useSpring as useSpringWeb, animated as aWeb } from "@react-spring/web";
 import "../../styles/dice-roll.css";
 
+// ----- Types -----
 interface Bet {
   category: string;
   option: string;
@@ -15,22 +17,25 @@ interface Bet {
   winAmount?: number;
 }
 
-// Given a dice result (1–6), return the target rotation as a tuple so that the correct face is up.
-// Using standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6.
+// ----- Dice Result Orientation -----
+// BoxGeometry maps materials in the following order: 
+// [right, left, top, bottom, front, back] 
+// To have standard dice (top=1, front=2, right=3, left=4, back=5, bottom=6),
+// we reorder the textures as shown below.
 function getTargetRotation(result: number): [number, number, number] {
   switch (result) {
     case 1:
-      return [0, 0, 0]; // Top shows face 1
+      return [0, 0, 0]; // Top shows face 1.
     case 2:
-      return [-Math.PI / 2, 0, 0]; // Front becomes top
+      return [-Math.PI / 2, 0, 0]; // Front becomes top.
     case 3:
-      return [0, 0, Math.PI / 2]; // Right becomes top
+      return [0, 0, Math.PI / 2]; // Right becomes top.
     case 4:
-      return [0, 0, -Math.PI / 2]; // Left becomes top
+      return [0, 0, -Math.PI / 2]; // Left becomes top.
     case 5:
-      return [Math.PI / 2, 0, 0]; // Back becomes top
+      return [Math.PI / 2, 0, 0]; // Back becomes top.
     case 6:
-      return [Math.PI, 0, 0]; // Bottom becomes top
+      return [Math.PI, 0, 0]; // Bottom becomes top.
     default:
       return [0, 0, 0];
   }
@@ -43,7 +48,8 @@ interface DiceProps {
   targetPosition: [number, number, number];
 }
 
-// Data URI–encoded SVG images for dice faces (very basic)
+// ----- Dice Textures -----
+// These are data URI–encoded SVG images for dice faces.
 const dice1 =
   "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice2 =
@@ -57,28 +63,19 @@ const dice5 =
 const dice6 =
   "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='75'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='75'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 
-// Our logical order is [dice1, dice2, dice3, dice4, dice5, dice6] (faces 1–6)
-// But BoxGeometry expects materials in order: [right, left, top, bottom, front, back].
-// To match our desired dice convention (top=1, front=2, right=3, left=4, back=5, bottom=6), reorder as follows:
-const orderedDiceTextures = [
-  dice3, // right face → dice face 3
-  dice4, // left face  → dice face 4
-  dice1, // top face   → dice face 1
-  dice6, // bottom face→ dice face 6
-  dice2, // front face → dice face 2
-  dice5, // back face  → dice face 5
-];
+// Reorder textures to match BoxGeometry face order:
+// [right, left, top, bottom, front, back] => we want: top=1, front=2, right=3, left=4, back=5, bottom=6.
+const orderedDiceTextures = [dice3, dice4, dice1, dice6, dice2, dice5];
 
 function Dice({ result, released, initialPosition, targetPosition }: DiceProps) {
   const mesh = useRef<any>();
-  // Use Drei's useTexture to load our ordered textures.
   const textures = useTexture(orderedDiceTextures);
   const materials = textures.map(
     (texture: any) => new MeshStandardMaterial({ map: texture })
   );
 
   const finalRotation = getTargetRotation(result);
-  // Animate both position and rotation from the initial (hand-held) to the target (table) state.
+  // Animate position and rotation from the initial (hand-held) to the target (on table).
   const { pos, rot } = useSpring({
     pos: released ? targetPosition : initialPosition,
     rot: released ? finalRotation : [0, 0, 0],
@@ -92,6 +89,11 @@ function Dice({ result, released, initialPosition, targetPosition }: DiceProps) 
   );
 }
 
+// ----- Hand Images -----
+// Replace these paths with the correct paths to your hand images.
+const handClosed = "/images/hand_close.png";
+const handOpen = "/assets/hand_open.png";
+
 export default function DiceRollPage() {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
@@ -103,8 +105,15 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
-  // State for when the hand releases the dice.
-  const [handReleased, setHandReleased] = useState(false);
+  // handState controls the hand image: "closed", "open", or "hidden"
+  const [handState, setHandState] = useState<"closed" | "open" | "hidden">("closed");
+
+  // Animate the hand overlay using react-spring for web.
+  const handSpring = useSpringWeb({
+    opacity: handState === "hidden" ? 0 : 1,
+    transform: handState === "open" ? "translateY(-20px)" : "translateY(0px)",
+    config: { duration: 500 },
+  });
 
   useEffect(() => {
     const tokens = sessionStorage.getItem("tokens");
@@ -154,7 +163,7 @@ export default function DiceRollPage() {
     setShowConfirmation(false);
     setShowDicePopup(true);
     setIsRolling(true);
-    setHandReleased(false);
+    setHandState("closed"); // Initially, hand is closed.
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -166,16 +175,20 @@ export default function DiceRollPage() {
     await updateTokens(updatedChips, 0, 0);
 
     try {
-      // Immediately fetch the result from the backend.
+      // Immediately fetch the dice result.
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
       setDiceResult([dice1, dice2]);
       setRollHash(hash);
       setVerificationSeed(seed);
-      highlightBets(dice1, dice2);
-      // After 1 second, simulate the hand releasing the dice.
+      // Optionally, highlight bets.
+      // After 500ms, animate hand open.
       setTimeout(() => {
-        setHandReleased(true);
+        setHandState("open");
+      }, 500);
+      // After another 500ms, hide the hand (release the dice).
+      setTimeout(() => {
+        setHandState("hidden");
         setIsRolling(false);
         setHasResult(true);
       }, 1000);
@@ -256,7 +269,7 @@ export default function DiceRollPage() {
     setRollHash(null);
     setVerificationSeed(null);
     setHasResult(false);
-    setHandReleased(false);
+    setHandState("closed");
   };
 
   const highlightBets = (dice1: number, dice2: number): void => {
@@ -391,10 +404,15 @@ export default function DiceRollPage() {
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{!handReleased ? "Hand Holding Dice..." : "Dice Result 🎲"}</h3>
-            {/* Display the hand image when not released */}
-            {!handReleased && (
-              <img src="/assets/hand.png" alt="Hand Holding Dice" className="hand-overlay" />
+            <h3>{handState === "hidden" ? "Dice Result 🎲" : "Hand Holding Dice..."}</h3>
+            {/* Hand overlay with animated transitions */}
+            {handState !== "hidden" && (
+              <aWeb.img
+                src={handState === "closed" ? handClosed : handOpen}
+                alt="Hand Holding Dice"
+                style={handSpring}
+                className="hand-overlay"
+              />
             )}
             <div className="dice-canvas">
               <Canvas>
@@ -402,13 +420,13 @@ export default function DiceRollPage() {
                 <directionalLight intensity={0.8} position={[10, 10, 5]} />
                 <Dice
                   result={diceResult[0]}
-                  released={handReleased}
+                  released={handState === "hidden"}
                   initialPosition={[-1, 3, 0]}
                   targetPosition={[-2, 0, 0]}
                 />
                 <Dice
                   result={diceResult[1]}
-                  released={handReleased}
+                  released={handState === "hidden"}
                   initialPosition={[1, 3, 0]}
                   targetPosition={[2, 0, 0]}
                 />
