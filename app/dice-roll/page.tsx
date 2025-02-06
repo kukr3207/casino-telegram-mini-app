@@ -92,7 +92,7 @@ function Dice({ result, released, initialPosition, targetPosition }: DiceProps) 
 // ----- Hand Images -----
 // Replace these paths with the correct paths to your hand images.
 const handClosed = "/images/hand_close.png";
-const handOpen = "/assets/hand_open.png";
+const handOpen = "/images/hand_open.png";
 
 export default function DiceRollPage() {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);

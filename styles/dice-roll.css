@@ -239,14 +239,13 @@ button {
   position: relative;
 }
 
-/* Hand Overlay: positioned above the dice canvas.
-   The hand image will be animated by react-spring; these rules ensure proper size and placement. */
+/* Hand Overlay: positioned above the dice canvas */
 .hand-overlay {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translate(-50%, -20%);
-  width: 150px; /* adjust as needed */
+  width: 150px;
   z-index: 2;
   pointer-events: none;
   transition: opacity 0.5s ease, transform 0.5s ease;
