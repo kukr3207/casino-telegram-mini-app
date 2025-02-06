@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useTexture } from "@react-three/drei";
+import { MeshStandardMaterial } from "three";
+import { useSpring, animated as a } from "@react-spring/three";
 import "../../styles/dice-roll.css";
 
+// ----- Types -----
 interface Bet {
   category: string;
   option: string;
@@ -11,19 +16,95 @@ interface Bet {
   winAmount?: number;
 }
 
+// ----- Dice Orientation Mapping -----
+// BoxGeometry maps materials in this order: [right, left, top, bottom, front, back].
+// For a standard dice with: top=1, front=2, right=3, left=4, back=5, bottom=6,
+// we reorder our textures accordingly.
+function getTargetRotation(result: number): [number, number, number] {
+  switch (result) {
+    case 1:
+      return [0, 0, 0]; // Face 1 on top.
+    case 2:
+      return [-Math.PI / 2, 0, 0]; // Face 2 rotates up.
+    case 3:
+      return [0, 0, Math.PI / 2]; // Face 3 rotates up.
+    case 4:
+      return [0, 0, -Math.PI / 2]; // Face 4 rotates up.
+    case 5:
+      return [Math.PI / 2, 0, 0]; // Face 5 rotates up.
+    case 6:
+      return [Math.PI, 0, 0]; // Face 6 rotates up.
+    default:
+      return [0, 0, 0];
+  }
+}
+
+interface DiceProps {
+  result: number;
+  falling: boolean;
+  initialPosition: [number, number, number];
+  targetPosition: [number, number, number];
+}
+
+// ----- Dice Textures -----
+// These data URI–encoded SVGs are simple dice faces. Replace them with your own images if desired.
+const diceFace1 =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3C/svg%3E";
+const diceFace2 =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
+const diceFace3 =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
+const diceFace4 =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
+const diceFace5 =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
+const diceFace6 =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='75'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='75'%20r='10'%20fill='black'/%3E%3C/svg%3E";
+
+// Logical order: [diceFace1, diceFace2, diceFace3, diceFace4, diceFace5, diceFace6]
+// To match BoxGeometry's order ([right, left, top, bottom, front, back]), reorder as:
+const orderedDiceTextures = [diceFace3, diceFace4, diceFace1, diceFace6, diceFace2, diceFace5];
+
+function Dice({ result, falling, initialPosition, targetPosition }: DiceProps) {
+  const textures = useTexture(orderedDiceTextures);
+  const materials = textures.map((texture: any) => new MeshStandardMaterial({ map: texture }));
+
+  const finalRotation = getTargetRotation(result);
+  // Animate dice falling from above: start at a high Y (e.g., 5) then fall to target position.
+  // Adjust the spring config for 0.5x speed (slower).
+  const { pos, rot } = useSpring({
+    pos: falling ? targetPosition : initialPosition,
+    rot: falling ? finalRotation : [0, 0, 0],
+    config: { tension: 80, friction: 30 },
+  });
+
+  // Make dice slightly smaller.
+  return (
+    <a.mesh material={materials} position={pos} rotation={rot.to((x, y, z) => [x, y, z]) as any} scale={[0.7, 0.7, 0.7]}>
+      <boxGeometry args={[1, 1, 1]} />
+    </a.mesh>
+  );
+}
+
 export default function DiceRollPage() {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
-  const [isDiceRolled, setIsDiceRolled] = useState(false); // New State for Fix
   const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
   const [casinoChips, setCasinoChips] = useState<number>(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
   const [hasResult, setHasResult] = useState(false);
-  const [showDicePopup, setShowDicePopup] = useState(false); // New for Dice Animation
+  const [showDicePopup, setShowDicePopup] = useState(false);
+
+  useEffect(() => {
+    const tokens = sessionStorage.getItem("tokens");
+    if (tokens) {
+      const parsedTokens = JSON.parse(tokens);
+      setCasinoChips(parsedTokens[0]?.count || 0);
+    }
+  }, []);
 
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
@@ -39,16 +120,10 @@ export default function DiceRollPage() {
     evenodd: 2,
   };
 
-  useEffect(() => {
-    const tokens = sessionStorage.getItem("tokens");
-    if (tokens) {
-      const parsedTokens = JSON.parse(tokens);
-      setCasinoChips(parsedTokens[0]?.count || 0);
-    }
-  }, []);
-
   const handleBetSelect = (category: string, option: string): void => {
-    const existingBet = selectedBets.find((bet) => bet.category === category && bet.option === option);
+    const existingBet = selectedBets.find(
+      (bet) => bet.category === category && bet.option === option
+    );
     if (existingBet) {
       setSelectedBets(selectedBets.filter((bet) => bet !== existingBet));
     } else {
@@ -69,48 +144,41 @@ export default function DiceRollPage() {
 
   const confirmBet = async () => {
     setShowConfirmation(false);
-    setShowDicePopup(true); // Show Dice Popup
+    setShowDicePopup(true);
     setIsRolling(true);
-    setIsDiceRolled(false); // Reset when starting the roll
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
       alert("Insufficient balance! Adjust your bet amount.");
       return;
     }
-
     const updatedChips = casinoChips - totalBetAmount;
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    setIsRolling(true);
-    setRollingDice([1, 1]);
-
-    const rollingInterval = setInterval(() => {
-      setRollingDice([Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)]);
-    }, 100);
-
     try {
+      // Immediately fetch dice result from the backend.
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
-
+      setDiceResult([dice1, dice2]);
+      setRollHash(hash);
+      setVerificationSeed(seed);
+      // After 500ms, trigger the dice drop animation.
       setTimeout(() => {
-        clearInterval(rollingInterval);
-        setDiceResult([dice1, dice2]);
-        setRollHash(hash);
-        setVerificationSeed(seed);
-        highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-      }, 3000);
+      }, 500);
     } catch (error) {
       console.error("Error rolling dice:", error);
-      clearInterval(rollingInterval);
       setIsRolling(false);
     }
   };
 
-  const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
+  const updateTokens = async (
+    casinoChips: number,
+    withdrawalTokens: number,
+    holTokens: number
+  ) => {
     const chatId = sessionStorage.getItem("chat_id");
     const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
 
@@ -121,7 +189,9 @@ export default function DiceRollPage() {
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
 
     const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
-    const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
+    const winAmount = selectedBets
+      .filter(bet => bet.isWin)
+      .reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
     const lossAmount = betAmount - winAmount;
 
     const wonBets = selectedBets.filter(bet => bet.isWin);
@@ -201,8 +271,7 @@ export default function DiceRollPage() {
       case "pairs":
         return bet.option === `Double ${dice1}s` && dice1 === dice2;
       case "evenodd":
-        return (bet.option === "Even" && total % 2 === 0) ||
-               (bet.option === "Odd" && total % 2 !== 0);
+        return (bet.option === "Even" && total % 2 === 0) || (bet.option === "Odd" && total % 2 !== 0);
       default:
         return false;
     }
@@ -291,18 +360,28 @@ export default function DiceRollPage() {
         </div>
       )}
 
-{showDicePopup && (
+      {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{isRolling ? "Rolling Dice..." : isDiceRolled ? "Dice Result 🎲" : ""}</h3>
-            <div className="dice-container">
-              {(isRolling ? rollingDice : diceResult).map((value, index) => (
-                <div key={index} className={`dice ${isRolling ? "rolling" : ""}`} data-value={value}>
-                  {[...Array(9)].map((_, i) => (
-                    <div key={i} className={`dot ${i + 1 === value ? "visible" : ""}`} />
-                  ))}
-                </div>
-              ))}
+            <h3>Dice Result 🎲</h3>
+            <div className="dice-canvas">
+              <Canvas>
+                <ambientLight intensity={0.5} />
+                <directionalLight intensity={0.8} position={[10, 10, 5]} />
+                <Dice
+                  result={diceResult[0]}
+                  falling={hasResult}
+                  initialPosition={[-0.5, 5, 0]}
+                  targetPosition={[-0.5, 0, 0]}
+                />
+                <Dice
+                  result={diceResult[1]}
+                  falling={hasResult}
+                  initialPosition={[0.5, 5, 0]}
+                  targetPosition={[0.5, 0, 0]}
+                />
+                <OrbitControls enableZoom={false} enablePan={false} />
+              </Canvas>
             </div>
           </div>
         </div>
