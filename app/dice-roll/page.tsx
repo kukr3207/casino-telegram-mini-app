@@ -11,27 +11,55 @@ interface Bet {
   winAmount?: number;
 }
 
-// --- New: DiceCube component for a 3D dice cube ---
+// --- 3D Dotted Dice Cube Component ---
 interface DiceCubeProps {
   style: React.CSSProperties;
+  rolling: boolean;
 }
-function DiceCube({ style }: DiceCubeProps) {
+function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
-    <div className="dice-cube" style={style}>
-      <div className="face face1">1</div>
-      <div className="face face2">2</div>
-      <div className="face face3">3</div>
-      <div className="face face4">4</div>
-      <div className="face face5">5</div>
-      <div className="face face6">6</div>
+    <div className={`dice-cube ${rolling ? "dice-rolling" : ""}`} style={style}>
+      <div className="face face1">
+        <div className="dot center"></div>
+      </div>
+      <div className="face face2">
+        <div className="dot top-left"></div>
+        <div className="dot bottom-right"></div>
+      </div>
+      <div className="face face3">
+        <div className="dot top-left"></div>
+        <div className="dot center"></div>
+        <div className="dot bottom-right"></div>
+      </div>
+      <div className="face face4">
+        <div className="dot top-left"></div>
+        <div className="dot top-right"></div>
+        <div className="dot bottom-left"></div>
+        <div className="dot bottom-right"></div>
+      </div>
+      <div className="face face5">
+        <div className="dot top-left"></div>
+        <div className="dot top-right"></div>
+        <div className="dot center"></div>
+        <div className="dot bottom-left"></div>
+        <div className="dot bottom-right"></div>
+      </div>
+      <div className="face face6">
+        <div className="dot top-left"></div>
+        <div className="dot top-right"></div>
+        <div className="dot middle-left"></div>
+        <div className="dot middle-right"></div>
+        <div className="dot bottom-left"></div>
+        <div className="dot bottom-right"></div>
+      </div>
     </div>
   );
 }
 
-// --- Mapping function to return the final transform for a dice value ---
+// --- Mapping function to compute final transform for each dice value ---
 function getDiceCubeTransform(value: number): string {
-  // The mapping is set so that the final transform brings the desired face front.
-  // You can tweak these rotations as needed for your visual design.
+  // These transforms orient the cube so that the correct face is on top.
+  // Adjust these values as needed to match your 3D cube layout.
   switch (value) {
     case 1:
       return "translateY(0) rotateX(0deg) rotateY(0deg)";
@@ -59,19 +87,18 @@ export default function DiceRollPage() {
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
   const [casinoChips, setCasinoChips] = useState<number>(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [rollingDice, setRollingDice] = useState<number[]>([1, 1]);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
 
-  // New state for the inline transform styles for each dice cube.
+  // State to hold the final inline transform for each dice cube.
   const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
 
-  // This is the starting style (off‐screen with a “falling” rotation)
-  const initialDiceCubeStyle = "translateY(-300px) rotateX(60deg) rotateY(60deg)";
+  // Starting style (positioned on the table).
+  const initialDiceCubeStyle = "translateY(0) rotateX(0deg) rotateY(0deg)";
 
-  // When the dice popup opens, set both dice to start off-screen.
   useEffect(() => {
     if (showDicePopup) {
+      // Reset to initial style when popup opens.
       setDiceCubeStyles([initialDiceCubeStyle, initialDiceCubeStyle]);
     }
   }, [showDicePopup]);
@@ -87,7 +114,14 @@ export default function DiceRollPage() {
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
     exact: ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
-    pairs: ["Double 1s", "Double 2s", "Double 3s", "Double 4s", "Double 5s", "Double 6s"],
+    pairs: [
+      "Double 1s",
+      "Double 2s",
+      "Double 3s",
+      "Double 4s",
+      "Double 5s",
+      "Double 6s",
+    ],
     evenodd: ["Even", "Odd"],
   };
 
@@ -122,7 +156,7 @@ export default function DiceRollPage() {
 
   const confirmBet = async () => {
     setShowConfirmation(false);
-    setShowDicePopup(true); // Show Dice Popup
+    setShowDicePopup(true);
     setIsRolling(true);
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
@@ -135,25 +169,23 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    // (Optional: you could start a "rolling" interval here if you want a spinner effect)
+    // Begin continuous roll animation (the dice cubes will have the "dice-rolling" class).
     try {
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
-      // After a short delay, update the dice cubes from the initial (off-screen) state to the final transform.
+      // When result arrives, stop the continuous roll.
       setTimeout(() => {
+        // Update each dice cube's inline style to show the final result.
         setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
-      }, 100); // slight delay so the CSS transition triggers
-
-      // Use a timeout to simulate the falling duration before stopping the roll.
-      setTimeout(() => {
+        // Save result data.
         setDiceResult([dice1, dice2]);
         setRollHash(hash);
         setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-      }, 1500);
+      }, 2000); // Duration of the continuous roll before showing result.
     } catch (error) {
       console.error("Error rolling dice:", error);
       setIsRolling(false);
@@ -248,12 +280,7 @@ export default function DiceRollPage() {
     );
   };
 
-  const checkBetWin = (
-    bet: Bet,
-    dice1: number,
-    dice2: number,
-    total: number
-  ): boolean => {
+  const checkBetWin = (bet: Bet, dice1: number, dice2: number, total: number): boolean => {
     switch (bet.category) {
       case "ranges":
         return (
@@ -286,7 +313,9 @@ export default function DiceRollPage() {
                 <button
                   key={option}
                   className={`bet-button ${
-                    selectedBets.some((bet) => bet.category === category && bet.option === option)
+                    selectedBets.some(
+                      (bet) => bet.category === category && bet.option === option
+                    )
                       ? "selected"
                       : ""
                   }`}
@@ -310,9 +339,7 @@ export default function DiceRollPage() {
             {selectedBets.map((bet, index) => (
               <div
                 key={`${bet.category}-${bet.option}`}
-                className={`bet-card ${
-                  bet.isWin ? "win" : bet.isWin === false ? "lose" : ""
-                }`}
+                className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}
               >
                 <span className="bet-text">
                   {bet.category} - {bet.option}
@@ -376,17 +403,15 @@ export default function DiceRollPage() {
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {isRolling
-                ? "Rolling Dice..."
-                : "Dice Result 🎲"}
-            </h3>
+            <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
             <div className="dice-container">
               <DiceCube
                 style={{ transform: diceCubeStyles[0] || initialDiceCubeStyle }}
+                rolling={isRolling}
               />
               <DiceCube
                 style={{ transform: diceCubeStyles[1] || initialDiceCubeStyle }}
+                rolling={isRolling}
               />
             </div>
           </div>
