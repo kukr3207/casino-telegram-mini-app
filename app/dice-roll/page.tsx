@@ -15,8 +15,8 @@ interface Bet {
   winAmount?: number;
 }
 
-// Returns the target rotation as a tuple so that the proper face is on top.
-// Standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6.
+// Given a dice result (1–6), return the target rotation as a tuple so that the proper face is on top.
+// (Standard dice: top=1, front=2, right=3, left=4, back=5, bottom=6)
 function getTargetRotation(result: number): [number, number, number] {
   switch (result) {
     case 1:
@@ -38,65 +38,50 @@ function getTargetRotation(result: number): [number, number, number] {
 
 interface DiceProps {
   result: number;
-  rolling: boolean;
-  position: [number, number, number];
+  released: boolean;
+  initialPosition: [number, number, number];
+  targetPosition: [number, number, number];
 }
 
-// Define data URIs for dice textures (simple SVG images).
+// Use data URI–encoded SVG images for dice faces.
+// (These are simple images: dice1 shows one pip in the center; dice2 shows pips at top‑left and bottom‑right, etc.)
 const dice1 =
-  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice2 =
-  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice3 =
-  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice4 =
-  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice5 =
-  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'30'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'70'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='30'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='50'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='70'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='70'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 const dice6 =
-  "data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20width%3D'100'%20height%3D'100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'white'%20stroke%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'25'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'25'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'50'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'30'%20cy%3D'75'%20r%3D'10'%20fill%3D'black'/%3E%3Ccircle%20cx%3D'70'%20cy%3D'75'%20r%3D'10'%20fill%3D'black'/%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'%3E%3Crect%20width='100'%20height='100'%20fill='white'%20stroke='black'/%3E%3Ccircle%20cx='30'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='25'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='50'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='30'%20cy='75'%20r='10'%20fill='black'/%3E%3Ccircle%20cx='70'%20cy='75'%20r='10'%20fill='black'/%3E%3C/svg%3E";
 
 const diceTextures = [dice1, dice2, dice3, dice4, dice5, dice6];
 
-function Dice({ result, rolling, position }: DiceProps) {
+function Dice({ result, released, initialPosition, targetPosition }: DiceProps) {
   const mesh = useRef<any>();
   const textures = useTexture(diceTextures);
   const materials = textures.map(
     (texture: any) => new MeshStandardMaterial({ map: texture })
   );
 
-  const target = getTargetRotation(result);
-  const [spring, springApi] = useSpring<{ rotation: [number, number, number] }>(() => ({
-    rotation: [0, 0, 0],
-  }));
-
-  useEffect(() => {
-    if (rolling) {
-      const interval = setInterval(() => {
-        springApi.start({
-          rotation: [
-            Math.random() * Math.PI,
-            Math.random() * Math.PI,
-            Math.random() * Math.PI,
-          ],
-        });
-      }, 100);
-      return () => clearInterval(interval);
-    } else {
-      springApi.start({ rotation: target });
-    }
-  }, [rolling, target, springApi]);
+  const finalRotation = getTargetRotation(result);
+  // Animate both position and rotation using react-spring.
+  const { pos, rot } = useSpring({
+    pos: released ? targetPosition : initialPosition,
+    rot: released ? finalRotation : [0, 0, 0],
+    config: { tension: 200, friction: 20 },
+  });
 
   return (
     <a.mesh
       ref={mesh}
-      position={position}
       material={materials}
-      rotation={spring.rotation.to(
-        (x: number, y: number, z: number) => new Euler(x, y, z)
-      ) as any}
+      position={pos}
+      rotation={rot.to((x, y, z) => [x, y, z]) as any}
     >
-      {/* Use <boxGeometry> instead of <boxBufferGeometry> */}
       <boxGeometry args={[2, 2, 2]} />
     </a.mesh>
   );
@@ -113,6 +98,8 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
+  // New state to indicate when the hand releases the dice.
+  const [handReleased, setHandReleased] = useState(false);
 
   useEffect(() => {
     const tokens = sessionStorage.getItem("tokens");
@@ -162,6 +149,7 @@ export default function DiceRollPage() {
     setShowConfirmation(false);
     setShowDicePopup(true);
     setIsRolling(true);
+    setHandReleased(false); // Initially, the hand is holding the dice
 
     const totalBetAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     if (totalBetAmount > casinoChips) {
@@ -174,17 +162,19 @@ export default function DiceRollPage() {
     await updateTokens(updatedChips, 0, 0);
 
     try {
+      // Immediately fetch the result
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
-
+      setDiceResult([dice1, dice2]);
+      setRollHash(hash);
+      setVerificationSeed(seed);
+      highlightBets(dice1, dice2);
+      // After 1 second, simulate the hand releasing the dice:
       setTimeout(() => {
-        setDiceResult([dice1, dice2]);
-        setRollHash(hash);
-        setVerificationSeed(seed);
-        highlightBets(dice1, dice2);
+        setHandReleased(true);
         setIsRolling(false);
         setHasResult(true);
-      }, 3000);
+      }, 1000);
     } catch (error) {
       console.error("Error rolling dice:", error);
       setIsRolling(false);
@@ -262,6 +252,7 @@ export default function DiceRollPage() {
     setRollHash(null);
     setVerificationSeed(null);
     setHasResult(false);
+    setHandReleased(false);
   };
 
   const highlightBets = (dice1: number, dice2: number): void => {
@@ -396,13 +387,29 @@ export default function DiceRollPage() {
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{isRolling ? "Rolling Dice..." : "Dice Result 🎲"}</h3>
+            <h3>{!handReleased ? "Hand Holding Dice..." : "Dice Result 🎲"}</h3>
+            {/* Hand overlay image */}
+            {!handReleased && (
+              <img src="/images/token1.png" alt="Hand Holding Dice" className="hand-overlay" />
+            )}
             <div className="dice-canvas">
               <Canvas>
                 <ambientLight intensity={0.5} />
                 <directionalLight intensity={0.8} position={[10, 10, 5]} />
-                <Dice result={diceResult[0]} rolling={isRolling} position={[-3, 0, 0]} />
-                <Dice result={diceResult[1]} rolling={isRolling} position={[3, 0, 0]} />
+                {/* Left Dice: initial position is [-1, 3, 0] and final (target) is [-2, 0, 0] */}
+                <Dice
+                  result={diceResult[0]}
+                  released={handReleased}
+                  initialPosition={[-1, 3, 0]}
+                  targetPosition={[-2, 0, 0]}
+                />
+                {/* Right Dice: initial position is [1, 3, 0] and final is [2, 0, 0] */}
+                <Dice
+                  result={diceResult[1]}
+                  released={handReleased}
+                  initialPosition={[1, 3, 0]}
+                  targetPosition={[2, 0, 0]}
+                />
                 <OrbitControls enableZoom={false} enablePan={false} />
               </Canvas>
             </div>
