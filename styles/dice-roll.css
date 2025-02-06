@@ -1,4 +1,4 @@
-/* Dice Roll Page */
+/* General Page Styling */
 .dice-roll-page {
   padding: 20px;
   color: #f0f0f0;
@@ -15,7 +15,7 @@
   margin-bottom: 20px;
 }
 
-/* Category Options */
+/* Category Options & Bets */
 .category-options {
   display: flex;
   flex-wrap: wrap;
@@ -32,24 +32,20 @@
   width: 100%;
   max-width: 300px;
 }
-
 .category:hover {
   transform: translateY(-5px);
 }
-
 .category h3 {
   font-size: 18px;
   color: #ffd700;
   margin-bottom: 10px;
 }
-
 .bet-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
 }
-
 .bet-button {
   background: linear-gradient(145deg, #282828, #3a3a3a);
   color: #ffd700;
@@ -60,17 +56,14 @@
   cursor: pointer;
   transition: all 0.3s ease;
 }
-
 .bet-button.selected {
   background: #ffd700;
   color: #000;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
 }
-
 .bet-button:hover {
   transform: scale(1.1);
 }
-
 .payout-ratio {
   font-size: 14px;
   color: #bbb;
@@ -85,14 +78,12 @@
   border-radius: 15px;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
-
 .bet-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 15px;
   justify-content: center;
 }
-
 .bet-card {
   background: linear-gradient(145deg, #252525, #2c2c2c);
   border-radius: 12px;
@@ -103,17 +94,14 @@
   margin: auto;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
-
 .bet-card:hover {
   transform: translateY(-5px);
 }
-
 .bet-text {
   font-size: 14px;
   font-weight: bold;
   color: #ffd700;
 }
-
 .bet-input {
   width: 80%;
   padding: 8px;
@@ -126,7 +114,6 @@
   box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
   transition: all 0.3s ease;
 }
-
 .bet-input:focus {
   border-color: #e5b800;
   background-color: #292929;
@@ -142,29 +129,24 @@ button {
   transition: all 0.3s ease;
   outline: none;
 }
-
 .place-bet-button {
   background: linear-gradient(145deg, #ffd700, #ffb300);
   color: #000;
   box-shadow: 0 4px 10px rgba(255, 215, 0, 0.5);
 }
-
 .place-bet-button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 20px rgba(255, 215, 0, 1);
 }
-
 .collect-button {
   background: linear-gradient(145deg, #4caf50, #2e7d32);
   color: #fff;
   box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
 }
-
 .collect-button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 20px rgba(76, 175, 80, 1);
 }
-
 .confirm-button {
   background: linear-gradient(145deg, #4caf50, #2e7d32);
   color: white;
@@ -172,12 +154,10 @@ button {
   padding: 12px 20px;
   border-radius: 12px;
 }
-
 .confirm-button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 20px rgba(76, 175, 80, 1);
 }
-
 .cancel-button {
   background: linear-gradient(145deg, #f44336, #b71c1c);
   color: white;
@@ -185,12 +165,12 @@ button {
   padding: 12px 20px;
   border-radius: 12px;
 }
-
 .cancel-button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 20px rgba(244, 67, 54, 1);
 }
 
+/* Dice Result */
 .dice-result {
   margin-top: 20px;
   background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
@@ -199,7 +179,6 @@ button {
   word-wrap: break-word;
   box-shadow: 0 4px 10px rgba(255, 215, 0, 0.5);
 }
-
 .dice-result p {
   color: #ffd700;
   font-size: 14px;
@@ -221,7 +200,6 @@ button {
   cursor: pointer;
   backdrop-filter: blur(5px);
 }
-
 .popup-content, .dice-popup-content {
   background: #1e1e1e;
   padding: 30px;
@@ -234,20 +212,17 @@ button {
   width: 90%;
   border: 2px solid #ffd700;
 }
-
 .popup-content h3, .dice-popup-content h3 {
   margin-bottom: 15px;
   font-size: 24px;
   color: #ffeb3b;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
 }
-
 .popup-content p, .dice-popup-content p {
   margin: 10px 0;
   color: #f0f0f0;
   font-size: 16px;
 }
-
 .popup-content button {
   margin: 10px 5px;
   width: 45%;
@@ -257,7 +232,7 @@ button {
   transition: all 0.3s ease;
 }
 
-/* Dice Container for 3D Perspective */
+/* Dice Container with Perspective */
 .dice-container {
   display: flex;
   justify-content: center;
@@ -266,62 +241,63 @@ button {
   perspective: 800px;
 }
 
-/* --- 3D Dice Cube & Dotted Faces --- */
+/* --- 3D Dice Cube Styles --- */
 .dice-cube {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   transform-style: preserve-3d;
-  transition: transform 1s cubic-bezier(0.25, 1.3, 0.5, 1);
+  transition: transform 1s ease-out;
+  /* A subtle drop shadow for realism */
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Each face of the cube */
+/* Position each face of the cube */
 .face {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  background: white;
+  width: 80px;
+  height: 80px;
+  background: #fff;
   border: 2px solid #000;
-  border-radius: 5px;
-  box-sizing: border-box;
+  border-radius: 10px;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
   backface-visibility: hidden;
-  position: relative;
 }
 
-/* Positioning cube faces */
-.face.face1 { transform: rotateY(0deg) translateZ(30px); }
-.face.face2 { transform: rotateY(90deg) translateZ(30px); }
-.face.face3 { transform: rotateX(90deg) translateZ(30px); }
-.face.face4 { transform: rotateX(-90deg) translateZ(30px); }
-.face.face5 { transform: rotateY(-90deg) translateZ(30px); }
-.face.face6 { transform: rotateY(180deg) translateZ(30px); }
+/* Cube face positions */
+.face.front  { transform: rotateY(0deg)   translateZ(40px); }
+.face.back   { transform: rotateY(180deg) translateZ(40px); }
+.face.right  { transform: rotateY(90deg)  translateZ(40px); }
+.face.left   { transform: rotateY(-90deg) translateZ(40px); }
+.face.top    { transform: rotateX(90deg)  translateZ(40px); }
+.face.bottom { transform: rotateX(-90deg) translateZ(40px); }
 
-/* Dotted Dice Face Dot Styles */
-.dot {
+/* Pip Styles */
+.pip {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   background: #000;
   border-radius: 50%;
 }
-.top-left    { top: 8px; left: 8px; }
-.top-right   { top: 8px; right: 8px; }
-.center      { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.bottom-left { bottom: 8px; left: 8px; }
-.bottom-right{ bottom: 8px; right: 8px; }
-.middle-left { top: 50%; left: 8px; transform: translateY(-50%); }
-.middle-right{ top: 50%; right: 8px; transform: translateY(-50%); }
+.pip.pip-center       { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.pip.pip-top-left     { top: 15%; left: 15%; }
+.pip.pip-top-right    { top: 15%; right: 15%; }
+.pip.pip-bottom-left  { bottom: 15%; left: 15%; }
+.pip.pip-bottom-right { bottom: 15%; right: 15%; }
+.pip.pip-middle-left  { top: 50%; left: 15%; transform: translateY(-50%); }
+.pip.pip-middle-right { top: 50%; right: 15%; transform: translateY(-50%); }
 
-/* Continuous Rolling (Bounce) Animation */
-@keyframes rollBounce {
-  0% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
-  25% { transform: translateY(-20px) rotateX(90deg) rotateY(45deg); }
-  50% { transform: translateY(0) rotateX(180deg) rotateY(90deg); }
-  75% { transform: translateY(-10px) rotateX(270deg) rotateY(135deg); }
-  100% { transform: translateY(0) rotateX(360deg) rotateY(180deg); }
+/* Continuous Rolling Animation for Realistic Bounce & Roll */
+@keyframes continuousRoll {
+  0% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+  25% { transform: translateY(-15px) rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
+  50% { transform: translateY(0) rotateX(360deg) rotateY(180deg) rotateZ(90deg); }
+  75% { transform: translateY(-10px) rotateX(540deg) rotateY(270deg) rotateZ(135deg); }
+  100% { transform: translateY(0) rotateX(720deg) rotateY(360deg) rotateZ(180deg); }
 }
-.dice-rolling {
-  animation: rollBounce 1s infinite;
+.dice-cube.rolling {
+  animation: continuousRoll 1s infinite;
 }
 
 /* Fade-in Animation */
@@ -343,7 +319,6 @@ button {
   box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
   color: white;
 }
-
 .lose {
   background: linear-gradient(145deg, #f44336, #b71c1c);
   border: 2px solid #ff1744;

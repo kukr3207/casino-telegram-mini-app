@@ -11,70 +11,76 @@ interface Bet {
   winAmount?: number;
 }
 
-// --- 3D Dotted Dice Cube Component ---
+// A realistic 3D dice cube with dotted faces
 interface DiceCubeProps {
   style: React.CSSProperties;
   rolling: boolean;
 }
 function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
-    <div className={`dice-cube ${rolling ? "dice-rolling" : ""}`} style={style}>
-      <div className="face face1">
-        <div className="dot center"></div>
+    <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
+      {/* Face numbering: front = 1, back = 6, right = 3, left = 4, top = 2, bottom = 5 */}
+      <div className="face front">
+        {/* Face 1: single pip in center */}
+        <div className="pip pip-center"></div>
       </div>
-      <div className="face face2">
-        <div className="dot top-left"></div>
-        <div className="dot bottom-right"></div>
+      <div className="face back">
+        {/* Face 6: two columns of three pips */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-middle-left"></div>
+        <div className="pip pip-bottom-left"></div>
+        <div className="pip pip-top-right"></div>
+        <div className="pip pip-middle-right"></div>
+        <div className="pip pip-bottom-right"></div>
       </div>
-      <div className="face face3">
-        <div className="dot top-left"></div>
-        <div className="dot center"></div>
-        <div className="dot bottom-right"></div>
+      <div className="face right">
+        {/* Face 3: pips at top-left, center, bottom-right */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-center"></div>
+        <div className="pip pip-bottom-right"></div>
       </div>
-      <div className="face face4">
-        <div className="dot top-left"></div>
-        <div className="dot top-right"></div>
-        <div className="dot bottom-left"></div>
-        <div className="dot bottom-right"></div>
+      <div className="face left">
+        {/* Face 4: pips at top-left, top-right, bottom-left, bottom-right */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-top-right"></div>
+        <div className="pip pip-bottom-left"></div>
+        <div className="pip pip-bottom-right"></div>
       </div>
-      <div className="face face5">
-        <div className="dot top-left"></div>
-        <div className="dot top-right"></div>
-        <div className="dot center"></div>
-        <div className="dot bottom-left"></div>
-        <div className="dot bottom-right"></div>
+      <div className="face top">
+        {/* Face 2: pips at top-left and bottom-right */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-bottom-right"></div>
       </div>
-      <div className="face face6">
-        <div className="dot top-left"></div>
-        <div className="dot top-right"></div>
-        <div className="dot middle-left"></div>
-        <div className="dot middle-right"></div>
-        <div className="dot bottom-left"></div>
-        <div className="dot bottom-right"></div>
+      <div className="face bottom">
+        {/* Face 5: four corner pips and one in center */}
+        <div className="pip pip-top-left"></div>
+        <div className="pip pip-top-right"></div>
+        <div className="pip pip-bottom-left"></div>
+        <div className="pip pip-bottom-right"></div>
+        <div className="pip pip-center"></div>
       </div>
     </div>
   );
 }
 
-// --- Mapping function to compute final transform for each dice value ---
+// Mapping function to compute the final transform so that the correct face is on top.
+// (These values are chosen by trial to give distinct rotations. Adjust as needed.)
 function getDiceCubeTransform(value: number): string {
-  // These transforms orient the cube so that the correct face is on top.
-  // Adjust these values as needed to match your 3D cube layout.
   switch (value) {
     case 1:
-      return "translateY(0) rotateX(0deg) rotateY(0deg)";
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";
     case 2:
-      return "translateY(0) rotateX(0deg) rotateY(-90deg)";
+      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
     case 3:
-      return "translateY(0) rotateX(90deg) rotateY(0deg)";
+      return "rotateX(0deg) rotateY(0deg) rotateZ(90deg)";
     case 4:
-      return "translateY(0) rotateX(-90deg) rotateY(0deg)";
+      return "rotateX(0deg) rotateY(0deg) rotateZ(-90deg)";
     case 5:
-      return "translateY(0) rotateX(0deg) rotateY(90deg)";
+      return "rotateX(180deg) rotateY(0deg) rotateZ(0deg)";
     case 6:
-      return "translateY(0) rotateX(0deg) rotateY(180deg)";
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";
     default:
-      return "translateY(0) rotateX(0deg) rotateY(0deg)";
+      return "";
   }
 }
 
@@ -90,15 +96,14 @@ export default function DiceRollPage() {
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
 
-  // State to hold the final inline transform for each dice cube.
+  // Holds the inline transform for each dice cube (final orientation when result arrives)
   const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
 
-  // Starting style (positioned on the table).
-  const initialDiceCubeStyle = "translateY(0) rotateX(0deg) rotateY(0deg)";
+  // Initial style (the cube is already on the table)
+  const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 
   useEffect(() => {
     if (showDicePopup) {
-      // Reset to initial style when popup opens.
       setDiceCubeStyles([initialDiceCubeStyle, initialDiceCubeStyle]);
     }
   }, [showDicePopup]);
@@ -114,14 +119,7 @@ export default function DiceRollPage() {
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
     exact: ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
-    pairs: [
-      "Double 1s",
-      "Double 2s",
-      "Double 3s",
-      "Double 4s",
-      "Double 5s",
-      "Double 6s",
-    ],
+    pairs: ["Double 1s", "Double 2s", "Double 3s", "Double 4s", "Double 5s", "Double 6s"],
     evenodd: ["Even", "Odd"],
   };
 
@@ -169,34 +167,29 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    // Begin continuous roll animation (the dice cubes will have the "dice-rolling" class).
+    // Start continuous realistic roll (the dice cubes have the "rolling" class).
     try {
       const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
-      // When result arrives, stop the continuous roll.
+      // After a continuous roll (animation runs for a couple of seconds), stop the rolling
       setTimeout(() => {
-        // Update each dice cube's inline style to show the final result.
+        // Set each cube’s inline style so that the correct face is on top.
         setDiceCubeStyles([getDiceCubeTransform(dice1), getDiceCubeTransform(dice2)]);
-        // Save result data.
         setDiceResult([dice1, dice2]);
         setRollHash(hash);
         setVerificationSeed(seed);
         highlightBets(dice1, dice2);
         setIsRolling(false);
         setHasResult(true);
-      }, 2000); // Duration of the continuous roll before showing result.
+      }, 2500); // Adjust the duration (in ms) as needed for a realistic roll
     } catch (error) {
       console.error("Error rolling dice:", error);
       setIsRolling(false);
     }
   };
 
-  const updateTokens = async (
-    casinoChips: number,
-    withdrawalTokens: number,
-    holTokens: number
-  ) => {
+  const updateTokens = async (casinoChips: number, withdrawalTokens: number, holTokens: number) => {
     const chatId = sessionStorage.getItem("chat_id");
     const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
 
@@ -313,9 +306,7 @@ export default function DiceRollPage() {
                 <button
                   key={option}
                   className={`bet-button ${
-                    selectedBets.some(
-                      (bet) => bet.category === category && bet.option === option
-                    )
+                    selectedBets.some((bet) => bet.category === category && bet.option === option)
                       ? "selected"
                       : ""
                   }`}
@@ -363,11 +354,7 @@ export default function DiceRollPage() {
 
       <div className="place-bet">
         {!hasResult && (
-          <button
-            className="place-bet-button"
-            onClick={handleRollDice}
-            disabled={selectedBets.length === 0 || isRolling}
-          >
+          <button className="place-bet-button" onClick={handleRollDice} disabled={selectedBets.length === 0 || isRolling}>
             {isRolling ? "Rolling Dice..." : "Roll Dice"}
           </button>
         )}
