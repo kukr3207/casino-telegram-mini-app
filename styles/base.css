@@ -106,6 +106,7 @@ main {
 .popup-container p {
   font-size: 1rem;
   margin-bottom: 20px;
+  color: #ffffff; /* Ensures text is white on dark background */
 }
 
 /* ========== Button Styles ========== */
