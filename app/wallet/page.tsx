@@ -39,6 +39,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        // Also store tokens in session storage
         sessionStorage.setItem(
           "tokens",
           JSON.stringify({
@@ -118,6 +119,7 @@ export default function WalletPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          // Update UI and session storage with new balances
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
           sessionStorage.setItem(
@@ -127,12 +129,15 @@ export default function WalletPage() {
               withdrawTokens: data.newWithdrawTokens,
             })
           );
+          // Trigger the creative conversion animation
           setShowConvertAnimation(true);
+          // Hide the animation after it finishes (3 seconds)
           setTimeout(() => {
             setShowConvertAnimation(false);
           }, 3000);
           setShowConvertPopup(false);
           setSelectedPercentage(null);
+          // Refresh token counts
           fetchTokenCounts();
         }
       } else {
@@ -253,9 +258,6 @@ export default function WalletPage() {
       {showConvertPopup && (
         <div className="popup">
           <div className="popup-content">
-            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
-              &#x2715;
-            </div>
             <h3>Select Conversion Percentage</h3>
             <div className="conversion-options">
               <button
