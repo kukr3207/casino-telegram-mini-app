@@ -41,14 +41,16 @@ export default function WalletPage() {
     try {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
-        const data = await response.json();
-        const tokenCounts: { id: number; count: number; image?: string }[] = Array.isArray(data.tokenCounts) ? data.tokenCounts : [];
-        setCasinoChips(String(tokenCounts.find(t => t.id === 1)?.count || 0));
-        setWithdrawTokens(String(tokenCounts.find(t => t.id === 2)?.count || 0));
-        sessionStorage.setItem(
-          "tokens",
-          JSON.stringify({ casinoChips: tokenCounts.find(t => t.id === 1)?.count || 0, withdrawTokens: tokenCounts.find(t => t.id === 2)?.count || 0 })
-        );
+        const { tokenCounts } = await response.json();
+        setCasinoChips(tokenCounts.casino_chips || 0);
+        setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        // Store tokens as an array (to be used with .map elsewhere)
+        const updatedTokens = [
+          { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
+          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
+          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+        ];
+        sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
       } else {
         console.error("Failed to fetch token counts.");
       }
@@ -67,6 +69,7 @@ export default function WalletPage() {
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 Received message:", event.data);
       if (event.data && event.data.type === "update_tokens") {
+        // Ensure tokens are stored as an array
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
@@ -133,14 +136,14 @@ export default function WalletPage() {
         if (data.success) {
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
-          sessionStorage.setItem(
-            "tokens",
-            JSON.stringify({
-              casinoChips: data.newCasinoChips,
-              withdrawTokens: data.newWithdrawTokens,
-            })
-          );
-          // Trigger creative flip animation
+          // Store tokens as an array in session storage
+          const updatedTokens = [
+            { id: 1, image: "/images/token1.png", count: data.newCasinoChips },
+            { id: 2, image: "/images/token2.png", count: data.newWithdrawTokens },
+            { id: 3, image: "/images/token3.png", count: 0 }, // assuming HOL tokens remain unchanged
+          ];
+          sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
+          // Trigger flip animation
           setShowConversionFlip(true);
           setTimeout(() => setFlipClass("flipped"), 100);
           setTimeout(() => {
