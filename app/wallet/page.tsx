@@ -35,6 +35,7 @@ export default function WalletPage() {
   const pricingTiers = [
     { chips: 50, price: 75, bonus: 0 },
     { chips: 100, price: 149, bonus: 0 },
+    { chips: 250, price: 350, bonus: 0 },
     { chips: 500, price: 725, bonus: 0 },
     { chips: 1000, price: 1399, bonus: 50 },
     { chips: 5000, price: 6750, bonus: 300 },
