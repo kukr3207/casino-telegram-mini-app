@@ -4,9 +4,9 @@
 
 /* Root Variables */
 :root {
-  --primary-color: #1111; /* Telegram Blue */
+  --primary-color: #0088cc; /* Telegram Blue */
   --secondary-color: #f0f0f0; /* Neutral White for Light Mode */
-  --dark-bg: #0000; /* Dark Background */
+  --dark-bg: #000000; /* Dark Background */
   --light-bg: #ffffff; /* Light Background */
   --accent-color: #ffd700; /* Casino Gold */
 }
@@ -28,6 +28,8 @@ body {
   padding: 0;
   height: 100%;
   overflow: hidden; /* Prevent scrolling on the body */
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 main {
@@ -36,7 +38,7 @@ main {
   -webkit-overflow-scrolling: touch; /* Smooth scrolling for mobile devices */
 }
 
-/* Game Section (Additional Utility Classes) */
+/* Game Section */
 .flex {
   display: flex;
 }
@@ -69,36 +71,67 @@ main {
   color: #cbd5e0;
 }
 
-/* Optional: Free Chips Popup Styles */
-/* You can use these classes in your popup component instead of inline Tailwind classes */
+/* ========== Popup Styles ========== */
 .popup-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6); /* Dark transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.popup {
-  @apply bg-white dark:bg-gray-800 p-6 rounded-lg text-center shadow-lg max-w-sm mx-4;
+.popup-container {
+  background: var(--light-bg);
+  color: var(--text-color);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+  max-width: 350px;
+  width: 90%;
 }
 
-.popup h2 {
-  @apply text-2xl font-bold mb-4;
+.popup-container h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
-.popup p {
-  @apply mb-6;
+.popup-container p {
+  font-size: 1rem;
+  margin-bottom: 20px;
 }
 
-.popup .popup-actions {
-  @apply flex justify-center gap-4;
+/* ========== Button Styles ========== */
+.popup-button {
+  background-color: var(--accent-color);
+  color: black;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  width: 100%;
 }
 
-.popup .popup-actions button {
-  @apply text-white font-semibold py-2 px-4 rounded;
+.popup-button:hover {
+  background-color: #e6c200;
 }
 
-.popup .popup-actions button.accept {
-  @apply bg-green-500 hover:bg-green-600;
+.popup-button:disabled {
+  background-color: #888;
+  cursor: not-allowed;
 }
 
-.popup .popup-actions button.decline {
-  @apply bg-red-500 hover:bg-red-600;
+/* ========== Utility Classes ========== */
+.hidden {
+  display: none;
+}
+
+.text-center {
+  text-align: center;
 }
