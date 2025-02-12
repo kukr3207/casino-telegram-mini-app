@@ -76,7 +76,7 @@
   margin-bottom: 15px;
 }
 
-.conversion-header .header-image {
+.header-image {
   width: 40px;
   height: 40px;
   border: 2px solid #ffd700;
@@ -84,7 +84,7 @@
   margin: 0 10px;
 }
 
-.conversion-header .conversion-arrow {
+.conversion-arrow {
   font-size: 24px;
   color: #ffd700;
 }
@@ -110,7 +110,7 @@
   transform: scale(1.05);
 }
 
-/* Popup Styles */
+/* Popup Styles – background remains as before with slight blur */
 .popup {
   position: fixed;
   top: 0;
@@ -118,12 +118,14 @@
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 
+/* Popup Content – dimensions remain as before */
 .popup-content {
   position: relative;
   background: #1e1e1e;
@@ -131,7 +133,6 @@
   border-radius: 8px;
   text-align: center;
   color: #ffd700;
-  /* Add a subtle border and shadow to match the theme */
   border: 2px solid #ffd700;
   box-shadow: 0 0 10px rgba(255,215,0,0.5);
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -151,6 +152,7 @@
   transform: scale(1.2);
 }
 
+/* Conversion Options in Popup */
 .conversion-options {
   display: flex;
   justify-content: space-around;
@@ -175,6 +177,7 @@
   transform: scale(1.1);
 }
 
+/* Convert Submit Button */
 .convert-submit {
   background: linear-gradient(145deg, #282828, #3a3a3a);
   color: #ffd700;
@@ -196,63 +199,48 @@
   transform: scale(1.05);
 }
 
-/* Conversion Particle Animation in Popup */
-.conversion-animation-popup {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  pointer-events: none;
+/* Processing Popup – new popup shown after submit */
+.processing-popup {
+  background: #1e1e1e;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255,215,0,0.5);
 }
 
-.animation-container {
-  position: relative;
-  width: 150px;
-  height: 150px;
+.processing-popup h3 {
+  font-size: 22px;
+  color: #ffd700;
+  margin-bottom: 10px;
+  text-transform: uppercase;
 }
 
-.token-move-out {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  animation: tokenSlideOut 1.5s forwards;
+.processing-popup .conversion-header {
+  margin-bottom: 15px;
 }
 
-.chip-move-in {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  animation: chipSlideIn 1.5s forwards;
+/* Confirmation Popup Styles – using theme colors */
+.confirmation-popup {
+  background: #1e1e1e;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255,215,0,0.5);
 }
 
-@keyframes tokenSlideOut {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(150%);
-    opacity: 0;
-  }
+.confirmation-popup h3 {
+  font-size: 22px;
+  color: #ffd700;
+  margin-bottom: 10px;
+  text-transform: uppercase;
 }
 
-@keyframes chipSlideIn {
-  0% {
-    transform: translateX(-150%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
+.confirmation-popup .conversion-ratio {
+  font-size: 16px;
+  color: #ffd700;
+  margin-bottom: 10px;
+}
+
+.confirmation-popup p {
+  font-size: 16px;
+  color: #f0f0f0;
+  margin: 8px 0;
 }
 
 /* Buy Chips Section */
@@ -390,22 +378,4 @@
   .buy-button, .convert-button, .convert-submit {
     width: 90%;
   }
-}
-
-/* Confirmation Popup Styles */
-.confirmation-popup {
-  border: 2px solid #66ff66;
-  box-shadow: 0 0 10px rgba(102,255,102,0.5);
-}
-
-.confirmation-popup h3 {
-  font-size: 22px;
-  color: #66ff66;
-  margin-bottom: 10px;
-}
-
-.confirmation-popup p {
-  font-size: 16px;
-  color: #f0f0f0;
-  margin: 8px 0;
 }
