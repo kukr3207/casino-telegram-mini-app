@@ -7,18 +7,18 @@ import Confetti from "react-confetti";
 export default function WalletPage() {
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [withdrawTokens, setWithdrawTokens] = useState("Loading...");
-  const [buyAmount, setBuyAmount] = useState(50);
   const [isBuying, setIsBuying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [showConfetti, setShowConfetti] = useState(false); 
+  const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // New state for conversion
+  // New state for conversion popup
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [showConvertAnimation, setShowConvertAnimation] = useState(false);
+  const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
 
-  // Pricing Tiers (predefined only)
+  // Predefined buy options (custom buy removed)
   const pricingTiers = [
     { chips: 50, price: 75, bonus: 0 },
     { chips: 100, price: 149, bonus: 0 },
@@ -50,9 +50,8 @@ export default function WalletPage() {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      console.log("📩 Received message from webhook:", event.data);
+      console.log("📩 Received message:", event.data);
       if (event.data && event.data.type === "update_tokens") {
-        console.log("✅ Payment success detected. Updating UI & triggering confetti...");
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
@@ -71,7 +70,6 @@ export default function WalletPage() {
       setTimeout(() => setErrorMessage(""), 4000);
       return;
     }
-
     setIsBuying(true);
     setProcessingChip(amount);
 
@@ -103,26 +101,26 @@ export default function WalletPage() {
     }
   };
 
-  // New conversion handler: calls our new API to convert withdrawable tokens.
-  const handleConvert = async (percentage: number) => {
+  // Conversion submission handler (triggered by Submit button)
+  const handleSubmitConversion = async () => {
+    if (!selectedPercentage) return;
     setIsConverting(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
       const response = await fetch("/api/convert-tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, percentage }),
+        body: JSON.stringify({ chatId, percentage: selectedPercentage }),
       });
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          // Update UI with new balances
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
-          // Trigger a conversion animation
           setShowConvertAnimation(true);
           setTimeout(() => setShowConvertAnimation(false), 4000);
           setShowConvertPopup(false);
+          setSelectedPercentage(null);
         }
       } else {
         const errorData = await response.json();
@@ -138,7 +136,6 @@ export default function WalletPage() {
 
   return (
     <div className="wallet-page">
-      {/* Confetti Animation for payment */}
       {showConfetti && (
         <>
           <Confetti
@@ -168,19 +165,18 @@ export default function WalletPage() {
         </>
       )}
 
-      {/* Conversion success animation */}
       {showConvertAnimation && (
         <Confetti
           numberOfPieces={100}
           recycle={false}
           gravity={0.35}
-          colors={["#66ff66", "#00ccff", "#ffcc00"]}
+          colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
           width={window.innerWidth}
           height={window.innerHeight}
         />
       )}
 
-      {/* Token Descriptions Section */}
+      {/* Token Descriptions */}
       <div className="description">
         <div className="description-item">
           <img src="/images/token1.png" alt="Casino Chips" />
@@ -205,7 +201,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* NEW: Conversion Section (placed directly below token descriptions) */}
+      {/* Conversion Section (placed immediately below descriptions) */}
       <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>
@@ -216,7 +212,7 @@ export default function WalletPage() {
         </button>
       </div>
 
-      {/* Buy Casino Chips Section (predefined options only) */}
+      {/* Buy Casino Chips Section */}
       <div className="buy-chips">
         <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
         <p>1 Telegram Star = 1 Casino Chip</p>
@@ -237,7 +233,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Existing Withdrawal Section */}
+      {/* Withdrawal Section */}
       <div className="withdrawal">
         <h3>Withdraw Tokens</h3>
         <p>
@@ -247,31 +243,48 @@ export default function WalletPage() {
         <button className="withdraw-button">Request Withdrawal</button>
       </div>
 
-      {/* Popup for Conversion Options */}
+      {/* Conversion Popup */}
       {showConvertPopup && (
-        <div className="popup">
-          <div className="popup-content">
-            <h3>Select Conversion Percentage</h3>
-            <div className="conversion-options">
-              <button className="convert-option" onClick={() => handleConvert(25)} disabled={isConverting}>
-                25%
-              </button>
-              <button className="convert-option" onClick={() => handleConvert(50)} disabled={isConverting}>
-                50%
-              </button>
-              <button className="convert-option" onClick={() => handleConvert(75)} disabled={isConverting}>
-                75%
-              </button>
-              <button className="convert-option" onClick={() => handleConvert(100)} disabled={isConverting}>
-                100%
-              </button>
-            </div>
-            <button className="earn-btn" onClick={() => setShowConvertPopup(false)} disabled={isConverting}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+  <div className="popup">
+    <div className="popup-content">
+      <h3>Select Conversion Percentage</h3>
+      <div className="conversion-options">
+        <button
+          className={`convert-option ${selectedPercentage === 25 ? "selected" : ""}`}
+          onClick={() => setSelectedPercentage(25)}
+          disabled={isConverting}
+        >
+          25%
+        </button>
+        <button
+          className={`convert-option ${selectedPercentage === 50 ? "selected" : ""}`}
+          onClick={() => setSelectedPercentage(50)}
+          disabled={isConverting}
+        >
+          50%
+        </button>
+        <button
+          className={`convert-option ${selectedPercentage === 75 ? "selected" : ""}`}
+          onClick={() => setSelectedPercentage(75)}
+          disabled={isConverting}
+        >
+          75%
+        </button>
+        <button
+          className={`convert-option ${selectedPercentage === 100 ? "selected" : ""}`}
+          onClick={() => setSelectedPercentage(100)}
+          disabled={isConverting}
+        >
+          100%
+        </button>
+      </div>
+      <button className="convert-submit" onClick={handleSubmitConversion} disabled={!selectedPercentage || isConverting}>
+        Submit
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
