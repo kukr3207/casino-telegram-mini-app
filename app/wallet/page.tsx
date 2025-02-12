@@ -5,7 +5,6 @@ import "../../styles/wallet.css";
 import Confetti from "react-confetti";
 
 export default function WalletPage() {
-  // Basic token balances and error/confetti states
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [withdrawTokens, setWithdrawTokens] = useState("Loading...");
   const [isBuying, setIsBuying] = useState(false);
@@ -13,11 +12,10 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // Conversion popup and animation states
+  // Conversion popup states
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
-  const [showConversionAnimation, setShowConversionAnimation] = useState(false);
 
   // Confirmation popup state and data
   const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
@@ -28,7 +26,7 @@ export default function WalletPage() {
     newWithdraw: number;
   } | null>(null);
 
-  // Dimensions for Confetti – safe client-only state
+  // Window dimensions state; default values provided
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Predefined buy options (custom buy removed)
@@ -132,7 +130,7 @@ export default function WalletPage() {
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
-    // Store previous balances for confirmation
+    // Save previous balances for confirmation display
     const prevCasino = Number(casinoChips);
     const prevWithdraw = Number(withdrawTokens);
     try {
@@ -153,22 +151,18 @@ export default function WalletPage() {
             { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Save conversion result for confirmation popup
+          // Save confirmation data for popup
           setConfirmationData({
             prevCasino,
             newCasino: data.newCasinoChips,
             prevWithdraw,
             newWithdraw: data.newWithdrawTokens,
           });
-          // Trigger particle explosion and reassembly animation in the popup
-          setShowConversionAnimation(true);
-          setTimeout(() => {
-            setShowConvertPopup(false);
-            setShowConversionAnimation(false);
-            setShowConfirmationPopup(true);
-          }, 1500);
+          setShowConvertPopup(false);
           setSelectedPercentage(null);
           fetchTokenCounts();
+          // Show confirmation popup after conversion
+          setShowConfirmationPopup(true);
         }
       } else {
         const errorData = await response.json();
@@ -182,12 +176,7 @@ export default function WalletPage() {
     }
   };
 
-
-  const closeConfirmationPopup = () => {
-    setShowConfirmationPopup(false);
-  };
-
-  // Allow closing the popup by clicking outside the content
+  // Allow closing the conversion popup by clicking outside its content
   const closePopup = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (e.target === e.currentTarget) {
       setShowConvertPopup(false);
@@ -226,15 +215,6 @@ export default function WalletPage() {
         </>
       )}
 
-      {showConversionAnimation && (
-        <div className="conversion-animation-popup" onClick={() => setShowConvertPopup(false)}>
-          <div className="animation-container">
-            <img className="token-move-out" src="/images/token2.png" alt="Withdrawable Token" />
-            <img className="chip-move-in" src="/images/token1.png" alt="Casino Chip" />
-          </div>
-        </div>
-      )}
-
       {/* Token Descriptions */}
       <div className="description">
         <div className="description-item">
@@ -260,22 +240,26 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section */}
-      <div className="conversion-section">
-        <h3>Convert Withdrawable Tokens to Casino Chips</h3>
-        <p>
-          You have <strong>{withdrawTokens}</strong> withdrawable tokens.
-        </p>
-        {/* Header showing conversion images */}
-        <div className="conversion-header">
-          <img src="/images/token2.png" alt="Withdrawable Token" className="header-image" />
-          <span className="conversion-arrow">&#8594;</span>
-          <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
+      {/* Conversion Section – show only if user has withdrawTokens >= 10 */}
+      {Number(withdrawTokens) >= 10 && (
+        <div className="conversion-section">
+          <h3>Convert Withdrawable Tokens to Casino Chips</h3>
+          <p>
+            Conversion Ratio: <strong>1:1</strong>
+          </p>
+          <p>
+            You have <strong>{withdrawTokens}</strong> withdrawable tokens.
+          </p>
+          <div className="conversion-header">
+            <img src="/images/token2.png" alt="Withdrawable Token" className="header-image" />
+            <span className="conversion-arrow">&#8594;</span>
+            <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
+          </div>
+          <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
+            Convert Tokens
+          </button>
         </div>
-        <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
-          Convert Tokens
-        </button>
-      </div>
+      )}
 
       {/* Buy Casino Chips Section */}
       <div className="buy-chips">
@@ -309,10 +293,16 @@ export default function WalletPage() {
       </div>
 
       {/* Conversion Popup */}
-      {showConvertPopup && !showConversionAnimation && (
+      {showConvertPopup && (
         <div className="popup" onClick={closePopup}>
           <div className="popup-content">
-            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
+            <div
+              className="popup-close"
+              onClick={() => {
+                setShowConvertPopup(false);
+                setSelectedPercentage(null);
+              }}
+            >
               &#x2715;
             </div>
             <h3>Select Conversion Percentage</h3>
@@ -365,6 +355,9 @@ export default function WalletPage() {
               &#x2715;
             </div>
             <h3>Conversion Successful!</h3>
+            <p>
+              <strong>Ratio:</strong> 1:1
+            </p>
             <p>
               Casino Chips: {confirmationData.prevCasino} → {confirmationData.newCasino}
             </p>

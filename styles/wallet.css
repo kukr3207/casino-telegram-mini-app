@@ -68,7 +68,7 @@
   font-weight: bold;
 }
 
-/* Header inside conversion popup */
+/* Header inside conversion section */
 .conversion-header {
   display: flex;
   align-items: center;
@@ -126,11 +126,14 @@
 
 .popup-content {
   position: relative;
-  background: #121212;
+  background: #1e1e1e;
   padding: 20px;
   border-radius: 8px;
   text-align: center;
   color: #ffd700;
+  /* Add a subtle border and shadow to match the theme */
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255,215,0,0.5);
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
@@ -193,7 +196,7 @@
   transform: scale(1.05);
 }
 
-/* Conversion Particle Animation (Popup-only) */
+/* Conversion Particle Animation in Popup */
 .conversion-animation-popup {
   position: absolute;
   top: 0;
@@ -219,7 +222,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  animation: moveWithdraw 1.5s forwards;
+  animation: tokenSlideOut 1.5s forwards;
 }
 
 .chip-move-in {
@@ -227,10 +230,10 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  animation: moveCasino 1.5s forwards;
+  animation: chipSlideIn 1.5s forwards;
 }
 
-@keyframes moveWithdraw {
+@keyframes tokenSlideOut {
   0% {
     transform: translateX(0);
     opacity: 1;
@@ -241,7 +244,7 @@
   }
 }
 
-@keyframes moveCasino {
+@keyframes chipSlideIn {
   0% {
     transform: translateX(-150%);
     opacity: 0;
@@ -390,6 +393,11 @@
 }
 
 /* Confirmation Popup Styles */
+.confirmation-popup {
+  border: 2px solid #66ff66;
+  box-shadow: 0 0 10px rgba(102,255,102,0.5);
+}
+
 .confirmation-popup h3 {
   font-size: 22px;
   color: #66ff66;
