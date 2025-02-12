@@ -41,15 +41,13 @@ export default function WalletPage() {
     try {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
-        const { tokenCounts } = await response.json();
-        setCasinoChips(tokenCounts.casino_chips || 0);
-        setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        const data = await response.json();
+        const tokenCounts: { id: number; count: number }[] = Array.isArray(data.tokenCounts) ? data.tokenCounts : [];
+        setCasinoChips(String(tokenCounts.find(t => t.id === 1)?.count || 0));
+        setWithdrawTokens(String(tokenCounts.find(t => t.id === 2)?.count || 0));
         sessionStorage.setItem(
           "tokens",
-          JSON.stringify({
-            casinoChips: tokenCounts.casino_chips || 0,
-            withdrawTokens: tokenCounts.withdraw_tokens || 0,
-          })
+          JSON.stringify({ casinoChips: tokenCounts.find(t => t.id === 1)?.count || 0, withdrawTokens: tokenCounts.find(t => t.id === 2)?.count || 0 })
         );
       } else {
         console.error("Failed to fetch token counts.");
@@ -231,7 +229,7 @@ export default function WalletPage() {
       </div>
 
       {/* Conversion Section */}
-      {/* <div className="conversion-section">
+      <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>
           You have <strong>{withdrawTokens}</strong> withdrawable tokens.
@@ -239,7 +237,7 @@ export default function WalletPage() {
         <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
           Convert Tokens
         </button>
-      </div> */}
+      </div>
 
       {/* Buy Casino Chips Section */}
       <div className="buy-chips">
