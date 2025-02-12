@@ -30,7 +30,7 @@ export async function POST(req) {
       );
     }
 
-    // Calculate conversion amount based on percentage
+    // Calculate conversion amount based on percentage of withdrawable tokens
     const currentWithdraw = user.withdraw_tokens || 0;
     const convertAmount = Math.floor(currentWithdraw * (percentage / 100));
     if (convertAmount <= 0) {
@@ -41,9 +41,10 @@ export async function POST(req) {
       );
     }
 
-    // Update: subtract from withdraw_tokens and add to casino_chips (1:1 conversion)
+    // Conversion logic: For each token converted, add 1.5 casino chips.
     const currentCasino = user.casino_chips || 0;
-    const newCasino = currentCasino + convertAmount;
+    const additionalCasino = Math.floor(convertAmount * 1.5); // 1:1.5 ratio
+    const newCasino = currentCasino + additionalCasino;
     const newWithdraw = currentWithdraw - convertAmount;
 
     await users.updateOne(
