@@ -16,7 +16,7 @@ export default function WalletPage() {
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
-  const [popupAnimation, setPopupAnimation] = useState(""); // "" or "success"
+  const [showConversionAnimation, setShowConversionAnimation] = useState(false);
 
   // Window dimensions state; default values provided
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -43,7 +43,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Store tokens as an array (for components that use .map)
+        // Store tokens as an array so that other components using .map work correctly.
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -140,12 +140,12 @@ export default function WalletPage() {
             { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Trigger popup success animation by adding a class
-          setPopupAnimation("success");
+          // Trigger our new morph animation in the popup:
+          setShowConversionAnimation(true);
+          // After animation completes (1.5s), let the popup be closable.
           setTimeout(() => {
-            // Clear animation and close popup after animation completes
-            setPopupAnimation("");
             setShowConvertPopup(false);
+            setShowConversionAnimation(false);
           }, 1500);
           setSelectedPercentage(null);
           fetchTokenCounts();
@@ -159,6 +159,14 @@ export default function WalletPage() {
       console.error("Error converting tokens:", error);
     } finally {
       setIsConverting(false);
+    }
+  };
+
+  // Allow closing the popup by clicking outside of the content.
+  const closePopup = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if (e.target === e.currentTarget) {
+      setShowConvertPopup(false);
+      setSelectedPercentage(null);
     }
   };
 
@@ -191,6 +199,13 @@ export default function WalletPage() {
             confettiSource={{ x: dimensions.width, y: dimensions.height / 2, w: 10, h: 10 }}
           />
         </>
+      )}
+
+      {/* If conversion animation is active, display it in the popup */}
+      {showConversionAnimation && (
+        <div className="conversion-animation-popup" onClick={() => setShowConvertPopup(false)}>
+          <div className="morph-container"></div>
+        </div>
       )}
 
       {/* Token Descriptions */}
@@ -261,17 +276,10 @@ export default function WalletPage() {
       </div>
 
       {/* Conversion Popup */}
-      {showConvertPopup && (
-        <div className="popup">
-          <div className={`popup-content ${popupAnimation}`}>
-            <div
-              className="popup-close"
-              onClick={() => {
-                setShowConvertPopup(false);
-                setSelectedPercentage(null);
-                setPopupAnimation("");
-              }}
-            >
+      {showConvertPopup && !showConversionAnimation && (
+        <div className="popup" onClick={closePopup}>
+          <div className="popup-content">
+            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
               &#x2715;
             </div>
             <h3>Select Conversion Percentage</h3>
