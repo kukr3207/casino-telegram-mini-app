@@ -73,7 +73,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ chatId, firstName, username }),
               });
-              // Immediately show the free tokens popup after adding user data.
+              console.log("User data saved. Forcing free tokens popup display.");
+              // Immediately force the free tokens popup after saving user data.
               setShowFreeChipsPopup(true);
             } catch (error) {
               console.error("Error saving user data:", error);
@@ -85,32 +86,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       // Hide splash screen after initialization
       setTimeout(() => {
         setIsSplashVisible(false);
-      }, 1000); // Reduced delay for faster UI update
+      }, 1000);
     };
 
     initializeApp();
   }, []);
 
   // Handler for accepting free tokens.
-  // When clicked, the button becomes unclickable ("Processing...") while the update-tokens API is called.
+  // When clicked, the button becomes disabled ("Processing...") while the update-tokens API is called.
   // After tokens are added to the DB, token counts are fetched and stored in session storage.
   const handleAcceptFreeChips = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
     setProcessing(true);
     try {
-      // Update tokens in the DB by adding 100 tokens.
+      // Add 100 tokens in the DB.
       const response = await fetch("/api/update-tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, tokens: 100 }),
       });
       if (response.ok) {
-        // Now fetch the updated token counts.
+        // Fetch the updated token counts.
         const tokenResponse = await fetch(`/api/get-token-counts?chatId=${chatId}`);
         if (tokenResponse.ok) {
           const { tokenCounts } = await tokenResponse.json();
-          // Store token counts in session storage
+          // Store token counts in session storage.
           const tokens = [
             { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
             { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
