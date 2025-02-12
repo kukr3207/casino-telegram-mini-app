@@ -46,6 +46,7 @@
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
+  margin-top: 10px;
 }
 
 .earn-btn:hover {
@@ -81,11 +82,18 @@
   height: 200px;
   margin: 0 auto;
   border-radius: 50%;
-  background: #ffd700;
+  /* Use a repeating conic-gradient to create pie segments with dividing lines */
+  background: repeating-conic-gradient(
+    from 0deg,
+    #ffd700 0deg,
+    #ffd700 43deg,
+    #fff 43deg,
+    #fff 45deg
+  );
   overflow: hidden;
 }
 
-/* The wheel overlaying the segments */
+/* The spinning wheel overlay */
 .wheel {
   position: absolute;
   width: 100%;
@@ -93,17 +101,12 @@
   border-radius: 50%;
   top: 0;
   left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* Transparent so the background pie (with dividing lines) is visible */
   background-color: rgba(255, 255, 255, 0.3);
-  font-size: 24px;
-  font-weight: bold;
-  cursor: pointer;
   transition: transform 3s ease-out;
 }
 
-/* Optional spinning animation */
+/* Spinning animation (optional additional effect) */
 .spinning {
   animation: spin 1.5s infinite linear;
 }
@@ -111,6 +114,20 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Arrow indicator for the winning slice */
+.arrow {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 15px solid #fff;
+  z-index: 10;
 }
 
 /* Popup Styles */

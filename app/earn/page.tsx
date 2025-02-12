@@ -43,7 +43,9 @@ export default function EarnPage() {
     checkSpinStatus();
   }, []);
 
-  // --- Fetch Functions ---
+  // -----------------------
+  // Fetch Functions
+  // -----------------------
 
   // Uses the existing get-token-counts endpoint.
   const fetchUserTokenBalance = async () => {
@@ -90,11 +92,13 @@ export default function EarnPage() {
   const checkSpinStatus = () => {
     const lastSpin = localStorage.getItem("dailySpinDate");
     if (lastSpin === today) {
-      // The spin button will be disabled by the UI based on local storage.
+      // The UI disables the spin button based on local storage.
     }
   };
 
-  // --- Event Handlers ---
+  // -----------------------
+  // Event Handlers
+  // -----------------------
 
   // Handle daily check‑in by calling the new daily-checkin endpoint.
   const handleDailyCheckIn = async () => {
@@ -171,7 +175,7 @@ export default function EarnPage() {
       const data: SpinResponse = await response.json();
       const { outcome, outcomeIndex } = data;
 
-      // Define outcomes (must match the API order)
+      // Define outcomes (must match API order)
       const outcomes: Outcome[] = [
         { type: "token", value: 10 },
         { type: "token", value: 25 },
@@ -189,7 +193,7 @@ export default function EarnPage() {
       const finalAngle = baseRotation + (outcomeIndex * segmentAngle) + (segmentAngle / 2);
       setRotation(finalAngle);
 
-      // Wait for the animation to finish (3 seconds)
+      // Wait for the spin animation to finish (3 seconds)
       setTimeout(() => {
         setIsSpinning(false);
         setSpinResult(outcome);
@@ -197,7 +201,7 @@ export default function EarnPage() {
         if (outcome.type === "token") {
           setSpinPopupMessage(`You won ${outcome.value} tokens!`);
         } else if (outcome.type === "booster") {
-          const boosterDuration = 60 * 60 * 1000; // 1 hour in milliseconds
+          const boosterDuration = 60 * 60 * 1000; // 1 hour
           const boosterInfo = { value: outcome.value, expiresAt: Date.now() + boosterDuration };
           sessionStorage.setItem("booster", JSON.stringify(boosterInfo));
           setSpinPopupMessage(`You won a ${outcome.value}% booster for 1 hour!`);
@@ -211,7 +215,7 @@ export default function EarnPage() {
     }
   };
 
-  // Render the wheel segments as labels positioned around the circle.
+  // Render the labels for each wheel segment.
   const renderWheelSegments = () => {
     const outcomes: Outcome[] = [
       { type: "token", value: 10 },
@@ -225,7 +229,7 @@ export default function EarnPage() {
     ];
     const segments = outcomes.length;
     const segmentAngle = 360 / segments;
-    const radius = 80; // radius for label placement
+    const radius = 80; // For label placement
     return outcomes.map((segment, index) => {
       const angle = (index * segmentAngle + segmentAngle / 2) * (Math.PI / 180);
       const x = 100 + radius * Math.cos(angle);
@@ -270,19 +274,24 @@ export default function EarnPage() {
       {/* Spin Wheel Section */}
       <div className="earn-section">
         <h4>🎡 Spin the Wheel</h4>
-        <div className="wheel-container" onClick={handleSpin}>
+        <div className="wheel-container">
           {renderWheelSegments()}
           <div
             className={`wheel ${isSpinning ? "spinning" : ""}`}
             style={{
               transform: `rotate(${rotation}deg)`,
               transition: "transform 3s ease-out",
-              cursor: localStorage.getItem("dailySpinDate") === today ? "not-allowed" : "pointer",
             }}
-          >
-            {(!isSpinning && localStorage.getItem("dailySpinDate") !== today) ? "SPIN" : ""}
-          </div>
+          ></div>
+          <div className="arrow"></div>
         </div>
+        <button
+          className="earn-btn"
+          onClick={handleSpin}
+          disabled={localStorage.getItem("dailySpinDate") === today || isSpinning}
+        >
+          {localStorage.getItem("dailySpinDate") === today ? "Already Spun Today" : "Spin"}
+        </button>
       </div>
 
       {/* Daily Check-In Popup */}
