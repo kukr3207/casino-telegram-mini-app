@@ -17,7 +17,10 @@ export default function WalletPage() {
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
   const [showConversionFlip, setShowConversionFlip] = useState(false);
-  const [flipClass, setFlipClass] = useState(""); // to add 'flipped' class
+  const [flipClass, setFlipClass] = useState("");
+
+  // New state for window dimensions
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Predefined buy options (custom buy removed)
   const pricingTiers = [
@@ -40,7 +43,6 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Also store in session storage
         sessionStorage.setItem(
           "tokens",
           JSON.stringify({
@@ -57,6 +59,9 @@ export default function WalletPage() {
   };
 
   useEffect(() => {
+    // Set window dimensions safely after component mounts
+    setDimensions({ width: window.innerWidth, height: window.innerHeight });
+
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 Received message:", event.data);
       if (event.data && event.data.type === "update_tokens") {
@@ -106,7 +111,6 @@ export default function WalletPage() {
     }
   };
 
-  // Conversion submission handler with flip animation
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
@@ -120,7 +124,6 @@ export default function WalletPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          // Update UI and session storage
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
           sessionStorage.setItem(
@@ -130,16 +133,15 @@ export default function WalletPage() {
               withdrawTokens: data.newWithdrawTokens,
             })
           );
-          // Trigger flip animation: show the conversion flip container, then add the flipped class.
+          // Trigger creative flip animation
           setShowConversionFlip(true);
           setTimeout(() => {
             setFlipClass("flipped");
-          }, 100); // slight delay for animation trigger
-          // After animation, hide the flip and popup
+          }, 100);
           setTimeout(() => {
             setShowConversionFlip(false);
             setFlipClass("");
-          }, 1600); // assuming animation duration is 1.5s
+          }, 1600);
           setShowConvertPopup(false);
           setSelectedPercentage(null);
           fetchTokenCounts();
@@ -168,9 +170,9 @@ export default function WalletPage() {
             initialVelocityY={{ min: -10, max: -5 }}
             colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
             wind={0}
-            width={window.innerWidth}
-            height={window.innerHeight}
-            confettiSource={{ x: 0, y: window.innerHeight / 2, w: 10, h: 10 }}
+            width={dimensions.width}
+            height={dimensions.height}
+            confettiSource={{ x: 0, y: dimensions.height / 2, w: 10, h: 10 }}
           />
           <Confetti
             numberOfPieces={150}
@@ -180,9 +182,9 @@ export default function WalletPage() {
             initialVelocityY={{ min: -10, max: -5 }}
             colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
             wind={0}
-            width={window.innerWidth}
-            height={window.innerHeight}
-            confettiSource={{ x: window.innerWidth, y: window.innerHeight / 2, w: 10, h: 10 }}
+            width={dimensions.width}
+            height={dimensions.height}
+            confettiSource={{ x: dimensions.width, y: dimensions.height / 2, w: 10, h: 10 }}
           />
         </>
       )}
@@ -221,7 +223,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section (immediately below token descriptions) */}
+      {/* Conversion Section */}
       <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>

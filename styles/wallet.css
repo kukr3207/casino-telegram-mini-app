@@ -205,11 +205,11 @@
 }
 
 .flip-front {
-  background-image: url('/images/token2.png'); /* Withdrawable token image */
+  background-image: url('/images/token2.png');
 }
 
 .flip-back {
-  background-image: url('/images/token1.png'); /* Casino chip image */
+  background-image: url('/images/token1.png');
   transform: rotateY(180deg);
 }
 
