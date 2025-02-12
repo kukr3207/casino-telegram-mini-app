@@ -12,7 +12,7 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // New state for conversion popup
+  // New state for conversion popup and animation
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [showConvertAnimation, setShowConvertAnimation] = useState(false);
@@ -33,13 +33,19 @@ export default function WalletPage() {
       console.error("Chat ID not found in sessionStorage.");
       return;
     }
-
     try {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        sessionStorage.setItem(
+          "tokens",
+          JSON.stringify({
+            casinoChips: tokenCounts.casino_chips || 0,
+            withdrawTokens: tokenCounts.withdraw_tokens || 0,
+          })
+        );
       } else {
         console.error("Failed to fetch token counts.");
       }
@@ -58,7 +64,6 @@ export default function WalletPage() {
         setProcessingChip(null);
       }
     };
-
     window.addEventListener("message", handleMessage);
     fetchTokenCounts();
     return () => window.removeEventListener("message", handleMessage);
@@ -72,7 +77,6 @@ export default function WalletPage() {
     }
     setIsBuying(true);
     setProcessingChip(amount);
-
     try {
       const chatId = sessionStorage.getItem("chat_id");
       const response = await fetch(`/api/create-invoice`, {
@@ -80,7 +84,6 @@ export default function WalletPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, amount, packageType, chipsBought }),
       });
-
       if (response.ok) {
         const { invoiceLink } = await response.json();
         const tg = window.Telegram?.WebApp;
@@ -101,7 +104,7 @@ export default function WalletPage() {
     }
   };
 
-  // Conversion submission handler (triggered by Submit button)
+  // New conversion submission handler with animation
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
@@ -117,10 +120,20 @@ export default function WalletPage() {
         if (data.success) {
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
+          sessionStorage.setItem(
+            "tokens",
+            JSON.stringify({
+              casinoChips: data.newCasinoChips,
+              withdrawTokens: data.newWithdrawTokens,
+            })
+          );
           setShowConvertAnimation(true);
-          setTimeout(() => setShowConvertAnimation(false), 4000);
+          setTimeout(() => {
+            setShowConvertAnimation(false);
+          }, 3000);
           setShowConvertPopup(false);
           setSelectedPercentage(null);
+          fetchTokenCounts();
         }
       } else {
         const errorData = await response.json();
@@ -166,14 +179,7 @@ export default function WalletPage() {
       )}
 
       {showConvertAnimation && (
-        <Confetti
-          numberOfPieces={100}
-          recycle={false}
-          gravity={0.35}
-          colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
-          width={window.innerWidth}
-          height={window.innerHeight}
-        />
+        <div className="conversion-animation"></div>
       )}
 
       {/* Token Descriptions */}
@@ -201,7 +207,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section (placed immediately below descriptions) */}
+      {/* Conversion Section (placed immediately below token descriptions) */}
       <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>
@@ -245,46 +251,52 @@ export default function WalletPage() {
 
       {/* Conversion Popup */}
       {showConvertPopup && (
-  <div className="popup">
-    <div className="popup-content">
-      <h3>Select Conversion Percentage</h3>
-      <div className="conversion-options">
-        <button
-          className={`convert-option ${selectedPercentage === 25 ? "selected" : ""}`}
-          onClick={() => setSelectedPercentage(25)}
-          disabled={isConverting}
-        >
-          25%
-        </button>
-        <button
-          className={`convert-option ${selectedPercentage === 50 ? "selected" : ""}`}
-          onClick={() => setSelectedPercentage(50)}
-          disabled={isConverting}
-        >
-          50%
-        </button>
-        <button
-          className={`convert-option ${selectedPercentage === 75 ? "selected" : ""}`}
-          onClick={() => setSelectedPercentage(75)}
-          disabled={isConverting}
-        >
-          75%
-        </button>
-        <button
-          className={`convert-option ${selectedPercentage === 100 ? "selected" : ""}`}
-          onClick={() => setSelectedPercentage(100)}
-          disabled={isConverting}
-        >
-          100%
-        </button>
-      </div>
-      <button className="convert-submit" onClick={handleSubmitConversion} disabled={!selectedPercentage || isConverting}>
-        Submit
-      </button>
-    </div>
-  </div>
-)}
-
+        <div className="popup">
+          <div className="popup-content">
+            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
+              &#x2715;
+            </div>
+            <h3>Select Conversion Percentage</h3>
+            <div className="conversion-options">
+              <button
+                className={`convert-option ${selectedPercentage === 25 ? "selected" : ""}`}
+                onClick={() => setSelectedPercentage(25)}
+                disabled={isConverting}
+              >
+                25%
+              </button>
+              <button
+                className={`convert-option ${selectedPercentage === 50 ? "selected" : ""}`}
+                onClick={() => setSelectedPercentage(50)}
+                disabled={isConverting}
+              >
+                50%
+              </button>
+              <button
+                className={`convert-option ${selectedPercentage === 75 ? "selected" : ""}`}
+                onClick={() => setSelectedPercentage(75)}
+                disabled={isConverting}
+              >
+                75%
+              </button>
+              <button
+                className={`convert-option ${selectedPercentage === 100 ? "selected" : ""}`}
+                onClick={() => setSelectedPercentage(100)}
+                disabled={isConverting}
+              >
+                100%
+              </button>
+            </div>
+            <button
+              className="convert-submit"
+              onClick={handleSubmitConversion}
+              disabled={!selectedPercentage || isConverting}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

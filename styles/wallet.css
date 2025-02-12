@@ -22,7 +22,7 @@
   padding: 15px;
   background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
   border-radius: 15px;
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(50, 50, 50, 0.3);
+  box-shadow: 5px 5px 15px rgba(0,0,0,0.5), -5px -5px 15px rgba(50,50,50,0.3);
 }
 
 .description-item img {
@@ -50,7 +50,7 @@
   padding: 25px;
   background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
   border-radius: 15px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
   text-align: center;
 }
 
@@ -103,11 +103,26 @@
 }
 
 .popup-content {
+  position: relative;
   background: #121212;
   padding: 20px;
   border-radius: 8px;
   text-align: center;
   color: #ffd700;
+}
+
+.popup-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 20px;
+  color: #ffd700;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.popup-close:hover {
+  transform: scale(1.2);
 }
 
 .conversion-options {
@@ -134,7 +149,6 @@
   transform: scale(1.1);
 }
 
-/* Submit button inside popup */
 .convert-submit {
   background: linear-gradient(145deg, #282828, #3a3a3a);
   color: #ffd700;
@@ -162,7 +176,7 @@
   padding: 25px;
   background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
   border-radius: 15px;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255,215,0,0.3);
   text-align: center;
 }
 
@@ -216,12 +230,12 @@
   font-weight: bold;
   padding: 14px 22px;
   border-radius: 15px;
-  box-shadow: 0px 0px 15px rgba(255, 215, 0, 0.5);
+  box-shadow: 0px 0px 15px rgba(255,215,0,0.5);
 }
 
 .buy-button.highlight:hover {
   transform: scale(1.1);
-  box-shadow: 0px 0px 20px rgba(255, 215, 0, 0.8);
+  box-shadow: 0px 0px 20px rgba(255,215,0,0.8);
 }
 
 /* Withdrawal Section */
@@ -230,7 +244,7 @@
   padding: 20px;
   background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
   border-radius: 15px;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255,215,0,0.3);
   text-align: center;
 }
 
@@ -261,7 +275,38 @@
 
 .withdraw-button:hover {
   transform: scale(1.1);
-  box-shadow: 0px 0px 10px rgba(255, 215, 0, 0.8);
+  box-shadow: 0px 0px 10px rgba(255,215,0,0.8);
+}
+
+/* Conversion Animation */
+.conversion-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  width: 150px;
+  height: 150px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  animation: convertAnimation 3s forwards;
+}
+
+@keyframes convertAnimation {
+  0% {
+    background-image: url('/images/token2.png');
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    background-image: url('/images/token1.png');
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 /* Error Message */
@@ -270,7 +315,7 @@
   font-size: 14px;
   margin: 10px 0;
   padding: 8px 12px;
-  background-color: rgba(255, 0, 0, 0.1);
+  background-color: rgba(255,0,0,0.1);
   border: 1px solid #ff6f61;
   border-radius: 8px;
   text-align: center;
