@@ -13,18 +13,14 @@ import { createPortal } from "react-dom";
 // Popup component for free chips
 function FreeChipsPopup({ onAccept, processing }: { onAccept: () => void; processing: boolean }) {
   return createPortal(
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg text-center shadow-lg max-w-sm mx-4">
-        <h2 className="text-2xl font-bold mb-4">🎉 Welcome to the Casino!</h2>
-        <p className="mb-6">
-          As a new player, you get <strong>100 free casino chips</strong>. Click "Accept" to claim them!
-        </p>
+    <div className="popup-overlay">
+      <div className="popup-container">
+        <h2>🎉 Welcome to the Casino!</h2>
+        <p>As a new player, you get <strong>100 free casino chips</strong>. Click "Accept" to claim them!</p>
         <button
           onClick={onAccept}
           disabled={processing}
-          className={`${
-            processing ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-          } text-white font-semibold py-2 px-4 rounded`}
+          className="popup-button"
         >
           {processing ? "Processing..." : "Accept"}
         </button>
@@ -39,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [isSplashVisible, setIsSplashVisible] = useState(true);
   const [showFreeChipsPopup, setShowFreeChipsPopup] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [chatId, setChatId] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<number | null>(null);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -58,17 +54,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           const { id, first_name: firstName, username } = initDataUnsafe.user;
 
           if (id) {
-            const chatIdStr = id.toString();
-            console.log("Chat ID found:", chatIdStr);
-            sessionStorage.setItem("chat_id", chatIdStr);
-            setChatId(chatIdStr);
+            const chatIdNum = Number(id); // Convert chat ID to a number (double)
+            console.log("Chat ID found:", chatIdNum);
+            sessionStorage.setItem("chat_id", chatIdNum.toString());
+            setChatId(chatIdNum);
 
             try {
-              // Save user data in the database.
+              // Save user data in the database and only show popup if the call succeeds
               const response = await fetch(`/api/save-user-data`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chatId: chatIdStr, firstName, username }),
+                body: JSON.stringify({ chatId: chatIdNum, firstName, username }),
               });
 
               if (response.ok) {
@@ -77,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               }
 
               // Fetch user's token counts
-              const tokenResponse = await fetch(`/api/get-token-counts?chatId=${chatIdStr}`);
+              const tokenResponse = await fetch(`/api/get-token-counts?chatId=${chatIdNum}`);
               if (tokenResponse.ok) {
                 const { tokenCounts } = await tokenResponse.json();
 
