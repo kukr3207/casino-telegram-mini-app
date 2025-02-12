@@ -62,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             try {
               // Save user data in the database.
-              // Assumes the /api/save-user-data API returns { isNewUser: true } for new users.
+              // The /api/save-user-data API now returns { isNewUser: true } for new users.
               const saveUserResponse = await fetch("/api/save-user-data", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -120,7 +120,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       if (response.ok) {
         const data = await response.json();
         console.log("Free chips added, new balance:", data.newBalance);
-        // Optionally update session storage or UI with the new token balance here
       } else {
         console.error("Failed to update tokens with free chips.");
       }
