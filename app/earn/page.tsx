@@ -3,21 +3,49 @@
 import React, { useState, useEffect } from "react";
 import "../../styles/earn.css";
 
-export default function EarnPage() {
-  const [streak, setStreak] = useState(0);
-  const [dailyReward, setDailyReward] = useState(10);
-  const [lastClaimedDate, setLastClaimedDate] = useState("");
-  const [isClaimed, setIsClaimed] = useState(false);
-  const [casinoBalance, setCasinoBalance] = useState(0);
+interface Outcome {
+  type: "token" | "booster";
+  value: number;
+}
 
-  const MAX_STREAK_DAYS = 30;
-  const resetTime = "00:00";
+interface SpinResponse {
+  outcome: Outcome;
+  outcomeIndex: number;
+  seed: string;
+  hash: string;
+}
+
+export default function EarnPage() {
+  // Daily check‑in states
+  const [streak, setStreak] = useState<number>(0);
+  const [dailyReward, setDailyReward] = useState<number>(10);
+  const [isDailyClaimed, setIsDailyClaimed] = useState<boolean>(false);
+  const [casinoBalance, setCasinoBalance] = useState<number>(0);
+
+  // Spin wheel states
+  const [isSpinning, setIsSpinning] = useState<boolean>(false);
+  const [rotation, setRotation] = useState<number>(0);
+  const [spinResult, setSpinResult] = useState<Outcome | null>(null);
+
+  // Popup states for daily check‑in and spin wheel results
+  const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
+  const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
+  const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
+  const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
+
+  // Maximum daily check‑in streak is now 15 days.
+  const MAX_STREAK_DAYS = 15;
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     fetchUserTokenBalance();
-    fetchStreakData();
+    checkDailyStatus();
+    checkSpinStatus();
   }, []);
 
+  // --- Fetch Functions ---
+
+  // Uses the existing get-token-counts endpoint.
   const fetchUserTokenBalance = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
@@ -27,8 +55,6 @@ export default function EarnPage() {
       if (response.ok) {
         const { tokenCounts } = await response.json();
         setCasinoBalance(tokenCounts.casino_chips || 0);
-        
-        // Update session storage immediately
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -41,94 +67,247 @@ export default function EarnPage() {
     }
   };
 
-  const fetchStreakData = () => {
+  // Check daily check‑in status from local storage.
+  const checkDailyStatus = () => {
+    const lastCheckIn = localStorage.getItem("dailyCheckinDate");
     const storedStreak = localStorage.getItem("streak");
-    const storedLastClaim = localStorage.getItem("lastClaimedDate");
-    const today = new Date().toISOString().split("T")[0];
-
-    if (storedLastClaim !== today) {
-      setIsClaimed(false);
+    if (lastCheckIn === today) {
+      setIsDailyClaimed(true);
+      if (storedStreak) {
+        setStreak(parseInt(storedStreak));
+        setDailyReward(5 + parseInt(storedStreak) * 5);
+      }
     } else {
-      setIsClaimed(true);
-    }
-
-    if (storedStreak) {
-      setStreak(parseInt(storedStreak));
-      setDailyReward(5 + parseInt(storedStreak) * 5);
+      setIsDailyClaimed(false);
+      if (storedStreak) {
+        setStreak(parseInt(storedStreak));
+        setDailyReward(5 + parseInt(storedStreak) * 5);
+      }
     }
   };
 
+  // Check if the user has already spun today.
+  const checkSpinStatus = () => {
+    const lastSpin = localStorage.getItem("dailySpinDate");
+    if (lastSpin === today) {
+      // The spin button will be disabled by the UI based on local storage.
+    }
+  };
+
+  // --- Event Handlers ---
+
+  // Handle daily check‑in by calling the new daily-checkin endpoint.
   const handleDailyCheckIn = async () => {
-    if (isClaimed) return;
+    if (isDailyClaimed) return;
 
-    const newStreak = streak >= MAX_STREAK_DAYS ? 1 : streak + 1;
+    // Determine yesterday's date.
+    const yesterday = new Date();
+    yesterday.setDate(new Date().getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    let newStreak = 1;
+    if (localStorage.getItem("dailyCheckinDate") === yesterdayStr) {
+      newStreak = (parseInt(localStorage.getItem("streak") || "0") || 0) + 1;
+      if (newStreak > MAX_STREAK_DAYS) {
+        newStreak = 1;
+      }
+    } else {
+      newStreak = 1;
+    }
+    // Reward calculation: Day 1 = 10, Day 2 = 15, Day 3 = 20, etc.
     const newReward = 5 + newStreak * 5;
-    const today = new Date().toISOString().split("T")[0];
 
-    setStreak(newStreak);
-    setDailyReward(newReward);
-    setLastClaimedDate(today);
-    setIsClaimed(true);
+    const chatId = sessionStorage.getItem("chat_id");
+    if (chatId) {
+      try {
+        const response = await fetch("/api/daily-checkin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatId, date: today, streak: newStreak, reward: newReward }),
+        });
+        if (!response.ok) {
+          throw new Error("Daily check-in failed");
+        }
+        const data = await response.json();
 
-    localStorage.setItem("streak", String(newStreak));
-    localStorage.setItem("lastClaimedDate", today);
+        // Update local storage and state
+        localStorage.setItem("dailyCheckinDate", today);
+        localStorage.setItem("streak", String(newStreak));
+        setStreak(newStreak);
+        setDailyReward(newReward);
+        setIsDailyClaimed(true);
 
-    await updateUserCasinoBalance(newReward);
+        if (data.newBalance !== undefined) {
+          setCasinoBalance(data.newBalance);
+        }
+        setDailyPopupMessage(`You received ${newReward} tokens for daily check-in!`);
+        setShowDailyPopup(true);
+        fetchUserTokenBalance();
+      } catch (error) {
+        console.error("Error during daily check-in:", error);
+      }
+    }
   };
 
-  const updateUserCasinoBalance = async (tokens: number) => {
+  // Handle spin wheel by calling the new spin-wheel endpoint.
+  const handleSpin = async () => {
+    if (localStorage.getItem("dailySpinDate") === today) return;
+    if (isSpinning) return;
+    setIsSpinning(true);
+    setSpinResult(null);
+
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
 
     try {
-      // Fetch current balance
-      const balanceResponse = await fetch(`/api/get-token-counts?chatId=${chatId}`);
-      if (!balanceResponse.ok) {
-        console.error("Failed to fetch current token balance.");
-        return;
-      }
-      
-      const { tokenCounts } = await balanceResponse.json();
-      const currentCasinoChips = tokenCounts.casino_chips || 0;
-      const updatedCasinoChips = currentCasinoChips + tokens;
-
-      // Update database
-      await fetch("/api/update-tokens", {
+      const response = await fetch("/api/spin-wheel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, tokens: updatedCasinoChips }),
+        body: JSON.stringify({ chatId }),
       });
+      if (!response.ok) {
+        throw new Error("Failed to spin the wheel");
+      }
+      const data: SpinResponse = await response.json();
+      const { outcome, outcomeIndex } = data;
 
-      // Update session storage immediately
-      const updatedTokens = [
-        { id: 1, image: "/images/token1.png", count: updatedCasinoChips },
-        { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
-        { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+      // Define outcomes (must match the API order)
+      const outcomes: Outcome[] = [
+        { type: "token", value: 10 },
+        { type: "token", value: 25 },
+        { type: "token", value: 50 },
+        { type: "token", value: 100 },
+        { type: "token", value: 150 },
+        { type: "booster", value: 15 },
+        { type: "booster", value: 25 },
+        { type: "booster", value: 35 },
       ];
-      sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-      setCasinoBalance(updatedCasinoChips);
+
+      const segments = outcomes.length;
+      const segmentAngle = 360 / segments;
+      const baseRotation = 360 * 5; // 5 full spins for effect.
+      const finalAngle = baseRotation + (outcomeIndex * segmentAngle) + (segmentAngle / 2);
+      setRotation(finalAngle);
+
+      // Wait for the animation to finish (3 seconds)
+      setTimeout(() => {
+        setIsSpinning(false);
+        setSpinResult(outcome);
+        localStorage.setItem("dailySpinDate", today);
+        if (outcome.type === "token") {
+          setSpinPopupMessage(`You won ${outcome.value} tokens!`);
+        } else if (outcome.type === "booster") {
+          const boosterDuration = 60 * 60 * 1000; // 1 hour in milliseconds
+          const boosterInfo = { value: outcome.value, expiresAt: Date.now() + boosterDuration };
+          sessionStorage.setItem("booster", JSON.stringify(boosterInfo));
+          setSpinPopupMessage(`You won a ${outcome.value}% booster for 1 hour!`);
+        }
+        setShowSpinPopup(true);
+        fetchUserTokenBalance();
+      }, 3000);
     } catch (error) {
-      console.error("Error updating token balance:", error);
+      console.error("Error during spin:", error);
+      setIsSpinning(false);
     }
+  };
+
+  // Render the wheel segments as labels positioned around the circle.
+  const renderWheelSegments = () => {
+    const outcomes: Outcome[] = [
+      { type: "token", value: 10 },
+      { type: "token", value: 25 },
+      { type: "token", value: 50 },
+      { type: "token", value: 100 },
+      { type: "token", value: 150 },
+      { type: "booster", value: 15 },
+      { type: "booster", value: 25 },
+      { type: "booster", value: 35 },
+    ];
+    const segments = outcomes.length;
+    const segmentAngle = 360 / segments;
+    const radius = 80; // radius for label placement
+    return outcomes.map((segment, index) => {
+      const angle = (index * segmentAngle + segmentAngle / 2) * (Math.PI / 180);
+      const x = 100 + radius * Math.cos(angle);
+      const y = 100 + radius * Math.sin(angle);
+      const label = segment.type === "token" ? `${segment.value}` : `${segment.value}%`;
+      return (
+        <div
+          key={index}
+          style={{
+            position: "absolute",
+            left: `${x}px`,
+            top: `${y}px`,
+            transform: "translate(-50%, -50%)",
+            fontSize: "12px",
+            color: "#000",
+            fontWeight: "bold",
+          }}
+        >
+          {label}
+        </div>
+      );
+    });
   };
 
   return (
     <div className="earn-page">
       <h3 className="earn-title">Earn Free Casino Tokens 🎰</h3>
 
-      {/* Daily Check-In Streak */}
+      {/* Daily Check-In Section */}
       <div className="earn-section">
         <h4>✅ Daily Check-In Streak</h4>
-        <div className="progress-container">
-          <div className="progress-bar" style={{ width: `${(streak / MAX_STREAK_DAYS) * 100}%` }}>
-            {streak}/30 Days
-          </div>
-        </div>
-        <p>Claim {dailyReward} tokens today! Reset at {resetTime}.</p>
-        <button className="earn-btn" onClick={handleDailyCheckIn} disabled={isClaimed}>
-          {isClaimed ? "✅ Claimed" : "Claim Now"}
+        <p>
+          {isDailyClaimed
+            ? `Checked in today! Streak: ${streak}/15`
+            : "Check in to earn your daily reward!"}
+        </p>
+        <button className="earn-btn" onClick={handleDailyCheckIn} disabled={isDailyClaimed}>
+          {isDailyClaimed ? "✅ Claimed" : "Claim Daily Reward"}
         </button>
       </div>
+
+      {/* Spin Wheel Section */}
+      <div className="earn-section">
+        <h4>🎡 Spin the Wheel</h4>
+        <div className="wheel-container" onClick={handleSpin}>
+          {renderWheelSegments()}
+          <div
+            className={`wheel ${isSpinning ? "spinning" : ""}`}
+            style={{
+              transform: `rotate(${rotation}deg)`,
+              transition: "transform 3s ease-out",
+              cursor: localStorage.getItem("dailySpinDate") === today ? "not-allowed" : "pointer",
+            }}
+          >
+            {(!isSpinning && localStorage.getItem("dailySpinDate") !== today) ? "SPIN" : ""}
+          </div>
+        </div>
+      </div>
+
+      {/* Daily Check-In Popup */}
+      {showDailyPopup && (
+        <div className="popup">
+          <div className="popup-content">
+            <p>{dailyPopupMessage}</p>
+            <button className="earn-btn" onClick={() => setShowDailyPopup(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Spin Result Popup */}
+      {showSpinPopup && (
+        <div className="popup">
+          <div className="popup-content">
+            <p>{spinPopupMessage}</p>
+            <button className="earn-btn" onClick={() => setShowSpinPopup(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
