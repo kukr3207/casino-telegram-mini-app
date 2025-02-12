@@ -231,7 +231,7 @@ export default function WalletPage() {
       </div>
 
       {/* Conversion Section */}
-      <div className="conversion-section">
+      {/* <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>
           You have <strong>{withdrawTokens}</strong> withdrawable tokens.
@@ -239,7 +239,7 @@ export default function WalletPage() {
         <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
           Convert Tokens
         </button>
-      </div>
+      </div> */}
 
       {/* Buy Casino Chips Section */}
       <div className="buy-chips">
