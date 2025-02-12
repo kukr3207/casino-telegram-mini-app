@@ -16,7 +16,7 @@ export default function WalletPage() {
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
-  const [showConversionMorph, setShowConversionMorph] = useState(false);
+  const [showConversionAnimation, setShowConversionAnimation] = useState(false);
 
   // Window dimensions state; default values provided
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -43,7 +43,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Store tokens as an array so that other components using .map work correctly.
+        // Store tokens as an array so that components expecting an array (e.g. .map) work properly.
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -134,21 +134,20 @@ export default function WalletPage() {
         if (data.success) {
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
-          // Store tokens as an array in session storage.
           const updatedTokens = [
             { id: 1, image: "/images/token1.png", count: data.newCasinoChips },
             { id: 2, image: "/images/token2.png", count: data.newWithdrawTokens },
-            { id: 3, image: "/images/token3.png", count: 0 }, // assuming HOL tokens remain unchanged
+            { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Trigger the realistic morph animation.
-          setShowConversionMorph(true);
+          // Trigger a creative ripple animation on the popup
+          setShowConversionAnimation(true);
           setTimeout(() => {
-            setShowConversionMorph(false);
-          }, 1500); // duration of the animation
-          setShowConvertPopup(false);
-          setSelectedPercentage(null);
-          fetchTokenCounts();
+            setShowConversionAnimation(false);
+            setShowConvertPopup(false);
+            setSelectedPercentage(null);
+            fetchTokenCounts();
+          }, 1500);
         }
       } else {
         const errorData = await response.json();
@@ -193,11 +192,8 @@ export default function WalletPage() {
         </>
       )}
 
-      {showConversionMorph && (
-        <div className="conversion-morph">
-          <div className="morph-front"></div>
-          <div className="morph-back"></div>
-        </div>
+      {showConversionAnimation && (
+        <div className="conversion-popup-animation"></div>
       )}
 
       {/* Token Descriptions */}
