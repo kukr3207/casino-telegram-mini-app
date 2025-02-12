@@ -12,11 +12,15 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // New state for conversion popup and animation
+  // Conversion states
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
-  const [showConvertAnimation, setShowConvertAnimation] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
+  const [showConversionFlip, setShowConversionFlip] = useState(false);
+  const [flipClass, setFlipClass] = useState("");
+
+  // Window dimensions state; default values provided
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Predefined buy options (custom buy removed)
   const pricingTiers = [
@@ -28,6 +32,7 @@ export default function WalletPage() {
   ];
 
   const fetchTokenCounts = async () => {
+    if (typeof window === "undefined") return;
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) {
       console.error("Chat ID not found in sessionStorage.");
@@ -39,7 +44,6 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Also store tokens in session storage
         sessionStorage.setItem(
           "tokens",
           JSON.stringify({
@@ -56,6 +60,13 @@ export default function WalletPage() {
   };
 
   useEffect(() => {
+    // Set window dimensions safely on client
+    if (typeof window !== "undefined") {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+    }
+  }, []);
+
+  useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 Received message:", event.data);
       if (event.data && event.data.type === "update_tokens") {
@@ -65,9 +76,15 @@ export default function WalletPage() {
         setProcessingChip(null);
       }
     };
-    window.addEventListener("message", handleMessage);
+    if (typeof window !== "undefined") {
+      window.addEventListener("message", handleMessage);
+    }
     fetchTokenCounts();
-    return () => window.removeEventListener("message", handleMessage);
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("message", handleMessage);
+      }
+    };
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Tier", chipsBought: number = amount) => {
@@ -87,9 +104,8 @@ export default function WalletPage() {
       });
       if (response.ok) {
         const { invoiceLink } = await response.json();
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-          tg.openLink(invoiceLink);
+        if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+          window.Telegram.WebApp.openLink(invoiceLink);
         } else {
           console.error("Telegram WebApp is not available.");
         }
@@ -105,13 +121,12 @@ export default function WalletPage() {
     }
   };
 
-  // New conversion submission handler with animation
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
-      const response = await fetch("/api/convert-tokens", {
+      const response = await fetch(`/api/convert-tokens`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, percentage: selectedPercentage }),
@@ -119,7 +134,6 @@ export default function WalletPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          // Update UI and session storage with new balances
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
           sessionStorage.setItem(
@@ -129,15 +143,15 @@ export default function WalletPage() {
               withdrawTokens: data.newWithdrawTokens,
             })
           );
-          // Trigger the creative conversion animation
-          setShowConvertAnimation(true);
-          // Hide the animation after it finishes (3 seconds)
+          // Trigger creative flip animation
+          setShowConversionFlip(true);
+          setTimeout(() => setFlipClass("flipped"), 100);
           setTimeout(() => {
-            setShowConvertAnimation(false);
-          }, 3000);
+            setShowConversionFlip(false);
+            setFlipClass("");
+          }, 1600);
           setShowConvertPopup(false);
           setSelectedPercentage(null);
-          // Refresh token counts
           fetchTokenCounts();
         }
       } else {
@@ -164,9 +178,9 @@ export default function WalletPage() {
             initialVelocityY={{ min: -10, max: -5 }}
             colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
             wind={0}
-            width={window.innerWidth}
-            height={window.innerHeight}
-            confettiSource={{ x: 0, y: window.innerHeight / 2, w: 10, h: 10 }}
+            width={dimensions.width}
+            height={dimensions.height}
+            confettiSource={{ x: 0, y: dimensions.height / 2, w: 10, h: 10 }}
           />
           <Confetti
             numberOfPieces={150}
@@ -176,15 +190,20 @@ export default function WalletPage() {
             initialVelocityY={{ min: -10, max: -5 }}
             colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
             wind={0}
-            width={window.innerWidth}
-            height={window.innerHeight}
-            confettiSource={{ x: window.innerWidth, y: window.innerHeight / 2, w: 10, h: 10 }}
+            width={dimensions.width}
+            height={dimensions.height}
+            confettiSource={{ x: dimensions.width, y: dimensions.height / 2, w: 10, h: 10 }}
           />
         </>
       )}
 
-      {showConvertAnimation && (
-        <div className="conversion-animation"></div>
+      {showConversionFlip && (
+        <div className="conversion-flip">
+          <div className={`flip-inner ${flipClass}`}>
+            <div className="flip-front"></div>
+            <div className="flip-back"></div>
+          </div>
+        </div>
       )}
 
       {/* Token Descriptions */}
@@ -212,7 +231,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section (placed immediately below token descriptions) */}
+      {/* Conversion Section */}
       <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>
@@ -258,6 +277,9 @@ export default function WalletPage() {
       {showConvertPopup && (
         <div className="popup">
           <div className="popup-content">
+            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
+              &#x2715;
+            </div>
             <h3>Select Conversion Percentage</h3>
             <div className="conversion-options">
               <button
