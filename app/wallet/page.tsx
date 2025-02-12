@@ -5,6 +5,7 @@ import "../../styles/wallet.css";
 import Confetti from "react-confetti";
 
 export default function WalletPage() {
+  // Token balances and error/confetti states
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [withdrawTokens, setWithdrawTokens] = useState("Loading...");
   const [isBuying, setIsBuying] = useState(false);
@@ -12,12 +13,12 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // Popup states for conversion
+  // Conversion popup state
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
 
-  // Additional popups: processing and confirmation
+  // Additional popups for processing and confirmation
   const [showProcessingPopup, setShowProcessingPopup] = useState(false);
   const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
   const [confirmationData, setConfirmationData] = useState<{
@@ -27,7 +28,7 @@ export default function WalletPage() {
     newWithdraw: number;
   } | null>(null);
 
-  // Window dimensions for Confetti
+  // Dimensions for Confetti (client-only)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Predefined buy options (custom buy removed)
@@ -52,6 +53,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        // Save tokens as an array for other components that might use .map
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -130,8 +132,12 @@ export default function WalletPage() {
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
+    // Save current balances for confirmation
     const prevCasino = Number(casinoChips);
     const prevWithdraw = Number(withdrawTokens);
+    // Immediately close the conversion selection popup and show the processing popup
+    setShowConvertPopup(false);
+    setShowProcessingPopup(true);
     try {
       const chatId = sessionStorage.getItem("chat_id");
       const response = await fetch(`/api/convert-tokens`, {
@@ -142,6 +148,7 @@ export default function WalletPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          // Update balances and session storage
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
           const updatedTokens = [
@@ -150,17 +157,14 @@ export default function WalletPage() {
             { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Save confirmation data for the confirmation popup
+          // Save confirmation data for later display
           setConfirmationData({
             prevCasino,
             newCasino: data.newCasinoChips,
             prevWithdraw,
             newWithdraw: data.newWithdrawTokens,
           });
-          // Close conversion popup and open processing popup
-          setShowConvertPopup(false);
-          setShowProcessingPopup(true);
-          // After a delay, close processing popup and open confirmation popup
+          // Close processing popup and show confirmation popup after a short delay
           setTimeout(() => {
             setShowProcessingPopup(false);
             setShowConfirmationPopup(true);
@@ -172,15 +176,17 @@ export default function WalletPage() {
         const errorData = await response.json();
         setErrorMessage(errorData.error || "Conversion failed");
         setTimeout(() => setErrorMessage(""), 4000);
+        setShowProcessingPopup(false);
       }
     } catch (error) {
       console.error("Error converting tokens:", error);
+      setShowProcessingPopup(false);
     } finally {
       setIsConverting(false);
     }
   };
 
-  // Allow closing the conversion popup by clicking outside its content
+  // Allow closing the conversion popup by clicking outside its content.
   const closePopup = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (e.target === e.currentTarget) {
       setShowConvertPopup(false);
@@ -244,7 +250,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section – only show if withdrawTokens >= 10 */}
+      {/* Conversion Section – show only if withdrawTokens >= 10 */}
       {Number(withdrawTokens) >= 10 && (
         <div className="conversion-section">
           <h3>Convert Withdrawable Tokens to Casino Chips</h3>
@@ -268,7 +274,7 @@ export default function WalletPage() {
       {/* Buy Casino Chips Section */}
       <div className="buy-chips">
         <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
-        <p>1 Telegram Star = 1 Casino Chip</p>
+        {/* <p>1 Telegram Star = 1 Casino Chip</p> */}
         {errorMessage && <div className="error-message">{errorMessage}</div>}
         <div className="predefined-options">
           {pricingTiers.map(({ chips, price, bonus }) => (
@@ -296,7 +302,7 @@ export default function WalletPage() {
         <button className="withdraw-button">Request Withdrawal</button>
       </div>
 
-      {/* Conversion Popup for selecting percentage */}
+      {/* Conversion Popup */}
       {showConvertPopup && (
         <div className="popup" onClick={closePopup}>
           <div className="popup-content">
@@ -364,6 +370,7 @@ export default function WalletPage() {
               <span className="conversion-arrow">&#8594; 1:1 &#8594;</span>
               <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
             </div>
+            <p>Please wait while we process your conversion.</p>
           </div>
         </div>
       )}
@@ -376,7 +383,7 @@ export default function WalletPage() {
               &#x2715;
             </div>
             <h3>Conversion Successful!</h3>
-            <p className="conversion-ratio">Conversion Ratio: 1:1</p>
+            {/* <p className="conversion-ratio">Conversion Ratio: 1:1</p> */}
             <p>
               Casino Chips: {confirmationData.prevCasino} → {confirmationData.newCasino}
             </p>
