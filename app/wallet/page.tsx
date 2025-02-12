@@ -16,7 +16,7 @@ export default function WalletPage() {
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
-  const [showConversionAnimation, setShowConversionAnimation] = useState(false);
+  const [popupAnimation, setPopupAnimation] = useState(""); // "" or "success"
 
   // Window dimensions state; default values provided
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -43,7 +43,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Store tokens as an array so that components expecting an array (e.g. .map) work properly.
+        // Store tokens as an array (for components that use .map)
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -140,14 +140,15 @@ export default function WalletPage() {
             { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Trigger a creative ripple animation on the popup
-          setShowConversionAnimation(true);
+          // Trigger popup success animation by adding a class
+          setPopupAnimation("success");
           setTimeout(() => {
-            setShowConversionAnimation(false);
+            // Clear animation and close popup after animation completes
+            setPopupAnimation("");
             setShowConvertPopup(false);
-            setSelectedPercentage(null);
-            fetchTokenCounts();
           }, 1500);
+          setSelectedPercentage(null);
+          fetchTokenCounts();
         }
       } else {
         const errorData = await response.json();
@@ -190,10 +191,6 @@ export default function WalletPage() {
             confettiSource={{ x: dimensions.width, y: dimensions.height / 2, w: 10, h: 10 }}
           />
         </>
-      )}
-
-      {showConversionAnimation && (
-        <div className="conversion-popup-animation"></div>
       )}
 
       {/* Token Descriptions */}
@@ -266,12 +263,13 @@ export default function WalletPage() {
       {/* Conversion Popup */}
       {showConvertPopup && (
         <div className="popup">
-          <div className="popup-content">
+          <div className={`popup-content ${popupAnimation}`}>
             <div
               className="popup-close"
               onClick={() => {
                 setShowConvertPopup(false);
                 setSelectedPercentage(null);
+                setPopupAnimation("");
               }}
             >
               &#x2715;
