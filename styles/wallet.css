@@ -170,49 +170,6 @@
   transform: scale(1.05);
 }
 
-/* Conversion Flip Animation */
-.conversion-flip {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 150px;
-  height: 150px;
-  transform: translate(-50%, -50%);
-  perspective: 1000px;
-  z-index: 2000;
-}
-
-.flip-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 1.5s;
-  transform-style: preserve-3d;
-}
-
-.flip-inner.flipped {
-  transform: rotateY(180deg);
-}
-
-.flip-front,
-.flip-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  background-size: contain;
-  background-repeat: no-repeat;
-}
-
-.flip-front {
-  background-image: url('/images/token2.png');
-}
-
-.flip-back {
-  background-image: url('/images/token1.png');
-  transform: rotateY(180deg);
-}
-
 /* Buy Chips Section */
 .buy-chips {
   margin-top: 30px;
@@ -319,6 +276,37 @@
 .withdraw-button:hover {
   transform: scale(1.1);
   box-shadow: 0px 0px 10px rgba(255,215,0,0.8);
+}
+
+/* Conversion Animation */
+.conversion-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  width: 150px;
+  height: 150px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  animation: convertAnimation 3s forwards;
+}
+
+@keyframes convertAnimation {
+  0% {
+    background-image: url('/images/token2.png');
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    background-image: url('/images/token1.png');
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 /* Error Message */

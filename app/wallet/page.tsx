@@ -12,17 +12,13 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // Conversion states
+  // New state for conversion popup and animation
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [showConvertAnimation, setShowConvertAnimation] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
-  const [showConversionFlip, setShowConversionFlip] = useState(false);
-  const [flipClass, setFlipClass] = useState("");
 
-  // Window dimensions state; default values provided
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-
-  // Pricing tiers for buying chips (predefined only)
+  // Predefined buy options (custom buy removed)
   const pricingTiers = [
     { chips: 50, price: 75, bonus: 0 },
     { chips: 100, price: 149, bonus: 0 },
@@ -31,9 +27,7 @@ export default function WalletPage() {
     { chips: 5000, price: 6750, bonus: 300 },
   ];
 
-  // Fetch token counts from the API safely (client only)
   const fetchTokenCounts = async () => {
-    if (typeof window === "undefined") return;
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) {
       console.error("Chat ID not found in sessionStorage.");
@@ -60,14 +54,6 @@ export default function WalletPage() {
     }
   };
 
-  // Set window dimensions safely after mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setDimensions({ width: window.innerWidth, height: window.innerHeight });
-    }
-  }, []);
-
-  // Set up message listener and fetch token counts after mount
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 Received message:", event.data);
@@ -78,15 +64,9 @@ export default function WalletPage() {
         setProcessingChip(null);
       }
     };
-    if (typeof window !== "undefined") {
-      window.addEventListener("message", handleMessage);
-    }
+    window.addEventListener("message", handleMessage);
     fetchTokenCounts();
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("message", handleMessage);
-      }
-    };
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Tier", chipsBought: number = amount) => {
@@ -124,6 +104,7 @@ export default function WalletPage() {
     }
   };
 
+  // New conversion submission handler with animation
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
@@ -146,13 +127,10 @@ export default function WalletPage() {
               withdrawTokens: data.newWithdrawTokens,
             })
           );
-          // Trigger flip animation
-          setShowConversionFlip(true);
-          setTimeout(() => setFlipClass("flipped"), 100);
+          setShowConvertAnimation(true);
           setTimeout(() => {
-            setShowConversionFlip(false);
-            setFlipClass("");
-          }, 1600);
+            setShowConvertAnimation(false);
+          }, 3000);
           setShowConvertPopup(false);
           setSelectedPercentage(null);
           fetchTokenCounts();
@@ -181,9 +159,9 @@ export default function WalletPage() {
             initialVelocityY={{ min: -10, max: -5 }}
             colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
             wind={0}
-            width={dimensions.width}
-            height={dimensions.height}
-            confettiSource={{ x: 0, y: dimensions.height / 2, w: 10, h: 10 }}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            confettiSource={{ x: 0, y: window.innerHeight / 2, w: 10, h: 10 }}
           />
           <Confetti
             numberOfPieces={150}
@@ -193,20 +171,15 @@ export default function WalletPage() {
             initialVelocityY={{ min: -10, max: -5 }}
             colors={["#ffcc00", "#ff0066", "#00ccff", "#66ff66"]}
             wind={0}
-            width={dimensions.width}
-            height={dimensions.height}
-            confettiSource={{ x: dimensions.width, y: dimensions.height / 2, w: 10, h: 10 }}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            confettiSource={{ x: window.innerWidth, y: window.innerHeight / 2, w: 10, h: 10 }}
           />
         </>
       )}
 
-      {showConversionFlip && (
-        <div className="conversion-flip">
-          <div className={`flip-inner ${flipClass}`}>
-            <div className="flip-front"></div>
-            <div className="flip-back"></div>
-          </div>
-        </div>
+      {showConvertAnimation && (
+        <div className="conversion-animation"></div>
       )}
 
       {/* Token Descriptions */}
@@ -234,7 +207,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section */}
+      {/* Conversion Section (placed immediately below token descriptions) */}
       <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>
