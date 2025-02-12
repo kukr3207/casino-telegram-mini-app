@@ -60,7 +60,6 @@ export default function WalletPage() {
   };
 
   useEffect(() => {
-    // Set window dimensions safely on client
     if (typeof window !== "undefined") {
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
     }
