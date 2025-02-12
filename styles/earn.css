@@ -76,6 +76,11 @@
 }
 
 /* Spin Wheel Section */
+.spin-wheel-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .wheel-container {
   position: relative;
   width: 200px;
@@ -101,25 +106,14 @@
   border-radius: 50%;
   top: 0;
   left: 0;
-  /* Transparent so the background pie (with dividing lines) is visible */
   background-color: rgba(255, 255, 255, 0.3);
   transition: transform 3s ease-out;
-}
-
-/* Spinning animation (optional additional effect) */
-.spinning {
-  animation: spin 1.5s infinite linear;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 /* Arrow indicator for the winning slice */
 .arrow {
   position: absolute;
-  top: -15px;
+  top: -25px; /* Position above the wheel */
   left: 50%;
   transform: translateX(-50%);
   width: 0;

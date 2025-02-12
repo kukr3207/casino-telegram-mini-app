@@ -16,7 +16,7 @@ interface SpinResponse {
 }
 
 export default function EarnPage() {
-  // Daily check‑in states
+  // Daily check-in states
   const [streak, setStreak] = useState<number>(0);
   const [dailyReward, setDailyReward] = useState<number>(10);
   const [isDailyClaimed, setIsDailyClaimed] = useState<boolean>(false);
@@ -24,16 +24,17 @@ export default function EarnPage() {
 
   // Spin wheel states
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
+  // Instead of setting absolute rotation each time, we add to the current rotation so the spin is animated.
   const [rotation, setRotation] = useState<number>(0);
   const [spinResult, setSpinResult] = useState<Outcome | null>(null);
 
-  // Popup states for daily check‑in and spin wheel results
+  // Popup states for daily check-in and spin wheel results
   const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
   const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
   const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
   const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
 
-  // Maximum daily check‑in streak is now 15 days.
+  // Maximum daily check-in streak is now 15 days.
   const MAX_STREAK_DAYS = 15;
   const today = new Date().toISOString().split("T")[0];
 
@@ -43,15 +44,12 @@ export default function EarnPage() {
     checkSpinStatus();
   }, []);
 
-  // -----------------------
-  // Fetch Functions
-  // -----------------------
+  // --- Fetch Functions ---
 
   // Uses the existing get-token-counts endpoint.
   const fetchUserTokenBalance = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
-
     try {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
@@ -69,7 +67,7 @@ export default function EarnPage() {
     }
   };
 
-  // Check daily check‑in status from local storage.
+  // Check daily check-in status from local storage.
   const checkDailyStatus = () => {
     const lastCheckIn = localStorage.getItem("dailyCheckinDate");
     const storedStreak = localStorage.getItem("streak");
@@ -96,14 +94,11 @@ export default function EarnPage() {
     }
   };
 
-  // -----------------------
-  // Event Handlers
-  // -----------------------
+  // --- Event Handlers ---
 
-  // Handle daily check‑in by calling the new daily-checkin endpoint.
+  // Handle daily check-in by calling the new daily-checkin endpoint.
   const handleDailyCheckIn = async () => {
     if (isDailyClaimed) return;
-
     // Determine yesterday's date.
     const yesterday = new Date();
     yesterday.setDate(new Date().getDate() - 1);
@@ -134,7 +129,6 @@ export default function EarnPage() {
         }
         const data = await response.json();
 
-        // Update local storage and state
         localStorage.setItem("dailyCheckinDate", today);
         localStorage.setItem("streak", String(newStreak));
         setStreak(newStreak);
@@ -190,10 +184,11 @@ export default function EarnPage() {
       const segments = outcomes.length;
       const segmentAngle = 360 / segments;
       const baseRotation = 360 * 5; // 5 full spins for effect.
-      const finalAngle = baseRotation + (outcomeIndex * segmentAngle) + (segmentAngle / 2);
-      setRotation(finalAngle);
+      // Instead of setting an absolute value, add the new rotation to the existing value.
+      const additionalRotation = baseRotation + (outcomeIndex * segmentAngle) + (segmentAngle / 2);
+      setRotation(prev => prev + additionalRotation);
 
-      // Wait for the spin animation to finish (3 seconds)
+      // Wait for the animation to finish (3 seconds)
       setTimeout(() => {
         setIsSpinning(false);
         setSpinResult(outcome);
@@ -215,7 +210,7 @@ export default function EarnPage() {
     }
   };
 
-  // Render the labels for each wheel segment.
+  // Render labels for each wheel segment.
   const renderWheelSegments = () => {
     const outcomes: Outcome[] = [
       { type: "token", value: 10 },
@@ -274,16 +269,19 @@ export default function EarnPage() {
       {/* Spin Wheel Section */}
       <div className="earn-section">
         <h4>🎡 Spin the Wheel</h4>
-        <div className="wheel-container">
-          {renderWheelSegments()}
-          <div
-            className={`wheel ${isSpinning ? "spinning" : ""}`}
-            style={{
-              transform: `rotate(${rotation}deg)`,
-              transition: "transform 3s ease-out",
-            }}
-          ></div>
+        <div className="spin-wheel-wrapper">
+          {/* Arrow indicator placed outside the wheel container */}
           <div className="arrow"></div>
+          <div className="wheel-container">
+            {renderWheelSegments()}
+            <div
+              className="wheel"
+              style={{
+                transform: `rotate(${rotation}deg)`,
+                transition: "transform 3s ease-out",
+              }}
+            ></div>
+          </div>
         </div>
         <button
           className="earn-btn"
