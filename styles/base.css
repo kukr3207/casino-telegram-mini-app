@@ -75,28 +75,32 @@ main {
 .popup-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6); /* Dark transparent background */
+  background: rgba(0, 0, 0, 0.8); /* Dark transparent background */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .popup-container {
-  background: var(--light-bg);
+  background: var(--dark-bg);
   color: var(--text-color);
-  padding: 20px;
-  border-radius: 10px;
+  padding: 25px;
+  border-radius: 12px;
   text-align: center;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
-  max-width: 350px;
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.5);
+  max-width: 380px;
   width: 90%;
+  border: 2px solid var(--accent-color);
+  animation: slideUp 0.3s ease-in-out;
 }
 
 .popup-container h2 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  color: var(--accent-color);
 }
 
 .popup-container p {
@@ -106,25 +110,51 @@ main {
 
 /* ========== Button Styles ========== */
 .popup-button {
-  background-color: var(--accent-color);
-  color: black;
-  font-size: 1rem;
+  background: linear-gradient(145deg, #ffd700, #e6c200);
+  color: #000;
+  font-size: 1.2rem;
   font-weight: bold;
-  padding: 10px 20px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
   width: 100%;
+  box-shadow: 0px 4px 10px rgba(255, 215, 0, 0.3);
 }
 
 .popup-button:hover {
-  background-color: #e6c200;
+  background: linear-gradient(145deg, #e6c200, #c8a400);
+  transform: scale(1.05);
 }
 
 .popup-button:disabled {
-  background-color: #888;
+  background: #444;
+  color: #bbb;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ========== Animations ========== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ========== Utility Classes ========== */
