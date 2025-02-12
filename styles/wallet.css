@@ -171,34 +171,63 @@
   transform: scale(1.05);
 }
 
-/* Conversion Morph Animation (Popup-only) */
+/* New Conversion Animation in Popup */
 .conversion-animation-popup {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: #121212;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  animation: morphAnimation 1.5s forwards;
-  cursor: pointer; /* Allow clicking anywhere to close */
+  pointer-events: none;
 }
 
-@keyframes morphAnimation {
+.animation-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.animation-container img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Withdrawable token slides out */
+.token-slide-out {
+  animation: tokenSlideOut 1.5s forwards;
+}
+
+/* Casino chip slides in */
+.chip-slide-in {
+  animation: chipSlideIn 1.5s forwards;
+}
+
+@keyframes tokenSlideOut {
   0% {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  50% {
     transform: translateX(0);
     opacity: 1;
   }
   100% {
     transform: translateX(100%);
     opacity: 0;
+  }
+}
+
+@keyframes chipSlideIn {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 

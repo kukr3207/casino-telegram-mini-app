@@ -43,7 +43,6 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Store tokens as an array so that other components using .map work correctly.
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -140,9 +139,8 @@ export default function WalletPage() {
             { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Trigger our new morph animation in the popup:
+          // Trigger the new morph animation in the popup:
           setShowConversionAnimation(true);
-          // After animation completes (1.5s), let the popup be closable.
           setTimeout(() => {
             setShowConvertPopup(false);
             setShowConversionAnimation(false);
@@ -201,10 +199,13 @@ export default function WalletPage() {
         </>
       )}
 
-      {/* If conversion animation is active, display it in the popup */}
+      {/* If conversion animation is active, display it in the popup overlay */}
       {showConversionAnimation && (
         <div className="conversion-animation-popup" onClick={() => setShowConvertPopup(false)}>
-          <div className="morph-container"></div>
+          <div className="animation-container">
+            <img className="token-slide-out" src="/images/token2.png" alt="Withdrawable Token" />
+            <img className="chip-slide-in" src="/images/token1.png" alt="Casino Chip" />
+          </div>
         </div>
       )}
 
@@ -279,7 +280,13 @@ export default function WalletPage() {
       {showConvertPopup && !showConversionAnimation && (
         <div className="popup" onClick={closePopup}>
           <div className="popup-content">
-            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
+            <div
+              className="popup-close"
+              onClick={() => {
+                setShowConvertPopup(false);
+                setSelectedPercentage(null);
+              }}
+            >
               &#x2715;
             </div>
             <h3>Select Conversion Percentage</h3>
