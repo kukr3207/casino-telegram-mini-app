@@ -15,9 +15,10 @@ export async function POST(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Check if the user exists
+    // Check if the user exists using chatId as a double
     const existingUser = await users.findOne({ chatId });
 
+    let isNewUser = false;
     if (!existingUser) {
       // Insert new user if they do not exist
       await users.insertOne({
@@ -30,18 +31,16 @@ export async function POST(req) {
         withdraw_tokens: 0,
         hol_tokens: 0,
       });
+      isNewUser = true;
       console.log(`New user created in DB: ${chatId}`);
     } else {
       console.log(`User already exists: ${chatId}`);
     }
 
     await client.close();
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return new Response(JSON.stringify({ success: true, isNewUser }), { status: 200 });
   } catch (error) {
     console.error("Error storing user data:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal Server Error" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
   }
 }
