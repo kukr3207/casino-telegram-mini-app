@@ -42,7 +42,7 @@ export default function WalletPage() {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
         const data = await response.json();
-        const tokenCounts: { id: number; count: number }[] = Array.isArray(data.tokenCounts) ? data.tokenCounts : [];
+        const tokenCounts: { id: number; count: number; image?: string }[] = Array.isArray(data.tokenCounts) ? data.tokenCounts : [];
         setCasinoChips(String(tokenCounts.find(t => t.id === 1)?.count || 0));
         setWithdrawTokens(String(tokenCounts.find(t => t.id === 2)?.count || 0));
         sessionStorage.setItem(
