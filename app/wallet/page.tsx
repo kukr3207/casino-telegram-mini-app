@@ -21,6 +21,7 @@ export default function WalletPage() {
   // Additional popups for processing and confirmation
   const [showProcessingPopup, setShowProcessingPopup] = useState(false);
   const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
+  const [customBuyAmount, setCustomBuyAmount] = useState(50);
   const [confirmationData, setConfirmationData] = useState<{
     prevCasino: number;
     newCasino: number;
@@ -35,7 +36,6 @@ export default function WalletPage() {
   const pricingTiers = [
     { chips: 50, price: 75, bonus: 0 },
     { chips: 100, price: 149, bonus: 0 },
-    { chips: 250, price: 350, bonus: 0 },
     { chips: 500, price: 725, bonus: 0 },
     { chips: 1000, price: 1399, bonus: 50 },
     { chips: 5000, price: 6750, bonus: 300 },
@@ -290,6 +290,21 @@ export default function WalletPage() {
                 : `${chips} Chips ${bonus > 0 ? `+ ${bonus} Bonus` : ""} 🌟 ${price} Stars`}
             </button>
           ))}
+        </div>
+        <div className="custom-buy">
+          <input
+            type="number"
+            min="50"
+            value={customBuyAmount}
+            onChange={(e) => setCustomBuyAmount(Number(e.target.value))}
+            placeholder="Custom amount (min 50)"
+          />
+          <button
+            className="buy-button custom"
+            onClick={() => handleBuy(customBuyAmount, "Normal", customBuyAmount)}
+          >
+            Buy Custom
+          </button>
         </div>
       </div>
 
