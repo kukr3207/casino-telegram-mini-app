@@ -382,3 +382,44 @@
     width: 90%;
   }
 }
+
+/* Popup container with blurred background */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5); /* semi-transparent overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  /* Remove backdrop-filter from the container itself */
+}
+
+/* Pseudo-element to blur the background behind the popup */
+.popup::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px); /* for Safari */
+  z-index: -1;
+}
+
+/* Popup Content remains unblurred */
+.popup-content {
+  position: relative;
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  color: #ffd700;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255,215,0,0.5);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}

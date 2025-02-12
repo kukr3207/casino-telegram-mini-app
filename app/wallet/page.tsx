@@ -254,9 +254,9 @@ export default function WalletPage() {
       {Number(withdrawTokens) >= 10 && (
         <div className="conversion-section">
           <h3>Convert Withdrawable Tokens to Casino Chips</h3>
-          <p>
+          {/* <p>
             Conversion Ratio: <strong>1:1</strong>
-          </p>
+          </p> */}
           <p>
             You have <strong>{withdrawTokens}</strong> withdrawable tokens.
           </p>
@@ -383,7 +383,7 @@ export default function WalletPage() {
               &#x2715;
             </div>
             <h3>Conversion Successful!</h3>
-            {/* <p className="conversion-ratio">Conversion Ratio: 1:1</p> */}
+            <p className="conversion-ratio">Conversion Ratio: 1:1</p>
             <p>
               Casino Chips: {confirmationData.prevCasino} → {confirmationData.newCasino}
             </p>
