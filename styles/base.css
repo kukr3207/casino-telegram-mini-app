@@ -10,60 +10,61 @@
   --light-bg: #ffffff; /* Light Background */
   --accent-color: #ffd700; /* Casino Gold */
 }
+
 /* Themes */
 [data-theme="dark"] {
-    --bg-color: #000000;
-    --text-color: #ffffff;
-  }
-  
-  [data-theme="light"] {
-    --bg-color: #ffffff;
-    --text-color: #000000;
-  }
-  
-  html,
-  body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden; /* Prevent scrolling on the body */
-  }
-  
-  main {
-    flex: 1;
-    overflow-y: auto; /* Make the main content area scrollable */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling for mobile devices */
-  }
-  
-/* Game Section */
+  --bg-color: #000000;
+  --text-color: #ffffff;
+}
+
+[data-theme="light"] {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* Prevent scrolling on the body */
+}
+
+main {
+  flex: 1;
+  overflow-y: auto; /* Make the main content area scrollable */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling for mobile devices */
+}
+
+/* Game Section (Additional Utility Classes) */
 .flex {
-    display: flex;
-  }
-  
-  .flex-col {
-    flex-direction: column;
-  }
-  
-  .gap-4 {
-    gap: 1rem;
-  }
-  
-  .p-4 {
-    padding: 1rem;
-  }
-  
-  .bg-gray-800 {
-    background-color: #2d3748;
-  }
-  
-  .hover\:bg-gray-700:hover {
-    background-color: #4a5568;
-  }
-  
-  .shadow-lg {
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.25);
-  }
-  
-  .text-gray-400 {
-    color: #cbd5e0;
-  }
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.bg-gray-800 {
+  background-color: #2d3748;
+}
+
+.hover\:bg-gray-700:hover {
+  background-color: #4a5568;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.25);
+}
+
+.text-gray-400 {
+  color: #cbd5e0;
+}
