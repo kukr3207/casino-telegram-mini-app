@@ -12,17 +12,17 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // New states for conversion popup and flip animation
+  // Conversion states
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
   const [showConversionFlip, setShowConversionFlip] = useState(false);
   const [flipClass, setFlipClass] = useState("");
 
-  // New state for window dimensions
+  // Window dimensions state; default values provided
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  // Predefined buy options (custom buy removed)
+  // Pricing tiers for buying chips (predefined only)
   const pricingTiers = [
     { chips: 50, price: 75, bonus: 0 },
     { chips: 100, price: 149, bonus: 0 },
@@ -31,7 +31,9 @@ export default function WalletPage() {
     { chips: 5000, price: 6750, bonus: 300 },
   ];
 
+  // Fetch token counts from the API safely (client only)
   const fetchTokenCounts = async () => {
+    if (typeof window === "undefined") return;
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) {
       console.error("Chat ID not found in sessionStorage.");
@@ -58,10 +60,15 @@ export default function WalletPage() {
     }
   };
 
+  // Set window dimensions safely after mount
   useEffect(() => {
-    // Set window dimensions safely after component mounts
-    setDimensions({ width: window.innerWidth, height: window.innerHeight });
+    if (typeof window !== "undefined") {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+    }
+  }, []);
 
+  // Set up message listener and fetch token counts after mount
+  useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 Received message:", event.data);
       if (event.data && event.data.type === "update_tokens") {
@@ -71,9 +78,15 @@ export default function WalletPage() {
         setProcessingChip(null);
       }
     };
-    window.addEventListener("message", handleMessage);
+    if (typeof window !== "undefined") {
+      window.addEventListener("message", handleMessage);
+    }
     fetchTokenCounts();
-    return () => window.removeEventListener("message", handleMessage);
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("message", handleMessage);
+      }
+    };
   }, []);
 
   const handleBuy = async (amount: number, packageType: string = "Tier", chipsBought: number = amount) => {
@@ -133,11 +146,9 @@ export default function WalletPage() {
               withdrawTokens: data.newWithdrawTokens,
             })
           );
-          // Trigger creative flip animation
+          // Trigger flip animation
           setShowConversionFlip(true);
-          setTimeout(() => {
-            setFlipClass("flipped");
-          }, 100);
+          setTimeout(() => setFlipClass("flipped"), 100);
           setTimeout(() => {
             setShowConversionFlip(false);
             setFlipClass("");
