@@ -33,7 +33,7 @@
 }
 
 .description-content h2 {
-  font-size: px;
+  font-size: 16px;
   margin-bottom: 5px;
   color: #ffd700;
   text-transform: uppercase;
@@ -42,6 +42,50 @@
 .description-content p {
   font-size: 10px;
   color: #b0b0b0;
+}
+
+/* Conversion Section */
+.conversion-section {
+  margin-top: 30px;
+  padding: 25px;
+  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+  border-radius: 15px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.conversion-section h3 {
+  font-size: 22px;
+  color: #ffd700;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.conversion-section p {
+  font-size: 16px;
+  color: #f0f0f0;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.convert-button {
+  background: linear-gradient(145deg, #282828, #3a3a3a);
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 16px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 2px solid #ffd700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 80%;
+  text-align: center;
+}
+
+.convert-button:hover {
+  background: linear-gradient(145deg, #ffd700, #e5b800);
+  color: #000;
+  transform: scale(1.05);
 }
 
 /* Buy Chips Section */
@@ -54,7 +98,6 @@
   text-align: center;
 }
 
-/* Buy Chips Title */
 .buy-chips h3 {
   font-size: 22px;
   color: #ffd700;
@@ -62,7 +105,6 @@
   text-transform: uppercase;
 }
 
-/* Buy Chips Info */
 .buy-chips p {
   font-size: 16px;
   color: #f0f0f0;
@@ -70,7 +112,6 @@
   font-weight: bold;
 }
 
-/* Predefined Buy Options */
 .predefined-options {
   display: flex;
   flex-direction: column;
@@ -80,7 +121,6 @@
   margin-bottom: 20px;
 }
 
-/* Buy Buttons */
 .buy-button {
   background: linear-gradient(145deg, #282828, #3a3a3a);
   color: #ffd700;
@@ -101,7 +141,6 @@
   transform: scale(1.05);
 }
 
-/* Highlighted Bonus Buttons */
 .buy-button.highlight {
   background: linear-gradient(145deg, #ffd700, #ffea70);
   color: #000;
@@ -115,36 +154,6 @@
 .buy-button.highlight:hover {
   transform: scale(1.1);
   box-shadow: 0px 0px 20px rgba(255, 215, 0, 0.8);
-}
-
-/* Custom Buy Section */
-.custom-buy {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 15px;
-}
-
-.custom-buy input {
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 2px solid #ffd700;
-  background: #1e1e1e;
-  color: #fff;
-  text-align: center;
-  width: 100px;
-  margin-right: 10px;
-}
-
-.custom-buy input::placeholder {
-  color: #bbb;
-  font-weight: bold;
-}
-
-.custom-buy input:focus {
-  border-color: #e5b800;
-  background-color: #292929;
 }
 
 /* Withdrawal Section */
@@ -187,6 +196,51 @@
   box-shadow: 0px 0px 10px rgba(255, 215, 0, 0.8);
 }
 
+/* Popup Styles */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: #121212;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  color: #ffd700;
+}
+
+.conversion-options {
+  display: flex;
+  justify-content: space-around;
+  margin: 15px 0;
+}
+
+.conversion-options .convert-option {
+  background: linear-gradient(145deg, #282828, #3a3a3a);
+  color: #ffd700;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 2px solid #ffd700;
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.3s ease;
+  font-weight: bold;
+}
+
+.conversion-options .convert-option:hover {
+  background: linear-gradient(145deg, #ffd700, #e5b800);
+  color: #000;
+  transform: scale(1.1);
+}
+
 /* Error Message */
 .error-message {
   color: #ff6f61;
@@ -200,24 +254,18 @@
   animation: fadeout 4s forwards;
 }
 
+@keyframes fadeout {
+  0% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
   .predefined-options {
     grid-template-columns: 1fr;
   }
-
-  .buy-button {
+  .buy-button, .convert-button {
     width: 90%;
   }
-
-  .custom-buy input {
-    width: 80px;
-  }
-}
-
-/* Fadeout Animation */
-@keyframes fadeout {
-  0% { opacity: 1; }
-  75% { opacity: 1; }
-  100% { opacity: 0; }
 }
