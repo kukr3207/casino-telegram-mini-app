@@ -16,8 +16,7 @@ export default function WalletPage() {
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
-  const [showConversionFlip, setShowConversionFlip] = useState(false);
-  const [flipClass, setFlipClass] = useState("");
+  const [showConversionMorph, setShowConversionMorph] = useState(false);
 
   // Window dimensions state; default values provided
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -44,7 +43,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Store tokens as an array (to be used with .map elsewhere)
+        // Store tokens as an array so that other components using .map work correctly.
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -69,7 +68,6 @@ export default function WalletPage() {
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 Received message:", event.data);
       if (event.data && event.data.type === "update_tokens") {
-        // Ensure tokens are stored as an array
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
@@ -136,20 +134,18 @@ export default function WalletPage() {
         if (data.success) {
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
-          // Store tokens as an array in session storage
+          // Store tokens as an array in session storage.
           const updatedTokens = [
             { id: 1, image: "/images/token1.png", count: data.newCasinoChips },
             { id: 2, image: "/images/token2.png", count: data.newWithdrawTokens },
             { id: 3, image: "/images/token3.png", count: 0 }, // assuming HOL tokens remain unchanged
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Trigger flip animation
-          setShowConversionFlip(true);
-          setTimeout(() => setFlipClass("flipped"), 100);
+          // Trigger the realistic morph animation.
+          setShowConversionMorph(true);
           setTimeout(() => {
-            setShowConversionFlip(false);
-            setFlipClass("");
-          }, 1600);
+            setShowConversionMorph(false);
+          }, 1500); // duration of the animation
           setShowConvertPopup(false);
           setSelectedPercentage(null);
           fetchTokenCounts();
@@ -197,12 +193,10 @@ export default function WalletPage() {
         </>
       )}
 
-      {showConversionFlip && (
-        <div className="conversion-flip">
-          <div className={`flip-inner ${flipClass}`}>
-            <div className="flip-front"></div>
-            <div className="flip-back"></div>
-          </div>
+      {showConversionMorph && (
+        <div className="conversion-morph">
+          <div className="morph-front"></div>
+          <div className="morph-back"></div>
         </div>
       )}
 
@@ -277,7 +271,13 @@ export default function WalletPage() {
       {showConvertPopup && (
         <div className="popup">
           <div className="popup-content">
-            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
+            <div
+              className="popup-close"
+              onClick={() => {
+                setShowConvertPopup(false);
+                setSelectedPercentage(null);
+              }}
+            >
               &#x2715;
             </div>
             <h3>Select Conversion Percentage</h3>

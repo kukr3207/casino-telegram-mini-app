@@ -170,47 +170,65 @@
   transform: scale(1.05);
 }
 
-/* Conversion Flip Animation */
-.conversion-flip {
+/* Conversion Morph Animation (New Realistic Animation) */
+.conversion-morph {
   position: fixed;
   top: 50%;
   left: 50%;
   width: 150px;
   height: 150px;
   transform: translate(-50%, -50%);
-  perspective: 1000px;
   z-index: 2000;
 }
 
-.flip-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 1.5s;
-  transform-style: preserve-3d;
-}
-
-.flip-inner.flipped {
-  transform: rotateY(180deg);
-}
-
-.flip-front,
-.flip-back {
+.morph-front,
+.morph-back {
   position: absolute;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden;
   background-size: contain;
   background-repeat: no-repeat;
+  background-position: center;
 }
 
-.flip-front {
-  background-image: url('/images/token2.png');
+.morph-front {
+  background-image: url('/images/token2.png'); /* Withdrawable token image */
+  animation: morphFront 1.5s forwards;
 }
 
-.flip-back {
-  background-image: url('/images/token1.png');
-  transform: rotateY(180deg);
+.morph-back {
+  background-image: url('/images/token1.png'); /* Casino chip image */
+  animation: morphBack 1.5s forwards;
+}
+
+@keyframes morphFront {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.9) rotate(5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) rotate(10deg);
+  }
+}
+
+@keyframes morphBack {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) rotate(10deg);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 /* Buy Chips Section */
