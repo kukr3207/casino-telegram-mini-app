@@ -5,14 +5,10 @@ export async function POST(req) {
     const { chatId, firstName, username } = await req.json();
 
     if (!chatId || !firstName) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+      });
     }
-
-    // Convert chatId to a string for consistency
-    const chatIdStr = chatId.toString();
 
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
@@ -20,13 +16,12 @@ export async function POST(req) {
     const users = db.collection("users");
 
     // Check if the user exists
-    const existingUser = await users.findOne({ chatId: chatIdStr });
+    const existingUser = await users.findOne({ chatId });
 
-    let isNewUser = false;
     if (!existingUser) {
       // Insert new user if they do not exist
       await users.insertOne({
-        chatId: chatIdStr,
+        chatId,
         firstName,
         username: username || null,
         createdAt: new Date(),
@@ -35,15 +30,13 @@ export async function POST(req) {
         withdraw_tokens: 0,
         hol_tokens: 0,
       });
-      isNewUser = true;
-      console.log(`New user created in DB: ${chatIdStr}`);
+      console.log(`New user created in DB: ${chatId}`);
     } else {
-      console.log(`User already exists: ${chatIdStr}`);
+      console.log(`User already exists: ${chatId}`);
     }
 
     await client.close();
-    // Return the flag so that the client can show the popup for new users
-    return new Response(JSON.stringify({ success: true, isNewUser }), { status: 200 });
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (error) {
     console.error("Error storing user data:", error);
     return new Response(
