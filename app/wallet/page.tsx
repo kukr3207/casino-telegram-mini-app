@@ -12,11 +12,12 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // New state for conversion popup and animation
+  // New states for conversion popup and flip animation
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
-  const [showConvertAnimation, setShowConvertAnimation] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
+  const [showConversionFlip, setShowConversionFlip] = useState(false);
+  const [flipClass, setFlipClass] = useState(""); // to add 'flipped' class
 
   // Predefined buy options (custom buy removed)
   const pricingTiers = [
@@ -39,6 +40,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        // Also store in session storage
         sessionStorage.setItem(
           "tokens",
           JSON.stringify({
@@ -104,7 +106,7 @@ export default function WalletPage() {
     }
   };
 
-  // New conversion submission handler with animation
+  // Conversion submission handler with flip animation
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
@@ -118,6 +120,7 @@ export default function WalletPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          // Update UI and session storage
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
           sessionStorage.setItem(
@@ -127,10 +130,16 @@ export default function WalletPage() {
               withdrawTokens: data.newWithdrawTokens,
             })
           );
-          setShowConvertAnimation(true);
+          // Trigger flip animation: show the conversion flip container, then add the flipped class.
+          setShowConversionFlip(true);
           setTimeout(() => {
-            setShowConvertAnimation(false);
-          }, 3000);
+            setFlipClass("flipped");
+          }, 100); // slight delay for animation trigger
+          // After animation, hide the flip and popup
+          setTimeout(() => {
+            setShowConversionFlip(false);
+            setFlipClass("");
+          }, 1600); // assuming animation duration is 1.5s
           setShowConvertPopup(false);
           setSelectedPercentage(null);
           fetchTokenCounts();
@@ -178,8 +187,13 @@ export default function WalletPage() {
         </>
       )}
 
-      {showConvertAnimation && (
-        <div className="conversion-animation"></div>
+      {showConversionFlip && (
+        <div className="conversion-flip">
+          <div className={`flip-inner ${flipClass}`}>
+            <div className="flip-front"></div>
+            <div className="flip-back"></div>
+          </div>
+        </div>
       )}
 
       {/* Token Descriptions */}
@@ -207,7 +221,7 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section (placed immediately below token descriptions) */}
+      {/* Conversion Section (immediately below token descriptions) */}
       <div className="conversion-section">
         <h3>Convert Withdrawable Tokens to Casino Chips</h3>
         <p>
