@@ -301,9 +301,9 @@ export default function WalletPage() {
           />
           <button
             className="buy-button custom"
-            onClick={() => handleBuy(customBuyAmount, "Normal", customBuyAmount)}
+            onClick={() => handleBuy(customBuyAmount, "Normal", customBuyAmount * 1.5)}
           >
-            Buy Custom
+            Buy
           </button>
         </div>
       </div>
