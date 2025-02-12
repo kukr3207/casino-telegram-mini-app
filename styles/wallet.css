@@ -68,6 +68,28 @@
   font-weight: bold;
 }
 
+/* Header inside conversion popup */
+.conversion-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.conversion-header .header-image {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #ffd700;
+  border-radius: 50%;
+  margin: 0 10px;
+}
+
+.conversion-header .conversion-arrow {
+  font-size: 24px;
+  color: #ffd700;
+}
+
+/* Convert Button */
 .convert-button {
   background: linear-gradient(145deg, #282828, #3a3a3a);
   color: #ffd700;
@@ -171,7 +193,7 @@
   transform: scale(1.05);
 }
 
-/* New Conversion Animation in Popup */
+/* Conversion Particle Animation (Popup-only) */
 .conversion-animation-popup {
   position: absolute;
   top: 0;
@@ -192,37 +214,36 @@
   height: 150px;
 }
 
-.animation-container img {
+.token-move-out {
   position: absolute;
   width: 100%;
   height: 100%;
   object-fit: contain;
+  animation: moveWithdraw 1.5s forwards;
 }
 
-/* Withdrawable token slides out */
-.token-slide-out {
-  animation: tokenSlideOut 1.5s forwards;
+.chip-move-in {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: moveCasino 1.5s forwards;
 }
 
-/* Casino chip slides in */
-.chip-slide-in {
-  animation: chipSlideIn 1.5s forwards;
-}
-
-@keyframes tokenSlideOut {
+@keyframes moveWithdraw {
   0% {
     transform: translateX(0);
     opacity: 1;
   }
   100% {
-    transform: translateX(100%);
+    transform: translateX(150%);
     opacity: 0;
   }
 }
 
-@keyframes chipSlideIn {
+@keyframes moveCasino {
   0% {
-    transform: translateX(-100%);
+    transform: translateX(-150%);
     opacity: 0;
   }
   100% {
@@ -366,4 +387,17 @@
   .buy-button, .convert-button, .convert-submit {
     width: 90%;
   }
+}
+
+/* Confirmation Popup Styles */
+.confirmation-popup h3 {
+  font-size: 22px;
+  color: #66ff66;
+  margin-bottom: 10px;
+}
+
+.confirmation-popup p {
+  font-size: 16px;
+  color: #f0f0f0;
+  margin: 8px 0;
 }

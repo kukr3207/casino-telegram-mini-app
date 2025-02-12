@@ -5,6 +5,7 @@ import "../../styles/wallet.css";
 import Confetti from "react-confetti";
 
 export default function WalletPage() {
+  // Basic token balances and error/confetti states
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [withdrawTokens, setWithdrawTokens] = useState("Loading...");
   const [isBuying, setIsBuying] = useState(false);
@@ -12,13 +13,22 @@ export default function WalletPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
 
-  // Conversion states
+  // Conversion popup and animation states
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
   const [showConversionAnimation, setShowConversionAnimation] = useState(false);
 
-  // Window dimensions state; default values provided
+  // Confirmation popup state and data
+  const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<{
+    prevCasino: number;
+    newCasino: number;
+    prevWithdraw: number;
+    newWithdraw: number;
+  } | null>(null);
+
+  // Dimensions for Confetti – safe client-only state
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Predefined buy options (custom buy removed)
@@ -43,6 +53,7 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        // Store tokens as an array for use with .map in other components
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -121,6 +132,9 @@ export default function WalletPage() {
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
+    // Store previous balances for confirmation
+    const prevCasino = Number(casinoChips);
+    const prevWithdraw = Number(withdrawTokens);
     try {
       const chatId = sessionStorage.getItem("chat_id");
       const response = await fetch(`/api/convert-tokens`, {
@@ -139,11 +153,19 @@ export default function WalletPage() {
             { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Trigger the new morph animation in the popup:
+          // Save conversion result for confirmation popup
+          setConfirmationData({
+            prevCasino,
+            newCasino: data.newCasinoChips,
+            prevWithdraw,
+            newWithdraw: data.newWithdrawTokens,
+          });
+          // Trigger particle explosion and reassembly animation in the popup
           setShowConversionAnimation(true);
           setTimeout(() => {
             setShowConvertPopup(false);
             setShowConversionAnimation(false);
+            setShowConfirmationPopup(true);
           }, 1500);
           setSelectedPercentage(null);
           fetchTokenCounts();
@@ -160,7 +182,12 @@ export default function WalletPage() {
     }
   };
 
-  // Allow closing the popup by clicking outside of the content.
+
+  const closeConfirmationPopup = () => {
+    setShowConfirmationPopup(false);
+  };
+
+  // Allow closing the popup by clicking outside the content
   const closePopup = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (e.target === e.currentTarget) {
       setShowConvertPopup(false);
@@ -199,12 +226,11 @@ export default function WalletPage() {
         </>
       )}
 
-      {/* If conversion animation is active, display it in the popup overlay */}
       {showConversionAnimation && (
         <div className="conversion-animation-popup" onClick={() => setShowConvertPopup(false)}>
           <div className="animation-container">
-            <img className="token-slide-out" src="/images/token2.png" alt="Withdrawable Token" />
-            <img className="chip-slide-in" src="/images/token1.png" alt="Casino Chip" />
+            <img className="token-move-out" src="/images/token2.png" alt="Withdrawable Token" />
+            <img className="chip-move-in" src="/images/token1.png" alt="Casino Chip" />
           </div>
         </div>
       )}
@@ -240,6 +266,12 @@ export default function WalletPage() {
         <p>
           You have <strong>{withdrawTokens}</strong> withdrawable tokens.
         </p>
+        {/* Header showing conversion images */}
+        <div className="conversion-header">
+          <img src="/images/token2.png" alt="Withdrawable Token" className="header-image" />
+          <span className="conversion-arrow">&#8594;</span>
+          <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
+        </div>
         <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
           Convert Tokens
         </button>
@@ -280,13 +312,7 @@ export default function WalletPage() {
       {showConvertPopup && !showConversionAnimation && (
         <div className="popup" onClick={closePopup}>
           <div className="popup-content">
-            <div
-              className="popup-close"
-              onClick={() => {
-                setShowConvertPopup(false);
-                setSelectedPercentage(null);
-              }}
-            >
+            <div className="popup-close" onClick={() => { setShowConvertPopup(false); setSelectedPercentage(null); }}>
               &#x2715;
             </div>
             <h3>Select Conversion Percentage</h3>
@@ -327,6 +353,24 @@ export default function WalletPage() {
             >
               Submit
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Popup */}
+      {showConfirmationPopup && confirmationData && (
+        <div className="popup" onClick={() => setShowConfirmationPopup(false)}>
+          <div className="popup-content confirmation-popup">
+            <div className="popup-close" onClick={() => setShowConfirmationPopup(false)}>
+              &#x2715;
+            </div>
+            <h3>Conversion Successful!</h3>
+            <p>
+              Casino Chips: {confirmationData.prevCasino} → {confirmationData.newCasino}
+            </p>
+            <p>
+              Withdrawable Tokens: {confirmationData.prevWithdraw} → {confirmationData.newWithdraw}
+            </p>
           </div>
         </div>
       )}
