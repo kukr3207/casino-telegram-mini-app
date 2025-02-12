@@ -59,8 +59,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             sessionStorage.setItem("chat_id", chatIdNum.toString());
             setChatId(chatIdNum);
 
+            // Check if user already exists
+            const tokenResponse = await fetch(`/api/get-token-counts?chatId=${chatIdNum}`);
+            if (tokenResponse.ok) {
+              const { tokenCounts } = await tokenResponse.json();
+
+              // Store token counts in session storage
+              const tokens = [
+                { id: 1, image: "/images/token1.png", count: tokenCounts?.casino_chips || 0 },
+                { id: 2, image: "/images/token2.png", count: tokenCounts?.withdraw_tokens || 0 },
+                { id: 3, image: "/images/token3.png", count: tokenCounts?.hol_tokens || 0 },
+              ];
+              sessionStorage.setItem("tokens", JSON.stringify(tokens));
+
+              // If user exists, stop here (No popup)
+              return;
+            }
+
+            // If the user doesn't exist, mark them as new and save user data
             try {
-              // Save user data in the database and only show popup if the call succeeds
               const response = await fetch(`/api/save-user-data`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -71,24 +88,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 console.log("New user detected. Showing free chips popup.");
                 setShowFreeChipsPopup(true);
               }
-
-              // Fetch user's token counts
-              const tokenResponse = await fetch(`/api/get-token-counts?chatId=${chatIdNum}`);
-              if (tokenResponse.ok) {
-                const { tokenCounts } = await tokenResponse.json();
-
-                // Store token counts in session storage
-                const tokens = [
-                  { id: 1, image: "/images/token1.png", count: tokenCounts?.casino_chips || 0 },
-                  { id: 2, image: "/images/token2.png", count: tokenCounts?.withdraw_tokens || 0 },
-                  { id: 3, image: "/images/token3.png", count: tokenCounts?.hol_tokens || 0 },
-                ];
-                sessionStorage.setItem("tokens", JSON.stringify(tokens));
-              } else {
-                console.error("Failed to fetch token counts.");
-              }
             } catch (error) {
-              console.error("Error fetching or storing token data:", error);
+              console.error("Error saving new user data:", error);
             }
           }
         }
