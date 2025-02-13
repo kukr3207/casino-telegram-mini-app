@@ -184,7 +184,7 @@ export default function EarnPage() {
         setRotation((prev) => prev + additionalRotation);
       }, 50);
 
-      // Increase delay to 8 seconds (5 seconds spin + 3 seconds delay) before showing the popup
+      // Wait 8 seconds total before showing the result popup (spin duration + delay)
       setTimeout(() => {
         setIsSpinning(false);
         setSpinResult(outcome);

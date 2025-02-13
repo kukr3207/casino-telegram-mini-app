@@ -93,18 +93,11 @@
   height: 200px;
   margin: 0 auto;
   border-radius: 50%;
-  background: repeating-conic-gradient(
-    from 0deg,
-    #ffd700 0deg,
-    #ffd700 43deg,
-    #fff 43deg,
-    #fff 45deg
-  );
-  /* Keep overflow hidden for the wheel circle */
+  /* Remove background from here */
   overflow: hidden;
 }
 
-/* The spinning wheel overlay */
+/* The spinning wheel element now has the gradient background */
 .wheel {
   position: absolute;
   width: 100%;
@@ -112,7 +105,13 @@
   border-radius: 50%;
   top: 0;
   left: 0;
-  background-color: rgba(255, 255, 255, 0.3);
+  background: repeating-conic-gradient(
+    from 0deg,
+    #ffd700 0deg,
+    #ffd700 43deg,
+    #fff 43deg,
+    #fff 45deg
+  );
   transition: transform 5s ease-out;
 }
 
