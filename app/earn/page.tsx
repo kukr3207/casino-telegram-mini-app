@@ -179,11 +179,12 @@ export default function EarnPage() {
       const winningSegmentCenter = outcomeIndex * segmentAngle + segmentAngle / 2;
       const additionalRotation = baseRotation + (arrowTargetAngle - winningSegmentCenter);
       
-      // Add a slight delay to force the browser to register the starting state before animating.
+      // Delay slightly to ensure the transition registers
       setTimeout(() => {
         setRotation((prev) => prev + additionalRotation);
       }, 50);
 
+      // Increase delay to 8 seconds (5 seconds spin + 3 seconds delay) before showing the popup
       setTimeout(() => {
         setIsSpinning(false);
         setSpinResult(outcome);
@@ -198,7 +199,7 @@ export default function EarnPage() {
         }
         setShowSpinPopup(true);
         fetchUserTokenBalance();
-      }, 3000);
+      }, 8000);
     } catch (error) {
       console.error("Error during spin:", error);
       setIsSpinning(false);
@@ -271,7 +272,7 @@ export default function EarnPage() {
                 className="wheel"
                 style={{
                   transform: `rotate(${rotation}deg)`,
-                  transition: "transform 3s ease-out",
+                  transition: "transform 5s ease-out",
                   position: "relative",
                   width: "100%",
                   height: "100%",
