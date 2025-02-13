@@ -82,7 +82,7 @@ export default function EarnPage() {
   const handleDailyCheckIn = async () => {
     if (isDailyClaimed || isCheckinProcessing) return;
     setIsCheckinProcessing(true);
-    // Calculate new streak and reward. (You might also perform this logic on the server.)
+    // Calculate new streak and reward.
     let newStreak = streak ? streak + 1 : 1;
     if (newStreak > MAX_STREAK_DAYS) newStreak = 1;
     const newReward = 5 + newStreak * 5;
@@ -98,7 +98,6 @@ export default function EarnPage() {
         throw new Error("Daily check-in failed");
       }
       const data = await response.json();
-      // Update UI state based on DB result.
       setIsDailyClaimed(true);
       setStreak(newStreak);
       setDailyReward(newReward);
@@ -107,7 +106,7 @@ export default function EarnPage() {
       }
       setDailyPopupMessage(`You received ${newReward} tokens for daily check-in!`);
       setShowDailyPopup(true);
-      // Refresh user status from DB.
+      // Refresh user status.
       fetchUserStatus();
     } catch (error) {
       console.error("Error during daily check-in:", error);
@@ -134,7 +133,7 @@ export default function EarnPage() {
       }
       const data: SpinResponse = await response.json();
       const { outcome, outcomeIndex } = data;
-      // Define outcomes (order must match the backend)
+      // Define outcomes (order must match backend)
       const outcomes: Outcome[] = [
         { type: "token", value: 10 },
         { type: "token", value: 25 },
@@ -148,7 +147,6 @@ export default function EarnPage() {
       const segments = outcomes.length;
       const segmentAngle = 360 / segments;
       const baseRotation = 360 * 5; // 5 full spins.
-      // With the arrow on the right, we want the winning segment's center to be at 0°.
       const arrowTargetAngle = 0;
       const winningSegmentCenter = outcomeIndex * segmentAngle + segmentAngle / 2;
       const additionalRotation = baseRotation + (arrowTargetAngle - winningSegmentCenter);
@@ -157,8 +155,8 @@ export default function EarnPage() {
       setTimeout(() => {
         setRotation(prev => prev + additionalRotation);
       }, 50);
-      
-      // Wait 8 seconds (5s spin + 3s delay) before showing the result popup.
+
+      // Wait 8 seconds (spin duration + extra delay) before showing popup.
       setTimeout(() => {
         setIsSpinProcessing(false);
         setSpinResult(outcome);
@@ -191,7 +189,7 @@ export default function EarnPage() {
     ];
     const segments = outcomes.length;
     const segmentAngle = 360 / segments;
-    const radius = 80; // For label placement.
+    const radius = 80;
     return outcomes.map((segment, index) => {
       const angle = (index * segmentAngle + segmentAngle / 2) * (Math.PI / 180);
       const x = 100 + radius * Math.cos(angle);
