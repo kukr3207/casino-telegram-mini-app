@@ -77,6 +77,12 @@
 
 /* Spin Wheel Section */
 .spin-wheel-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wheel-wrapper {
   position: relative;
   display: inline-block;
 }
@@ -87,7 +93,6 @@
   height: 200px;
   margin: 0 auto;
   border-radius: 50%;
-  /* Use a repeating conic-gradient to create pie segments with dividing lines */
   background: repeating-conic-gradient(
     from 0deg,
     #ffd700 0deg,
@@ -95,6 +100,7 @@
     #fff 43deg,
     #fff 45deg
   );
+  /* Keep overflow hidden for the wheel circle */
   overflow: hidden;
 }
 
@@ -110,17 +116,19 @@
   transition: transform 3s ease-out;
 }
 
-/* Arrow indicator for the winning slice */
+/* Arrow positioned relative to the wheel-wrapper.
+   Uses border-left to create a left-pointing triangle.
+   Rotated 180° so that it now points right, matching the wheel on the left */
 .arrow {
   position: absolute;
-  top: -25px; /* Position above the wheel */
-  left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%) rotate(180deg);
   width: 0;
   height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 15px solid #fff;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 15px solid #ffd700;
   z-index: 10;
 }
 

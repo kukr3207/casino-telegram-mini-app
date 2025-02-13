@@ -24,17 +24,16 @@ export default function EarnPage() {
 
   // Spin wheel states
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
-  // Instead of setting absolute rotation each time, we add to the current rotation so the spin is animated.
+  // We add to the current rotation so that the spin is animated continuously.
   const [rotation, setRotation] = useState<number>(0);
   const [spinResult, setSpinResult] = useState<Outcome | null>(null);
 
-  // Popup states for daily check-in and spin wheel results
+  // Popup states for daily check-in and spin results
   const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
   const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
   const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
   const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
 
-  // Maximum daily check-in streak is now 15 days.
   const MAX_STREAK_DAYS = 15;
   const today = new Date().toISOString().split("T")[0];
 
@@ -45,8 +44,6 @@ export default function EarnPage() {
   }, []);
 
   // --- Fetch Functions ---
-
-  // Uses the existing get-token-counts endpoint.
   const fetchUserTokenBalance = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
@@ -67,7 +64,6 @@ export default function EarnPage() {
     }
   };
 
-  // Check daily check-in status from local storage.
   const checkDailyStatus = () => {
     const lastCheckIn = localStorage.getItem("dailyCheckinDate");
     const storedStreak = localStorage.getItem("streak");
@@ -86,20 +82,16 @@ export default function EarnPage() {
     }
   };
 
-  // Check if the user has already spun today.
   const checkSpinStatus = () => {
     const lastSpin = localStorage.getItem("dailySpinDate");
     if (lastSpin === today) {
-      // The UI disables the spin button based on local storage.
+      // Spin button will be disabled.
     }
   };
 
   // --- Event Handlers ---
-
-  // Handle daily check-in by calling the new daily-checkin endpoint.
   const handleDailyCheckIn = async () => {
     if (isDailyClaimed) return;
-    // Determine yesterday's date.
     const yesterday = new Date();
     yesterday.setDate(new Date().getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
@@ -113,7 +105,6 @@ export default function EarnPage() {
     } else {
       newStreak = 1;
     }
-    // Reward calculation: Day 1 = 10, Day 2 = 15, Day 3 = 20, etc.
     const newReward = 5 + newStreak * 5;
 
     const chatId = sessionStorage.getItem("chat_id");
@@ -147,7 +138,6 @@ export default function EarnPage() {
     }
   };
 
-  // Handle spin wheel by calling the new spin-wheel endpoint.
   const handleSpin = async () => {
     if (localStorage.getItem("dailySpinDate") === today) return;
     if (isSpinning) return;
@@ -169,7 +159,7 @@ export default function EarnPage() {
       const data: SpinResponse = await response.json();
       const { outcome, outcomeIndex } = data;
 
-      // Define outcomes (must match API order)
+      // Define outcomes (order must match backend)
       const outcomes: Outcome[] = [
         { type: "token", value: 10 },
         { type: "token", value: 25 },
@@ -183,12 +173,17 @@ export default function EarnPage() {
 
       const segments = outcomes.length;
       const segmentAngle = 360 / segments;
-      const baseRotation = 360 * 5; // 5 full spins for effect.
-      // Instead of setting an absolute value, add the new rotation to the existing value.
-      const additionalRotation = baseRotation + (outcomeIndex * segmentAngle) + (segmentAngle / 2);
-      setRotation(prev => prev + additionalRotation);
+      const baseRotation = 360 * 5; // 5 full spins.
+      // With the arrow on the right, we want the winning segment's center to be at 0° (to the right).
+      const arrowTargetAngle = 0;
+      const winningSegmentCenter = outcomeIndex * segmentAngle + segmentAngle / 2;
+      const additionalRotation = baseRotation + (arrowTargetAngle - winningSegmentCenter);
+      
+      // Add a slight delay to force the browser to register the starting state before animating.
+      setTimeout(() => {
+        setRotation((prev) => prev + additionalRotation);
+      }, 50);
 
-      // Wait for the animation to finish (3 seconds)
       setTimeout(() => {
         setIsSpinning(false);
         setSpinResult(outcome);
@@ -270,17 +265,22 @@ export default function EarnPage() {
       <div className="earn-section">
         <h4>🎡 Spin the Wheel</h4>
         <div className="spin-wheel-wrapper">
-          {/* Arrow indicator placed outside the wheel container */}
-          <div className="arrow"></div>
-          <div className="wheel-container">
-            {renderWheelSegments()}
-            <div
-              className="wheel"
-              style={{
-                transform: `rotate(${rotation}deg)`,
-                transition: "transform 3s ease-out",
-              }}
-            ></div>
+          <div className="wheel-wrapper">
+            <div className="wheel-container">
+              <div
+                className="wheel"
+                style={{
+                  transform: `rotate(${rotation}deg)`,
+                  transition: "transform 3s ease-out",
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                {renderWheelSegments()}
+              </div>
+            </div>
+            <div className="arrow"></div>
           </div>
         </div>
         <button
