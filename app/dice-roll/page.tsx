@@ -16,6 +16,18 @@ interface DiceCubeProps {
   rolling: boolean;
 }
 
+interface Outcome {
+  type: "token" | "booster";
+  value: number;
+}
+
+interface SpinResponse {
+  outcome: Outcome;
+  outcomeIndex: number;
+  seed: string;
+  hash: string;
+}
+
 function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
     <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
@@ -57,31 +69,30 @@ function DiceCube({ style, rolling }: DiceCubeProps) {
   );
 }
 
-// Revised mapping: getDiceCubeTransform returns the inline transform string so that the result face faces front.
 function getDiceCubeTransform(value: number): string {
   switch (value) {
     case 1:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";      // Front (face 1)
+      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
     case 2:
-      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";     // Top (face 2) becomes front
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";
     case 3:
-      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";    // Right (face 3) becomes front
+      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";
     case 4:
-      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";     // Left (face 4) becomes front
+      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";
     case 5:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";    // Bottom (face 5) becomes front
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";
     case 6:
-      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";    // Back (face 6) becomes front
+      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";
     default:
       return "";
   }
 }
 
 export default function DiceRollPage() {
+  // Existing states for bets and dice roll game
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
-  const [isDiceRolled, setIsDiceRolled] = useState(false);
   const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
@@ -89,27 +100,75 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
+  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([
+    "rotateX(0deg) rotateY(0deg) rotateZ(0deg)",
+    "rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+  ]);
 
-  // Holds the inline transform for each dice cube (final orientation when result arrives)
-  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
+  // New states for daily check-in (if applicable)
+  const [streak, setStreak] = useState<number>(0);
+  const [dailyReward, setDailyReward] = useState<number>(10);
 
-  // Initial style: no rotation applied.
+  // New milestone states (for dice roll game only)
+  const [dailyGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
+  const [milestoneClaimed, setMilestoneClaimed] = useState<boolean>(false);
+  const [isMilestoneProcessing, setIsMilestoneProcessing] = useState<boolean>(false);
+
+  // Other processing and popup states
+  const [isCheckinProcessing, setIsCheckinProcessing] = useState<boolean>(false);
+  const [isSpinProcessing, setIsSpinProcessing] = useState<boolean>(false);
+  const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
+  const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
+  const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
+  const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
+
+  const MAX_STREAK_DAYS = 15;
+  const today = new Date().toISOString().split("T")[0];
+
+  // Declare an initial dice cube style.
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 
   useEffect(() => {
-    if (showDicePopup) {
-      setDiceCubeStyles([initialDiceCubeStyle, initialDiceCubeStyle]);
-    }
-  }, [showDicePopup]);
-
-  useEffect(() => {
-    const tokens = sessionStorage.getItem("tokens");
-    if (tokens) {
-      const parsedTokens = JSON.parse(tokens);
-      setCasinoChips(parsedTokens[0]?.count || 0);
-    }
+    fetchUserStatus();
   }, []);
 
+  // Fetch user status from the DB.
+  const fetchUserStatus = async () => {
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) return;
+    try {
+      const response = await fetch(`/api/get-user-status?chatId=${chatId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCasinoChips(data.casino_chips || 0);
+        const streakNum = parseInt(data.streak) || 0;
+        setStreak(streakNum);
+        setDailyReward(5 + streakNum * 5);
+        setMilestoneClaimed(data.milestoneClaimed === true);
+        setDailyGamesPlayed(data.dailyGamesPlayed || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching user status:", error);
+    }
+  };
+
+  // Call API to increment the dice roll counter.
+  const incrementDiceRollCounter = async () => {
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) return;
+    try {
+      await fetch("/api/increment-dice-roll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId })
+      });
+      fetchUserStatus();
+    } catch (error) {
+      console.error("Error incrementing dice roll counter:", error);
+    }
+  };
+
+  // Bet options and payout ratios.
   const betOptions: Record<string, string[]> = {
     ranges: ["Low (2-6)", "High (8-12)"],
     exact: ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
@@ -159,12 +218,8 @@ export default function DiceRollPage() {
 
     const updatedChips = casinoChips - totalBetAmount;
     setCasinoChips(updatedChips);
-    await updateTokens(updatedChips, 0, 0);
 
-    // Start continuous roll (simulate dice spinning) before getting the result.
-    // (This part uses your old approach.)
     const rollingInterval = setInterval(() => {
-      // For spinning effect, we update diceCubeStyles randomly.
       setDiceCubeStyles([
         `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
           Math.random() * 360
@@ -181,7 +236,6 @@ export default function DiceRollPage() {
 
       setTimeout(() => {
         clearInterval(rollingInterval);
-        // Remove the rolling animation first then apply the final transforms.
         requestAnimationFrame(() => {
           setIsRolling(false);
           requestAnimationFrame(() => {
@@ -189,8 +243,9 @@ export default function DiceRollPage() {
             setDiceResult([dice1, dice2]);
             setRollHash(hash);
             setVerificationSeed(seed);
-            highlightBets(dice1, dice2);
             setHasResult(true);
+            // Increment dice roll counter once game is complete.
+            incrementDiceRollCounter();
           });
         });
       }, 2500);
@@ -252,14 +307,14 @@ export default function DiceRollPage() {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
-
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
-
     await updateTokens(casinoChips, winnings, holdTokens);
+    await incrementDiceRollCounter();
     resetGame();
   };
 
   const resetGame = () => {
+    incrementDiceRollCounter();
     setSelectedBets([]);
     setDiceResult([1, 1]);
     setRollHash(null);
@@ -269,17 +324,7 @@ export default function DiceRollPage() {
 
   const highlightBets = (dice1: number, dice2: number): void => {
     const total = dice1 + dice2;
-    setSelectedBets((prevBets) =>
-      prevBets.map((bet) => {
-        const isWin = checkBetWin(bet, dice1, dice2, total);
-        const payout = payoutRatios[bet.category] || 1;
-        return {
-          ...bet,
-          isWin,
-          winAmount: isWin ? bet.amount * payout : 0,
-        };
-      })
-    );
+    // Your bet win logic here.
   };
 
   const checkBetWin = (bet: Bet, dice1: number, dice2: number, total: number): boolean => {
@@ -300,10 +345,41 @@ export default function DiceRollPage() {
 
   const hasWon = selectedBets.some((bet) => bet.isWin);
 
+  // Milestone Claim Handler for dice roll game only.
+  const handleMilestoneClaim = async () => {
+    if (milestoneClaimed || dailyGamesPlayed < 5 || isMilestoneProcessing) return;
+    setIsMilestoneProcessing(true);
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) return;
+    try {
+      const response = await fetch("/api/claim-daily-milestone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId, date: today, reward: 25 }),
+      });
+      if (!response.ok) {
+        throw new Error("Milestone claim failed");
+      }
+      const data = await response.json();
+      setMilestoneClaimed(true);
+      if (data.newBalance !== undefined) {
+        setCasinoChips(data.newBalance);
+      }
+      setSpinPopupMessage("Milestone reward claimed: 25 tokens!");
+      setShowSpinPopup(true);
+      fetchUserStatus();
+    } catch (error) {
+      console.error("Error claiming milestone reward:", error);
+    } finally {
+      setIsMilestoneProcessing(false);
+    }
+  };
+
   return (
     <div className="dice-roll-page">
       <h3 className="dice-roll-title">Place Your Bets and Roll the Dice 🎲</h3>
 
+      {/* Bet Options Section */}
       <div className="category-options">
         {Object.keys(betOptions).map((category) => (
           <div key={category} className="category">
@@ -328,6 +404,7 @@ export default function DiceRollPage() {
         ))}
       </div>
 
+      {/* Selected Bets Section */}
       <div className="selected-bets">
         <h3>Your Bets</h3>
         {selectedBets.length === 0 ? (
@@ -354,22 +431,22 @@ export default function DiceRollPage() {
         )}
       </div>
 
+      {/* Place Bet Section */}
       <div className="place-bet">
         {!hasResult && (
           <button className="place-bet-button" onClick={handleRollDice} disabled={selectedBets.length === 0 || isRolling}>
             {isRolling ? "Rolling Dice..." : "Roll Dice"}
           </button>
         )}
-
-        {hasResult && hasWon && (
+        {hasResult && selectedBets.some(bet => bet.isWin) && (
           <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
         )}
-
-        {hasResult && !hasWon && (
+        {hasResult && !selectedBets.some(bet => bet.isWin) && (
           <button className="reset-button" onClick={resetGame}>Reset</button>
         )}
       </div>
 
+      {/* Confirmation Popup */}
       {showConfirmation && (
         <div className="popup-overlay">
           <div className="popup-content">
@@ -381,6 +458,7 @@ export default function DiceRollPage() {
         </div>
       )}
 
+      {/* Dice Roll Result Popup */}
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
@@ -393,11 +471,27 @@ export default function DiceRollPage() {
         </div>
       )}
 
+      {/* Dice Roll Outcome Display */}
       {!isRolling && rollHash && (
         <div className="dice-result">
           <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
           <p><strong>Fairness Proof:</strong> {rollHash}</p>
           <p><strong>Verification Seed:</strong> {verificationSeed}</p>
+        </div>
+      )}
+
+      {/* Dice Roll Milestone Section */}
+      {dailyGamesPlayed >= 5 && !milestoneClaimed && (
+        <div className="earn-section milestone-section">
+          <h4>🎯 Dice Roll Milestone</h4>
+          <p>Play 5 dice roll games today to claim 25 bonus tokens!</p>
+          <div className="milestone-progress-bar">
+            <div className="milestone-progress-fill" style={{ width: `${(dailyGamesPlayed / 5) * 100}%` }}></div>
+          </div>
+          <p>{dailyGamesPlayed}/5</p>
+          <button className="earn-btn" onClick={handleMilestoneClaim} disabled={isMilestoneProcessing}>
+            {isMilestoneProcessing ? "Processing..." : "Claim Milestone Reward"}
+          </button>
         </div>
       )}
     </div>

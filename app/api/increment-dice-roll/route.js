@@ -1,9 +1,8 @@
 import { MongoClient } from "mongodb";
 
-export async function GET(req) {
+export async function POST(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const chatId = searchParams.get("chatId");
+    const { chatId } = await req.json();
     if (!chatId) {
       return new Response(
         JSON.stringify({ error: "Missing chatId" }),
@@ -16,7 +15,6 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
     
-    // Try numeric and string version of chatId.
     const numericChatId = isNaN(chatId) ? chatId : parseFloat(chatId);
     let user = await users.findOne({ chatId: numericChatId });
     if (!user) {
@@ -30,20 +28,18 @@ export async function GET(req) {
       );
     }
     
+    await users.updateOne(
+      { _id: user._id },
+      { $inc: { dailyGamesPlayed: 1 }, $set: { updatedAt: new Date() } }
+    );
+    
     await client.close();
     return new Response(
-      JSON.stringify({
-        casino_chips: user.casino_chips || 0,
-        dailyCheckinDate: user.dailyCheckinDate || null,
-        dailySpinDate: user.dailySpinDate || null,
-        streak: user.streak || 0,
-        dailyGamesPlayed: user.dailyGamesPlayed || 0,    // dice roll game plays count
-        milestoneClaimed: user.milestoneClaimed || false  // milestone reward claimed flag
-      }),
+      JSON.stringify({ message: "Counter incremented" }),
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching user status:", error);
+    console.error("Error incrementing dice roll counter:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500 }
