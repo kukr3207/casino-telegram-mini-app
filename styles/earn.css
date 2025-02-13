@@ -22,7 +22,13 @@
   background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
   border-radius: 12px;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  text-align: center;
   transition: opacity 0.3s ease;
+}
+
+.earn-section.completed {
+  opacity: 0.6;
+  text-decoration: line-through;
 }
 
 .earn-section h4 {
@@ -40,7 +46,7 @@
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
-  margin: 10px;
+  margin-top: 10px;
 }
 
 .earn-btn:hover {
@@ -52,45 +58,77 @@
   cursor: not-allowed;
 }
 
-/* Spin Section: text and button side by side at extremes */
-.spin-section .spin-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* (Optional) Progress Bar */
+.progress-container {
   width: 100%;
-}
-
-.spin-section .spin-text {
-  font-size: 18px;
-  color: #ffd700;
-  text-align: left;
-}
-
-/* Milestone Section */
-.milestone-section {
-  margin-top: 20px;
-}
-
-.milestone-progress-bar {
   background: #333;
-  border-radius: 5px;
+  border-radius: 12px;
   overflow: hidden;
-  margin: 10px auto;
-  height: 10px;
-  width: 80%;
+  margin-bottom: 10px;
 }
 
-.milestone-progress-fill {
+.progress-bar {
+  height: 20px;
   background: #ffd700;
-  height: 100%;
-  width: 0%;
-  transition: width 0.5s ease-out;
+  text-align: center;
+  color: #000;
+  font-weight: bold;
 }
 
-.milestone-status {
-  font-size: 16px;
-  color: #ffd700;
-  font-weight: bold;
+/* Spin Wheel Section */
+.spin-wheel-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wheel-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.wheel-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  border-radius: 50%;
+  /* No background here; it's on the .wheel */
+  overflow: hidden;
+}
+
+/* The spinning wheel element now has the gradient background */
+.wheel {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    #ffd700 0deg,
+    #ffd700 43deg,
+    #fff 43deg,
+    #fff 45deg
+  );
+  transition: transform 5s ease-out;
+}
+
+/* Arrow positioned relative to the wheel-wrapper.
+   Uses border-left to create a left-pointing triangle.
+   Rotated 180° so that it now points right */
+.arrow {
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%) rotate(180deg);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 15px solid #ffd700;
+  z-index: 10;
 }
 
 /* Popup Styles with background blur */
@@ -115,4 +153,40 @@
   border-radius: 8px;
   text-align: center;
   color: #ffd700;
+}
+
+/* Additional Styles */
+.tasks ul {
+  list-style: none;
+  padding: 0;
+}
+
+.tasks ul li {
+  font-size: 16px;
+  color: #bbb;
+  margin: 5px 0;
+}
+
+.mystery-box {
+  text-align: center;
+}
+
+.result {
+  font-size: 18px;
+  color: #ffd700;
+  margin-top: 10px;
+}
+
+.reward-tag {
+  background-color: #ffd700;
+  color: black;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-left: 5px;
+}
+
+.strike {
+  text-decoration: line-through;
+  opacity: 0.6;
 }

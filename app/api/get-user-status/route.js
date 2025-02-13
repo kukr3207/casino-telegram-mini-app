@@ -2,6 +2,7 @@ import { MongoClient } from "mongodb";
 
 export async function GET(req) {
   try {
+    // Extract chatId from the query parameters.
     const { searchParams } = new URL(req.url);
     const chatId = searchParams.get("chatId");
     if (!chatId) {
@@ -10,13 +11,13 @@ export async function GET(req) {
         { status: 400 }
       );
     }
-    
+
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
-    
-    // Try numeric and string version of chatId.
+
+    // Try to find the user using either a number or string form of chatId.
     const numericChatId = isNaN(chatId) ? chatId : parseFloat(chatId);
     let user = await users.findOne({ chatId: numericChatId });
     if (!user) {
@@ -29,16 +30,15 @@ export async function GET(req) {
         { status: 404 }
       );
     }
-    
+
     await client.close();
+    // Return the user status data.
     return new Response(
       JSON.stringify({
         casino_chips: user.casino_chips || 0,
         dailyCheckinDate: user.dailyCheckinDate || null,
         dailySpinDate: user.dailySpinDate || null,
-        streak: user.streak || 0,
-        dailyGamesPlayed: user.dailyGamesPlayed || 0,    // dice roll game plays count
-        milestoneClaimed: user.milestoneClaimed || false  // milestone reward claimed flag
+        streak: user.streak || 0
       }),
       { status: 200 }
     );
