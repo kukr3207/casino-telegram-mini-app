@@ -24,7 +24,7 @@ export default function EarnPage() {
 
   // Spin wheel states
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
-  // We'll increment the rotation state to animate the spin.
+  // We'll update the rotation state so the spin animation is continuous.
   const [rotation, setRotation] = useState<number>(0);
   const [spinResult, setSpinResult] = useState<Outcome | null>(null);
   const [hasSpunToday, setHasSpunToday] = useState<boolean>(false);
@@ -60,17 +60,29 @@ export default function EarnPage() {
         setDailyReward(5 + streakNum * 5);
         setIsDailyClaimed(data.dailyCheckinDate === today);
         setHasSpunToday(data.dailySpinDate === today);
+        // Update local storage with values from DB.
+        if (data.dailyCheckinDate) {
+          localStorage.setItem("dailyCheckinDate", data.dailyCheckinDate);
+        } else {
+          localStorage.removeItem("dailyCheckinDate");
+        }
+        localStorage.setItem("streak", data.streak);
+        if (data.dailySpinDate) {
+          localStorage.setItem("dailySpinDate", data.dailySpinDate);
+        } else {
+          localStorage.removeItem("dailySpinDate");
+        }
       }
     } catch (error) {
       console.error("Error fetching user status:", error);
     }
   };
 
-  // Handle daily check-in.
+  // Daily Check-In Handler
   const handleDailyCheckIn = async () => {
     if (isDailyClaimed || isCheckinProcessing) return;
     setIsCheckinProcessing(true);
-    // Compute new streak and reward. (You can also handle this on the server.)
+    // Calculate new streak and reward. (You might also perform this logic on the server.)
     let newStreak = streak ? streak + 1 : 1;
     if (newStreak > MAX_STREAK_DAYS) newStreak = 1;
     const newReward = 5 + newStreak * 5;
@@ -86,7 +98,7 @@ export default function EarnPage() {
         throw new Error("Daily check-in failed");
       }
       const data = await response.json();
-      // Update state based on DB result.
+      // Update UI state based on DB result.
       setIsDailyClaimed(true);
       setStreak(newStreak);
       setDailyReward(newReward);
@@ -95,7 +107,7 @@ export default function EarnPage() {
       }
       setDailyPopupMessage(`You received ${newReward} tokens for daily check-in!`);
       setShowDailyPopup(true);
-      // Refresh status from DB.
+      // Refresh user status from DB.
       fetchUserStatus();
     } catch (error) {
       console.error("Error during daily check-in:", error);
@@ -104,7 +116,7 @@ export default function EarnPage() {
     }
   };
 
-  // Handle spin wheel.
+  // Spin Wheel Handler
   const handleSpin = async () => {
     if (hasSpunToday || isSpinProcessing) return;
     setIsSpinProcessing(true);
@@ -122,7 +134,7 @@ export default function EarnPage() {
       }
       const data: SpinResponse = await response.json();
       const { outcome, outcomeIndex } = data;
-      // Define outcomes (must match backend order).
+      // Define outcomes (order must match the backend)
       const outcomes: Outcome[] = [
         { type: "token", value: 10 },
         { type: "token", value: 25 },
@@ -136,7 +148,8 @@ export default function EarnPage() {
       const segments = outcomes.length;
       const segmentAngle = 360 / segments;
       const baseRotation = 360 * 5; // 5 full spins.
-      const arrowTargetAngle = 0; // We want the winning segment center at 0°.
+      // With the arrow on the right, we want the winning segment's center to be at 0°.
+      const arrowTargetAngle = 0;
       const winningSegmentCenter = outcomeIndex * segmentAngle + segmentAngle / 2;
       const additionalRotation = baseRotation + (arrowTargetAngle - winningSegmentCenter);
       
@@ -144,8 +157,8 @@ export default function EarnPage() {
       setTimeout(() => {
         setRotation(prev => prev + additionalRotation);
       }, 50);
-
-      // Wait 8 seconds (spin duration + extra delay) before showing popup.
+      
+      // Wait 8 seconds (5s spin + 3s delay) before showing the result popup.
       setTimeout(() => {
         setIsSpinProcessing(false);
         setSpinResult(outcome);
@@ -156,7 +169,6 @@ export default function EarnPage() {
           setSpinPopupMessage(`You won a ${outcome.value}% booster for 1 hour!`);
         }
         setShowSpinPopup(true);
-        // Refresh status from DB.
         fetchUserStatus();
       }, 8000);
     } catch (error) {
