@@ -93,7 +93,7 @@
   height: 200px;
   margin: 0 auto;
   border-radius: 50%;
-  /* Remove background from here */
+  /* No background here; it is on the .wheel */
   overflow: hidden;
 }
 
@@ -117,7 +117,7 @@
 
 /* Arrow positioned relative to the wheel-wrapper.
    Uses border-left to create a left-pointing triangle.
-   Rotated 180° so that it now points right, matching the wheel on the left */
+   Rotated 180° so that it now points right */
 .arrow {
   position: absolute;
   top: 50%;
@@ -153,7 +153,7 @@
   color: #ffd700;
 }
 
-/* Additional Styles (Tasks, Mystery Box, etc.) */
+/* Additional Styles */
 .tasks ul {
   list-style: none;
   padding: 0;
