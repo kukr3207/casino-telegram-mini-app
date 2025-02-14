@@ -80,20 +80,19 @@ export default function EarnPage() {
   const [showMilestonePopup, setShowMilestonePopup] = useState<boolean>(false);
   const [milestonePopupMessage, setMilestonePopupMessage] = useState<string>("");
 
-  // Milestone states
+  // Milestone states – also tracking the last claimed milestone info.
   const [dailyDiceRollGamesPlayed, setDailyDiceRollGamesPlayed] = useState<number>(0);
-  // We'll now also track lastMilestoneClaimed and lastMilestoneClaimDate from the user record.
   const [lastMilestoneClaimed, setLastMilestoneClaimed] = useState<number>(0);
   const [lastMilestoneClaimDate, setLastMilestoneClaimDate] = useState<string>("");
 
-  const MAX_STREAK_DAYS = 15;
+  const MAX_DICE_GAMES = 25; // now only 25 games max per day for milestone progress
   const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     fetchUserStatus();
   }, []);
 
-  // Fetch user status from the DB. We now also fetch milestone claim info.
+  // Fetch user status (including milestone info) from the DB.
   const fetchUserStatus = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
@@ -108,7 +107,7 @@ export default function EarnPage() {
         setIsDailyClaimed(data.dailyCheckinDate === today);
         setHasSpunToday(data.dailySpinDate === today);
         setDailyDiceRollGamesPlayed(Number(data.dailyDiceRollGamesPlayed) || 0);
-        // For milestone, we expect lastMilestoneClaimed and lastMilestoneClaimDate
+        // Milestone info
         setLastMilestoneClaimed(data.lastMilestoneClaimed || 0);
         setLastMilestoneClaimDate(data.lastMilestoneClaimDate || "");
       }
@@ -117,18 +116,18 @@ export default function EarnPage() {
     }
   };
 
-  // Calculate next eligible milestone.
-  // If lastMilestoneClaimDate is today, then use lastMilestoneClaimed; otherwise treat it as 0.
+  // Calculate the effective last milestone claimed.
   const effectiveLastClaimed = lastMilestoneClaimDate === today ? lastMilestoneClaimed : 0;
-  const nextEligibleMilestone = effectiveLastClaimed + 10;
-  const milestoneReward = 25; // Fixed reward per milestone claim
+  // Next eligible milestone is effectiveLastClaimed + 5.
+  const nextEligibleMilestone = effectiveLastClaimed + 5;
+  const milestoneReward = 15; // Fixed reward per milestone claim
 
   // Daily Check-In Handler (unchanged)
   const handleDailyCheckIn = async () => {
     if (isDailyClaimed || isCheckinProcessing) return;
     setIsCheckinProcessing(true);
     let newStreak = streak ? streak + 1 : 1;
-    if (newStreak > MAX_STREAK_DAYS) newStreak = 1;
+    if (newStreak > 15) newStreak = 1;
     const newReward = 5 + newStreak * 5;
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
@@ -218,10 +217,8 @@ export default function EarnPage() {
     }
   };
 
-  // Milestone Claim Handler
+  // Milestone Claim Handler – the claim button is only shown when enough games have been played.
   const handleClaimMilestone = async () => {
-    // Allow claim only if user has played enough games
-    if (dailyDiceRollGamesPlayed < nextEligibleMilestone) return;
     setIsMilestoneProcessing(true);
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
@@ -233,7 +230,7 @@ export default function EarnPage() {
         body: JSON.stringify({
           chatId,
           date: today,
-          reward: milestoneReward,
+          reward: milestoneReward, // 15 tokens
           milestoneThreshold: nextEligibleMilestone,
         }),
       });
@@ -367,11 +364,15 @@ export default function EarnPage() {
         <p>
           Next Milestone: {nextEligibleMilestone} games for {milestoneReward} tokens reward.
         </p>
-        <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={100} step={10} />
+        <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={MAX_DICE_GAMES} step={5} />
         {dailyDiceRollGamesPlayed >= nextEligibleMilestone ? (
-          <button className="earn-btn" onClick={handleClaimMilestone} disabled={isMilestoneProcessing}>
-            {isMilestoneProcessing ? "Processing..." : "Claim Milestone Reward"}
-          </button>
+          effectiveLastClaimed >= nextEligibleMilestone ? (
+            <p>Milestone already claimed for this threshold.</p>
+          ) : (
+            <button className="earn-btn" onClick={handleClaimMilestone} disabled={isMilestoneProcessing}>
+              {isMilestoneProcessing ? "Processing..." : "Claim Milestone Reward"}
+            </button>
+          )
         ) : (
           <p>
             Play {nextEligibleMilestone - dailyDiceRollGamesPlayed} more dice games to claim the reward.
