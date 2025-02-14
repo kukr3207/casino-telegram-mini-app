@@ -12,8 +12,8 @@ export async function GET(req) {
       );
     }
 
-    // Convert chatId to a number since it's stored as a Double in MongoDB.
-    const numericChatId = parseFloat(chatId);
+    // Convert chatId to a number (keep it as Int32, since DB uses Int32)
+    const numericChatId = parseInt(chatId, 10);
     if (isNaN(numericChatId)) {
       return new Response(
         JSON.stringify({ error: "Invalid chatId format" }),
@@ -26,7 +26,7 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Find user by numeric chatId (Double in MongoDB)
+    // Find user by numeric chatId (stored as Int32 in MongoDB)
     let user = await users.findOne({ chatId: numericChatId });
 
     if (!user) {
@@ -49,7 +49,7 @@ export async function GET(req) {
 
     // Query for today's dice rolls matching the chatId and seed presence
     const dailyRollCount = await rolls.countDocuments({
-      chatId: numericChatId, // Now explicitly matching against a Double chatId
+      chatId: numericChatId, // Ensuring it's treated as Int32 in the query
       seed: { $exists: true, $ne: null }, // Ensures only valid game records
       createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
     });
