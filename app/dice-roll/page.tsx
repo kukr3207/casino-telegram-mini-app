@@ -57,7 +57,7 @@ function DiceCube({ style, rolling }: DiceCubeProps) {
   );
 }
 
-// Revised mapping: getDiceCubeTransform returns the inline transform string so that the result face faces front.
+// Returns the inline transform string to bring the desired face to the front.
 function getDiceCubeTransform(value: number): string {
   switch (value) {
     case 1:
@@ -158,7 +158,7 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    // Start continuous roll (simulate dice spinning) before getting the result.
+    // Start continuous roll (simulate dice spinning)
     const rollingInterval = setInterval(() => {
       setDiceCubeStyles([
         `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
@@ -171,7 +171,13 @@ export default function DiceRollPage() {
     }, 100);
 
     try {
-      const response = await fetch("/api/dice-roll", { method: "POST" });
+      // Retrieve chatId from sessionStorage and send it in the body.
+      const chatId = sessionStorage.getItem("chat_id");
+      const response = await fetch("/api/dice-roll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId })
+      });
       const { dice1, dice2, hash, seed } = await response.json();
 
       setTimeout(() => {
@@ -205,9 +211,9 @@ export default function DiceRollPage() {
 
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
 
-    const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
+    const betAmountTotal = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
-    const lossAmount = betAmount - winAmount;
+    const lossAmount = betAmountTotal - winAmount;
 
     const wonBets = selectedBets.filter(bet => bet.isWin);
     const lostBets = selectedBets.filter(bet => !bet.isWin);
@@ -226,7 +232,7 @@ export default function DiceRollPage() {
       placedBets: selectedBets,
       wonBets,
       lostBets,
-      betAmount,
+      betAmount: betAmountTotal,
       winAmount,
       lossAmount,
     };
@@ -242,7 +248,7 @@ export default function DiceRollPage() {
     }
   };
 
-  // Wrapper function for Collect Rewards with processing state.
+  // Wrapper for Collect Rewards with processing state.
   const handleCollectRewardsClick = async () => {
     setIsActionProcessing(true);
     await handleCollectRewards();
@@ -259,7 +265,7 @@ export default function DiceRollPage() {
     resetGame();
   };
 
-  // Wrapper function for Reset with processing state.
+  // Wrapper for Reset with processing state.
   const handleResetClick = async () => {
     setIsActionProcessing(true);
     resetGame();
@@ -404,6 +410,7 @@ export default function DiceRollPage() {
         </div>
       )}
 
+      {/* Dice Result Section */}
       {!isRolling && rollHash && (
         <div className="dice-result">
           <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
