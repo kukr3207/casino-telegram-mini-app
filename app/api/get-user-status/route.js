@@ -20,11 +20,13 @@ export async function GET(req) {
       return new Response(JSON.stringify({ error: "Invalid chatId format" }), { status: 400 });
     }
 
+    console.log("🔍 Debug: MONGO_URI in use:", process.env.MONGO_URI);
+
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("casino-mini-app");
 
-    // Debug: list all collections to ensure you're connected to the correct DB.
+    // List available collections for confirmation.
     const collections = await db.listCollections().toArray();
     console.log("✅ Debug: Available collections:", collections.map(col => col.name));
 
@@ -55,9 +57,7 @@ export async function GET(req) {
     console.log(`✅ Debug: Total dice-roll games played today for chatId ${numericChatId}: ${dailyRollCount}`);
 
     // Additional debug: count all dice-roll documents for the given chatId (ignoring createdAt)
-    const totalRollCount = await rolls.countDocuments({
-      chatId: numericChatId
-    });
+    const totalRollCount = await rolls.countDocuments({ chatId: numericChatId });
     const sampleDocs = await rolls.find({ chatId: numericChatId }).limit(5).toArray();
     console.log(`✅ Debug: Total dice-roll documents for chatId ${numericChatId} (ignoring date): ${totalRollCount}`);
     console.log(`✅ Debug: Sample dice-roll documents for chatId ${numericChatId}:`, sampleDocs);
