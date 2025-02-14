@@ -37,20 +37,20 @@ export async function GET(req) {
 
     console.log(`✅ Debug: Found user data for chatId ${numericChatId}`);
 
-    // Get today's date range in UTC
+    // Get today's date range in local time
     const now = new Date();
-    const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-    const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDayUTC.toISOString()} and ${endOfDayUTC.toISOString()}`);
+    console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
 
     // Query dice-roll collection to count today's games
     const rolls = db.collection("dice-roll");
 
     // Try finding records using both Int32 and Double chatId
     const sampleRolls = await rolls.find({
-      chatId: { $in: [numericChatId, Math.floor(numericChatId)] }, // Ensure both formats match
-      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
+      chatId: { $in: [numericChatId, Math.floor(numericChatId)] },
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
     })
     .limit(5)
     .toArray();
@@ -59,8 +59,8 @@ export async function GET(req) {
 
     // Count total records for today
     const dailyRollCount = await rolls.countDocuments({
-      chatId: { $in: [numericChatId, Math.floor(numericChatId)] }, // Ensure both formats match
-      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
+      chatId: { $in: [numericChatId, Math.floor(numericChatId)] },
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
     });
 
     console.log(`✅ Debug: Total dice-roll games played today for chatId ${numericChatId}: ${dailyRollCount}`);
