@@ -10,8 +10,8 @@ export async function GET(req) {
       return new Response(JSON.stringify({ error: "Missing chatId" }), { status: 400 });
     }
 
-    // Force chatId to be an Int32 (MongoDB stores it as Int32)
-    const numericChatId = parseInt(chatId, 10);
+    // Convert chatId to a DOUBLE (since it's stored as Double in MongoDB)
+    const numericChatId = parseFloat(chatId);
     if (isNaN(numericChatId)) {
       return new Response(JSON.stringify({ error: "Invalid chatId format" }), { status: 400 });
     }
@@ -21,7 +21,7 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Try finding user with Int32 chatId
+    // Find user by chatId (explicitly using Double type)
     let user = await users.findOne({ chatId: numericChatId });
 
     if (!user) {
