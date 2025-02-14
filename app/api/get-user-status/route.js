@@ -38,8 +38,7 @@ export async function GET(req) {
     console.log(`✅ Debug: Found user data for chatId ${numericChatId}`);
 
     // Calculate today's boundaries in UTC.
-    // Since your dice-roll createdAt field is stored as a Date in UTC (e.g., "2025-02-14T06:15:27.071+00:00"),
-    // we use UTC boundaries.
+    // Your createdAt field is a Date in UTC, e.g. "2025-02-14T06:15:27.071+00:00".
     const now = new Date();
     const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
     const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
@@ -49,11 +48,11 @@ export async function GET(req) {
       "endOfDayUTC:", endOfDayUTC.toISOString()
     );
 
-    // Query dice-roll collection for today's games
+    // Query dice-roll collection for today's games using $in for chatId.
     const rolls = db.collection("dice-roll");
 
     const dailyRollCount = await rolls.countDocuments({
-      chatId: numericChatId,
+      chatId: { $in: [numericChatId, Math.floor(numericChatId)] },
       createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
     });
 
