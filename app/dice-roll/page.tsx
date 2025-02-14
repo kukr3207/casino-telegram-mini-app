@@ -65,13 +65,13 @@ function getDiceCubeTransform(value: number): string {
     case 2:
       return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";     // Top (face 2) becomes front
     case 3:
-      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";    // Right (face 3) becomes front
+      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";     // Right (face 3) becomes front
     case 4:
-      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";     // Left (face 4) becomes front
+      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";      // Left (face 4) becomes front
     case 5:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";    // Bottom (face 5) becomes front
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";      // Bottom (face 5) becomes front
     case 6:
-      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";    // Back (face 6) becomes front
+      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";     // Back (face 6) becomes front
     default:
       return "";
   }
@@ -81,7 +81,6 @@ export default function DiceRollPage() {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
-  const [isDiceRolled, setIsDiceRolled] = useState(false);
   const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
@@ -89,11 +88,9 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
-
-  // Holds the inline transform for each dice cube (final orientation when result arrives)
   const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
+  const [isActionProcessing, setIsActionProcessing] = useState(false);
 
-  // Initial style: no rotation applied.
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 
   useEffect(() => {
@@ -162,9 +159,7 @@ export default function DiceRollPage() {
     await updateTokens(updatedChips, 0, 0);
 
     // Start continuous roll (simulate dice spinning) before getting the result.
-    // (This part uses your old approach.)
     const rollingInterval = setInterval(() => {
-      // For spinning effect, we update diceCubeStyles randomly.
       setDiceCubeStyles([
         `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
           Math.random() * 360
@@ -181,7 +176,6 @@ export default function DiceRollPage() {
 
       setTimeout(() => {
         clearInterval(rollingInterval);
-        // Remove the rolling animation first then apply the final transforms.
         requestAnimationFrame(() => {
           setIsRolling(false);
           requestAnimationFrame(() => {
@@ -248,15 +242,28 @@ export default function DiceRollPage() {
     }
   };
 
+  // Wrapper function for Collect Rewards with processing state.
+  const handleCollectRewardsClick = async () => {
+    setIsActionProcessing(true);
+    await handleCollectRewards();
+    setIsActionProcessing(false);
+  };
+
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
-
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
 
     await updateTokens(casinoChips, winnings, holdTokens);
     resetGame();
+  };
+
+  // Wrapper function for Reset with processing state.
+  const handleResetClick = async () => {
+    setIsActionProcessing(true);
+    resetGame();
+    setIsActionProcessing(false);
   };
 
   const resetGame = () => {
@@ -362,11 +369,15 @@ export default function DiceRollPage() {
         )}
 
         {hasResult && hasWon && (
-          <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
+          <button className="collect-button" onClick={handleCollectRewardsClick} disabled={isActionProcessing}>
+            {isActionProcessing ? "Processing..." : "Collect Rewards"}
+          </button>
         )}
 
         {hasResult && !hasWon && (
-          <button className="reset-button" onClick={resetGame}>Reset</button>
+          <button className="reset-button" onClick={handleResetClick} disabled={isActionProcessing}>
+            {isActionProcessing ? "Processing..." : "Reset"}
+          </button>
         )}
       </div>
 
