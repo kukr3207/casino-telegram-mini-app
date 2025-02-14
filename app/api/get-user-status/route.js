@@ -48,15 +48,23 @@ export async function GET(req) {
       "endOfDayUTC:", endOfDayUTC.toISOString()
     );
 
-    // Query dice-roll collection for today's games using $in for chatId.
+    // Query dice-roll collection for today's games using createdAt range.
     const rolls = db.collection("dice-roll");
 
     const dailyRollCount = await rolls.countDocuments({
-      chatId: { $in: [numericChatId, Math.floor(numericChatId)] },
+      chatId: numericChatId,
       createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
     });
 
     console.log(`✅ Debug: Total dice-roll games played today for chatId ${numericChatId}: ${dailyRollCount}`);
+
+    // Additional debug: Count all dice-roll documents for the given chatId (ignoring createdAt)
+    const totalRollCount = await rolls.countDocuments({
+      chatId: numericChatId
+    });
+    const sampleDocs = await rolls.find({ chatId: numericChatId }).limit(5).toArray();
+    console.log(`✅ Debug: Total dice-roll documents for chatId ${numericChatId} (ignoring date): ${totalRollCount}`);
+    console.log(`✅ Debug: Sample dice-roll documents for chatId ${numericChatId}:`, sampleDocs);
 
     await client.close();
 
