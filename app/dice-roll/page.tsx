@@ -87,7 +87,7 @@ function getDiceCubeTransform(value: number): string {
   }
 }
 
-// Helper function to fetch user status.
+// Helper function to fetch user status; state setters are passed as parameters.
 async function fetchUserStatusInternal(
   setCasinoChips: (chips: number) => void,
   setStreak: (streak: number) => void,
@@ -110,7 +110,7 @@ async function fetchUserStatusInternal(
       setDailyReward(5 + streakNum * 5);
       setIsDailyClaimed(data.dailyCheckinDate === today);
       setHasSpunToday(data.dailySpinDate === today);
-      // Note: using "dailyDiceRollGamesPlayed" as field name.
+      // Using "dailyDiceRollGamesPlayed" as field name.
       setDailyGamesPlayed(data.dailyDiceRollGamesPlayed || 0);
       setMilestoneClaimed(data.milestoneClaimed === true);
     }
@@ -120,7 +120,7 @@ async function fetchUserStatusInternal(
 }
 
 export default function DiceRollPage() {
-  // Dice roll game states
+  // Dice-roll game states
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
@@ -264,7 +264,7 @@ export default function DiceRollPage() {
             setVerificationSeed(seed);
             highlightBets(dice1, dice2);
             setHasResult(true);
-            // Call the increment function only once here.
+            // Increment the dice roll counter only once here.
             awaitIncrementDiceRollCounter();
           });
         });
@@ -290,7 +290,6 @@ export default function DiceRollPage() {
         sessionStorage.setItem("dailyDiceRollGamesPlayed", String(data.dailyDiceRollGamesPlayed));
         setDailyGamesPlayed(data.dailyDiceRollGamesPlayed);
       }
-      // Refresh user status (if needed)
       fetchUserStatusInternal(
         setCasinoChips,
         setStreak,
@@ -359,12 +358,12 @@ export default function DiceRollPage() {
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
     await updateTokens(casinoChips, winnings, holdTokens);
-    // Do not call increment again here—counter is already incremented after result processing.
+    // Do not call increment again here.
     resetGame();
   };
 
   const resetGame = async () => {
-    // Do not call increment here as well.
+    // Do not call increment here.
     setSelectedBets([]);
     setDiceResult([1, 1]);
     setRollHash(null);
@@ -407,83 +406,82 @@ export default function DiceRollPage() {
 
   return (
     <div className="dice-roll-page">
-      <h3 className="dice-roll-title">Place Your Bets and Roll the Dice 🎲</h3>
+      {/* Header - not blurred */}
+      <header className="header">Header (always visible)</header>
 
-      <div className="category-options">
-        {Object.keys(betOptions).map((category) => (
-          <div key={category} className="category">
-            <h3>{category.charAt(0).toUpperCase() + category.slice(1)}</h3>
-            <div className="bet-buttons">
-              {betOptions[category].map((option) => (
-                <button
-                  key={option}
-                  className={`bet-button ${
-                    selectedBets.some((bet) => bet.category === category && bet.option === option)
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() => handleBetSelect(category, option)}
-                >
-                  {option}
-                </button>
+      {/* Game Section - this will be blurred when popup is active */}
+      <div className={`game-section ${showDicePopup ? "blur" : ""}`}>
+        <h3 className="dice-roll-title">Place Your Bets and Roll the Dice 🎲</h3>
+
+        <div className="category-options">
+          {Object.keys(betOptions).map((category) => (
+            <div key={category} className="category">
+              <h3>{category.charAt(0).toUpperCase() + category.slice(1)}</h3>
+              <div className="bet-buttons">
+                {betOptions[category].map((option) => (
+                  <button
+                    key={option}
+                    className={`bet-button ${
+                      selectedBets.some((bet) => bet.category === category && bet.option === option)
+                        ? "selected"
+                        : ""
+                    }`}
+                    onClick={() => handleBetSelect(category, option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              <p className="payout-ratio">Payout: {payoutRatios[category]}x</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="selected-bets">
+          <h3>Your Bets</h3>
+          {selectedBets.length === 0 ? (
+            <p className="no-bets">No bets selected. Pick one above!</p>
+          ) : (
+            <div className="bet-list">
+              {selectedBets.map((bet, index) => (
+                <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}>
+                  <span className="bet-text">{bet.category} - {bet.option}</span>
+                  {bet.isWin !== undefined ? (
+                    <p>{bet.isWin ? `Won: ${bet.winAmount} tokens` : `Lost: ${bet.amount} tokens`}</p>
+                  ) : (
+                    <input
+                      type="number"
+                      min={10}
+                      value={bet.amount}
+                      className="bet-input"
+                      onChange={(e) => handleBetAmountChange(Number(e.target.value), index)}
+                    />
+                  )}
+                </div>
               ))}
             </div>
-            <p className="payout-ratio">Payout: {payoutRatios[category]}x</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="selected-bets">
-        <h3>Your Bets</h3>
-        {selectedBets.length === 0 ? (
-          <p className="no-bets">No bets selected. Pick one above!</p>
-        ) : (
-          <div className="bet-list">
-            {selectedBets.map((bet, index) => (
-              <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}>
-                <span className="bet-text">{bet.category} - {bet.option}</span>
-                {bet.isWin !== undefined ? (
-                  <p>{bet.isWin ? `Won: ${bet.winAmount} tokens` : `Lost: ${bet.amount} tokens`}</p>
-                ) : (
-                  <input
-                    type="number"
-                    min={10}
-                    value={bet.amount}
-                    className="bet-input"
-                    onChange={(e) => handleBetAmountChange(Number(e.target.value), index)}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="place-bet">
-        {!hasResult && (
-          <button className="place-bet-button" onClick={handleRollDice} disabled={selectedBets.length === 0 || isRolling}>
-            {isRolling ? "Rolling Dice..." : "Roll Dice"}
-          </button>
-        )}
-        {hasResult && hasWon && (
-          <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
-        )}
-        {hasResult && !hasWon && (
-          <button className="reset-button" onClick={resetGame}>Reset</button>
-        )}
-      </div>
-
-      {showConfirmation && (
-        <div className="popup-overlay">
-          <div className="popup-content">
-            <h3>Confirm Your Bet</h3>
-            <p>Total Bet: {selectedBets.reduce((sum, bet) => sum + bet.amount, 0)} Chips</p>
-            <button onClick={confirmBet} className="confirm-button">Yes, Confirm</button>
-            <button onClick={() => setShowConfirmation(false)} className="cancel-button">No, Go Back</button>
-          </div>
+          )}
         </div>
-      )}
 
+        <div className="place-bet">
+          {!hasResult && (
+            <button className="place-bet-button" onClick={handleRollDice} disabled={selectedBets.length === 0 || isRolling}>
+              {isRolling ? "Rolling Dice..." : "Roll Dice"}
+            </button>
+          )}
+          {hasResult && hasWon && (
+            <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
+          )}
+          {hasResult && !hasWon && (
+            <button className="reset-button" onClick={resetGame}>Reset</button>
+          )}
+        </div>
+      </div>
+
+      {/* Footer / Bottom Menu - not blurred */}
+      <footer className="footer">Bottom Menu (always visible)</footer>
+
+      {/* Popup Overlay - positioned absolutely relative to game section */}
       {showDicePopup && (
         <div className="popup-overlay" onClick={() => setShowDicePopup(false)}>
           <div className="dice-popup-content" onClick={(e) => e.stopPropagation()}>
