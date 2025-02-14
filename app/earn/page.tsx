@@ -296,7 +296,7 @@ export default function EarnPage() {
       {/* Daily Check-In Section */}
       <div className="earn-section">
         {isDailyClaimed ? (
-          <div className="claimed-container strike" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="claimed-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>✅ Daily Check-In Streak (Streak: {streak}/15)</h4>
             <button className="earn-btn" disabled>
               Already Claimed
@@ -316,10 +316,10 @@ export default function EarnPage() {
       {/* Spin Wheel Section */}
       <div className="earn-section">
         {hasSpunToday ? (
-          <div className="claimed-container strike" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="claimed-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>🎡 Spin the Wheel</h4>
             <button className="earn-btn" disabled>
-              Already Spun Today
+              Already Claimed
             </button>
           </div>
         ) : (
@@ -354,7 +354,7 @@ export default function EarnPage() {
       {/* Milestone Section */}
       <div className="earn-section milestone-section">
         {milestoneClaimed ? (
-          <div className="claimed-container strike" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="claimed-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>Dice Roll Milestone</h4>
             <button className="earn-btn" disabled>
               Already Claimed
@@ -364,9 +364,7 @@ export default function EarnPage() {
           <>
             <h4>Dice Roll Milestone</h4>
             {dailyDiceRollGamesPlayed >= 100 ? (
-              <p className="strike">
-                100 games reached! Milestone completed for today.
-              </p>
+              <p>100 games reached! Milestone completed for today.</p>
             ) : (
               <div>
                 <p>Games played today: {dailyDiceRollGamesPlayed}</p>

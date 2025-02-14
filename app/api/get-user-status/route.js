@@ -72,7 +72,7 @@ export async function GET(req) {
         casino_chips: user.casino_chips || 0,
         dailyCheckinDate: user.dailyCheckinDate || null,
         dailySpinDate: user.dailySpinDate || null,
-        streak: user.streak || 0,
+        streak: user.dailyCheckinStreak || 0,
         dailyDiceRollGamesPlayed: dailyRollCount
       }),
       { status: 200 }
