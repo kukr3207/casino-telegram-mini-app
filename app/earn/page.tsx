@@ -15,7 +15,6 @@ interface SpinResponse {
   hash: string;
 }
 
-// MilestoneProgressBar Component: renders a progress bar with checkpoint dots.
 interface MilestoneProgressBarProps {
   current: number;
   max: number;
@@ -78,6 +77,8 @@ export default function EarnPage() {
   const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
   const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
   const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
+  const [showMilestonePopup, setShowMilestonePopup] = useState<boolean>(false);
+  const [milestonePopupMessage, setMilestonePopupMessage] = useState<string>("");
 
   // Milestone states
   const [dailyDiceRollGamesPlayed, setDailyDiceRollGamesPlayed] = useState<number>(0);
@@ -105,7 +106,7 @@ export default function EarnPage() {
         setDailyReward(5 + streakNum * 5);
         setIsDailyClaimed(data.dailyCheckinDate === today);
         setHasSpunToday(data.dailySpinDate === today);
-        setDailyDiceRollGamesPlayed(data.dailyDiceRollGamesPlayed || 0);
+        setDailyDiceRollGamesPlayed(Number(data.dailyDiceRollGamesPlayed) || 0);
         setMilestoneClaimed(data.milestoneClaimed === true);
         setMilestoneClaimDate(data.milestoneClaimDate || "");
         // Optionally update local storage.
@@ -135,6 +136,7 @@ export default function EarnPage() {
     const newReward = 5 + newStreak * 5;
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
+    const oldBalance = casinoBalance;
     try {
       const response = await fetch("/api/daily-checkin", {
         method: "POST",
@@ -145,15 +147,14 @@ export default function EarnPage() {
         throw new Error("Daily check-in failed");
       }
       const data = await response.json();
-      setIsDailyClaimed(true);
-      setStreak(newStreak);
-      setDailyReward(newReward);
       if (data.newBalance !== undefined) {
         setCasinoBalance(data.newBalance);
       }
-      setDailyPopupMessage(`You received ${newReward} tokens for daily check-in!`);
-      setShowDailyPopup(true);
       fetchUserStatus();
+      // For the daily check-in popup, show old and new balance details.
+      const tokensAdded = data.newBalance - oldBalance;
+      setDailyPopupMessage(`Daily Check-In: Old Balance: ${oldBalance}, New Balance: ${data.newBalance} (added ${tokensAdded} tokens)`);
+      setShowDailyPopup(true);
     } catch (error) {
       console.error("Error during daily check-in:", error);
     } finally {
@@ -168,6 +169,7 @@ export default function EarnPage() {
     setSpinResult(null);
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
+    const oldBalance = casinoBalance;
     try {
       const response = await fetch("/api/spin-wheel", {
         method: "POST",
@@ -179,7 +181,6 @@ export default function EarnPage() {
       }
       const data: SpinResponse = await response.json();
       const { outcome, outcomeIndex } = data;
-      // Define outcomes (order must match backend)
       const outcomes: Outcome[] = [
         { type: "token", value: 10 },
         { type: "token", value: 25 },
@@ -192,7 +193,7 @@ export default function EarnPage() {
       ];
       const segments = outcomes.length;
       const segmentAngle = 360 / segments;
-      const baseRotation = 360 * 5; // 5 full spins.
+      const baseRotation = 360 * 5;
       const arrowTargetAngle = 0;
       const winningSegmentCenter = outcomeIndex * segmentAngle + segmentAngle / 2;
       const additionalRotation = baseRotation + (arrowTargetAngle - winningSegmentCenter);
@@ -203,11 +204,17 @@ export default function EarnPage() {
         setIsSpinProcessing(false);
         setSpinResult(outcome);
         setHasSpunToday(true);
+        let popupMsg = "";
         if (outcome.type === "token") {
-          setSpinPopupMessage(`You won ${outcome.value} tokens!`);
+          popupMsg = `Spin Result: Old Balance: ${oldBalance}, `;
+          // Assume the outcome tokens are added to balance.
+          const newBalance = oldBalance + outcome.value;
+          setCasinoBalance(newBalance);
+          popupMsg += `New Balance: ${newBalance} (added ${outcome.value} tokens)!`;
         } else if (outcome.type === "booster") {
-          setSpinPopupMessage(`You won a ${outcome.value}% booster for 1 hour!`);
+          popupMsg = `Spin Result: Booster won! (No token change)`;
         }
+        setSpinPopupMessage(popupMsg);
         setShowSpinPopup(true);
         fetchUserStatus();
       }, 8000);
@@ -218,18 +225,18 @@ export default function EarnPage() {
   };
 
   // Milestone Section:
-  // Determine the next milestone in increments of 10, capped at 100.
   const nextMilestone =
     dailyDiceRollGamesPlayed === 0
       ? 10
       : Math.min(Math.ceil(dailyDiceRollGamesPlayed / 10) * 10, 100);
-  // Reward increases by 25 tokens for every 10 games.
   const milestoneReward = (nextMilestone / 10) * 25;
 
+  // Claim Milestone Handler
   const handleClaimMilestone = async () => {
     setIsMilestoneProcessing(true);
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
+    const oldBalance = casinoBalance;
     try {
       const response = await fetch("/api/claim-daily-milestone", {
         method: "POST",
@@ -244,6 +251,11 @@ export default function EarnPage() {
         setCasinoBalance(data.newBalance);
       }
       fetchUserStatus();
+      const tokensAdded = data.newBalance - oldBalance;
+      setMilestonePopupMessage(
+        `Milestone Claim: Old Balance: ${oldBalance}, New Balance: ${data.newBalance} (added ${tokensAdded} tokens)`
+      );
+      setShowMilestonePopup(true);
     } catch (error) {
       console.error("Error claiming milestone:", error);
     } finally {
@@ -296,7 +308,7 @@ export default function EarnPage() {
       {/* Daily Check-In Section */}
       <div className="earn-section">
         {isDailyClaimed ? (
-          <div className="claimed-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>✅ Daily Check-In Streak (Streak: {streak}/15)</h4>
             <button className="earn-btn" disabled>
               Already Claimed
@@ -316,10 +328,10 @@ export default function EarnPage() {
       {/* Spin Wheel Section */}
       <div className="earn-section">
         {hasSpunToday ? (
-          <div className="claimed-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>🎡 Spin the Wheel</h4>
             <button className="earn-btn" disabled>
-              Already Claimed
+              Already Spun Today
             </button>
           </div>
         ) : (
@@ -354,7 +366,7 @@ export default function EarnPage() {
       {/* Milestone Section */}
       <div className="earn-section milestone-section">
         {milestoneClaimed ? (
-          <div className="claimed-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>Dice Roll Milestone</h4>
             <button className="earn-btn" disabled>
               Already Claimed
@@ -409,6 +421,18 @@ export default function EarnPage() {
           <div className="popup-content">
             <p>{spinPopupMessage}</p>
             <button className="earn-btn" onClick={() => setShowSpinPopup(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Milestone Popup */}
+      {showMilestonePopup && (
+        <div className="popup">
+          <div className="popup-content">
+            <p>{milestonePopupMessage}</p>
+            <button className="earn-btn" onClick={() => setShowMilestonePopup(false)}>
               Close
             </button>
           </div>
