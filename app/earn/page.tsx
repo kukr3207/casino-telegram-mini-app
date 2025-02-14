@@ -295,92 +295,101 @@ export default function EarnPage() {
 
       {/* Daily Check-In Section */}
       <div className="earn-section">
-        <h4>✅ Daily Check-In Streak</h4>
-        <p>
-          {isDailyClaimed
-            ? `Checked in today! Streak: ${streak}/15`
-            : "Check in to earn your daily reward!"}
-        </p>
-        <button
-          className="earn-btn"
-          onClick={handleDailyCheckIn}
-          disabled={isCheckinProcessing || isDailyClaimed}
-        >
-          {isCheckinProcessing
-            ? "Processing..."
-            : isDailyClaimed
-            ? "Already Claimed"
-            : "Claim Daily Reward"}
-        </button>
+        {isDailyClaimed ? (
+          <div className="claimed-container strike" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h4>✅ Daily Check-In Streak (Streak: {streak}/15)</h4>
+            <button className="earn-btn" disabled>
+              Already Claimed
+            </button>
+          </div>
+        ) : (
+          <>
+            <h4>✅ Daily Check-In Streak</h4>
+            <p>Check in to earn your daily reward!</p>
+            <button className="earn-btn" onClick={handleDailyCheckIn} disabled={isCheckinProcessing}>
+              {isCheckinProcessing ? "Processing..." : "Claim Daily Reward"}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Spin Wheel Section */}
       <div className="earn-section">
-        <h4>🎡 Spin the Wheel</h4>
-        <div className="spin-wheel-wrapper">
-          <div className="wheel-wrapper">
-            <div className="wheel-container">
-              <div
-                className="wheel"
-                style={{
-                  transform: `rotate(${rotation}deg)`,
-                  transition: "transform 5s ease-out",
-                  position: "relative",
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
-                {renderWheelSegments()}
+        {hasSpunToday ? (
+          <div className="claimed-container strike" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h4>🎡 Spin the Wheel</h4>
+            <button className="earn-btn" disabled>
+              Already Spun Today
+            </button>
+          </div>
+        ) : (
+          <>
+            <h4>🎡 Spin the Wheel</h4>
+            <div className="spin-wheel-wrapper">
+              <div className="wheel-wrapper">
+                <div className="wheel-container">
+                  <div
+                    className="wheel"
+                    style={{
+                      transform: `rotate(${rotation}deg)`,
+                      transition: "transform 5s ease-out",
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    {renderWheelSegments()}
+                  </div>
+                </div>
+                <div className="arrow"></div>
               </div>
             </div>
-            <div className="arrow"></div>
-          </div>
-        </div>
-        <button
-          className="earn-btn"
-          onClick={handleSpin}
-          disabled={isSpinProcessing || hasSpunToday}
-        >
-          {isSpinProcessing
-            ? "Processing..."
-            : hasSpunToday
-            ? "Already Spun Today"
-            : "Spin"}
-        </button>
+            <button className="earn-btn" onClick={handleSpin} disabled={isSpinProcessing}>
+              {isSpinProcessing ? "Processing..." : "Spin"}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Milestone Section */}
       <div className="earn-section milestone-section">
-        <h4>Dice Roll Milestone</h4>
-        {dailyDiceRollGamesPlayed >= 100 ? (
-          <p className="strike">
-            100 games reached! Milestone completed for today.
-          </p>
-        ) : (
-          <div>
-            <p>Games played today: {dailyDiceRollGamesPlayed}</p>
-            <p>
-              Next Milestone: {nextMilestone} games for {milestoneReward} tokens reward.
-            </p>
-            <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={100} step={10} />
-            {dailyDiceRollGamesPlayed >= nextMilestone ? (
-              <button
-                className="earn-btn"
-                onClick={handleClaimMilestone}
-                disabled={isMilestoneProcessing || milestoneClaimed}
-              >
-                {isMilestoneProcessing
-                  ? "Processing..."
-                  : milestoneClaimed
-                  ? "Already Claimed"
-                  : "Claim Milestone Reward"}
-              </button>
-            ) : (
-              <p>
-                Play {nextMilestone - dailyDiceRollGamesPlayed} more dice games to claim the reward.
-              </p>
-            )}
+        {milestoneClaimed ? (
+          <div className="claimed-container strike" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h4>Dice Roll Milestone</h4>
+            <button className="earn-btn" disabled>
+              Already Claimed
+            </button>
           </div>
+        ) : (
+          <>
+            <h4>Dice Roll Milestone</h4>
+            {dailyDiceRollGamesPlayed >= 100 ? (
+              <p className="strike">
+                100 games reached! Milestone completed for today.
+              </p>
+            ) : (
+              <div>
+                <p>Games played today: {dailyDiceRollGamesPlayed}</p>
+                <p>
+                  Next Milestone: {nextMilestone} games for {milestoneReward} tokens reward.
+                </p>
+                <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={100} step={10} />
+                {dailyDiceRollGamesPlayed >= nextMilestone ? (
+                  <button
+                    className="earn-btn"
+                    onClick={handleClaimMilestone}
+                    disabled={isMilestoneProcessing}
+                  >
+                    {isMilestoneProcessing ? "Processing..." : "Claim Milestone Reward"}
+                  </button>
+                ) : (
+                  <p>
+                    Play {nextMilestone - dailyDiceRollGamesPlayed} more dice games to claim the reward.
+                  </p>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

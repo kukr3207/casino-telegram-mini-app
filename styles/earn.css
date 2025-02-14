@@ -93,11 +93,9 @@
   height: 200px;
   margin: 0 auto;
   border-radius: 50%;
-  /* No background here; it's on the .wheel */
   overflow: hidden;
 }
 
-/* The spinning wheel element now has the gradient background */
 .wheel {
   position: absolute;
   width: 100%;
@@ -115,9 +113,6 @@
   transition: transform 5s ease-out;
 }
 
-/* Arrow positioned relative to the wheel-wrapper.
-   Uses border-left to create a left-pointing triangle.
-   Rotated 180° so that it now points right */
 .arrow {
   position: absolute;
   top: 50%;
@@ -196,57 +191,52 @@
   position: relative;
   margin: 25px auto;
   width: 90%;
-  text-align: center; /* Centers the labels below if you want them aligned */
+  text-align: center;
 }
 
-/* Outer container for the bar */
 .progress-container {
   position: relative;
-  background: #222;              /* Darker background for contrast */
-  border: 2px solid #444;        /* Slight border to define the container */
+  background: #222;
+  border: 2px solid #444;
   border-radius: 10px;
   width: 100%;
-  height: 8px;                   /* Thinner bar height */
+  height: 8px;
   margin: 0 auto;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Subtle shadow behind the bar */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-/* The actual progress fill */
 .progress-bar {
   height: 8px;
-  background: linear-gradient(145deg, #ffd700, #ffb300); 
+  background: linear-gradient(145deg, #ffd700, #ffb300);
   border-radius: 10px;
-  width: 0%;                     /* Will be updated dynamically */
+  width: 0%;
   transition: width 0.5s ease-in-out;
-  box-shadow: 0 0 5px rgba(255, 215, 0, 0.6); /* Glow effect on the fill */
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.6);
 }
 
-/* Each checkpoint dot */
 .checkpoint {
   position: absolute;
-  top: 50%;                      /* Vertically center on the bar */
+  top: 50%;
   width: 8px;
   height: 8px;
-  background: #1e1e1e;          /* Same color as page background for a "hole" effect */
-  border: 2px solid #ffd700;    /* Golden ring around the dot */
+  background: #1e1e1e;
+  border: 2px solid #ffd700;
   border-radius: 50%;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 3px rgba(255, 215, 0, 0.5);
 }
 
-/* Container for the numeric labels below the bar */
 .milestone-labels {
   position: relative;
   width: 100%;
-  margin-top: 10px; /* Space between bar and labels */
+  margin-top: 10px;
 }
 
-/* Each numeric label (e.g., 10, 20, 30...) */
 .milestone-label {
   position: absolute;
   top: 0;
   transform: translateX(-50%);
   font-size: 12px;
-  color: #ffd700; /* Golden color for visibility */
+  color: #ffd700;
   font-weight: bold;
 }
