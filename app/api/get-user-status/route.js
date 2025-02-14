@@ -31,14 +31,27 @@ export async function GET(req) {
       );
     }
 
+    // Query the dice-roll collection to count today's dice roll games.
+    const rolls = db.collection("dice-roll");
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    
+    const dailyRollCount = await rolls.countDocuments({
+      chatId: numericChatId,
+      seed: { $exists: true, $ne: null },
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
+    });
+
     await client.close();
-    // Return the user status data.
+    // Return the user status data along with the daily dice roll games count.
     return new Response(
       JSON.stringify({
         casino_chips: user.casino_chips || 0,
         dailyCheckinDate: user.dailyCheckinDate || null,
         dailySpinDate: user.dailySpinDate || null,
-        streak: user.streak || 0
+        streak: user.streak || 0,
+        dailyDiceRollGamesPlayed: dailyRollCount
       }),
       { status: 200 }
     );

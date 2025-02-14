@@ -190,3 +190,63 @@
   text-decoration: line-through;
   opacity: 0.6;
 }
+
+/* Milestone Progress Bar Styles */
+.milestone-progress {
+  position: relative;
+  margin: 25px auto;
+  width: 90%;
+  text-align: center; /* Centers the labels below if you want them aligned */
+}
+
+/* Outer container for the bar */
+.progress-container {
+  position: relative;
+  background: #222;              /* Darker background for contrast */
+  border: 2px solid #444;        /* Slight border to define the container */
+  border-radius: 10px;
+  width: 100%;
+  height: 8px;                   /* Thinner bar height */
+  margin: 0 auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Subtle shadow behind the bar */
+}
+
+/* The actual progress fill */
+.progress-bar {
+  height: 8px;
+  background: linear-gradient(145deg, #ffd700, #ffb300); 
+  border-radius: 10px;
+  width: 0%;                     /* Will be updated dynamically */
+  transition: width 0.5s ease-in-out;
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.6); /* Glow effect on the fill */
+}
+
+/* Each checkpoint dot */
+.checkpoint {
+  position: absolute;
+  top: 50%;                      /* Vertically center on the bar */
+  width: 8px;
+  height: 8px;
+  background: #1e1e1e;          /* Same color as page background for a "hole" effect */
+  border: 2px solid #ffd700;    /* Golden ring around the dot */
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 3px rgba(255, 215, 0, 0.5);
+}
+
+/* Container for the numeric labels below the bar */
+.milestone-labels {
+  position: relative;
+  width: 100%;
+  margin-top: 10px; /* Space between bar and labels */
+}
+
+/* Each numeric label (e.g., 10, 20, 30...) */
+.milestone-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #ffd700; /* Golden color for visibility */
+  font-weight: bold;
+}

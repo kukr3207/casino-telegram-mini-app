@@ -15,6 +15,46 @@ interface SpinResponse {
   hash: string;
 }
 
+// MilestoneProgressBar Component: renders a progress bar with checkpoint dots.
+interface MilestoneProgressBarProps {
+  current: number;
+  max: number;
+  step: number;
+}
+
+function MilestoneProgressBar({ current, max, step }: MilestoneProgressBarProps) {
+  const percentage = Math.min((current / max) * 100, 100);
+  const milestones = [];
+  for (let i = step; i <= max; i += step) {
+    milestones.push(i);
+  }
+  return (
+    <div className="milestone-progress">
+      <div className="progress-container">
+        <div className="progress-bar" style={{ width: `${percentage}%` }}></div>
+        {milestones.map((milestone) => (
+          <div
+            key={milestone}
+            className="checkpoint"
+            style={{ left: `${(milestone / max) * 100}%` }}
+          ></div>
+        ))}
+      </div>
+      <div className="milestone-labels">
+        {milestones.map((milestone) => (
+          <span
+            key={milestone}
+            className="milestone-label"
+            style={{ left: `${(milestone / max) * 100}%` }}
+          >
+            {milestone}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function EarnPage() {
   // Daily check-in states
   const [streak, setStreak] = useState<number>(0);
@@ -24,7 +64,6 @@ export default function EarnPage() {
 
   // Spin wheel states
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
-  // We'll update the rotation state so the spin animation is continuous.
   const [rotation, setRotation] = useState<number>(0);
   const [spinResult, setSpinResult] = useState<Outcome | null>(null);
   const [hasSpunToday, setHasSpunToday] = useState<boolean>(false);
@@ -32,12 +71,18 @@ export default function EarnPage() {
   // Processing states for buttons
   const [isCheckinProcessing, setIsCheckinProcessing] = useState<boolean>(false);
   const [isSpinProcessing, setIsSpinProcessing] = useState<boolean>(false);
+  const [isMilestoneProcessing, setIsMilestoneProcessing] = useState<boolean>(false);
 
   // Popup states for results
   const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
   const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
   const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
   const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
+
+  // Milestone states
+  const [dailyDiceRollGamesPlayed, setDailyDiceRollGamesPlayed] = useState<number>(0);
+  const [milestoneClaimed, setMilestoneClaimed] = useState<boolean>(false);
+  const [milestoneClaimDate, setMilestoneClaimDate] = useState<string>("");
 
   const MAX_STREAK_DAYS = 15;
   const today = new Date().toISOString().split("T")[0];
@@ -46,7 +91,7 @@ export default function EarnPage() {
     fetchUserStatus();
   }, []);
 
-  // New API call to fetch user status from the DB.
+  // Fetch user status from the DB.
   const fetchUserStatus = async () => {
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) return;
@@ -60,7 +105,10 @@ export default function EarnPage() {
         setDailyReward(5 + streakNum * 5);
         setIsDailyClaimed(data.dailyCheckinDate === today);
         setHasSpunToday(data.dailySpinDate === today);
-        // Update local storage with values from DB.
+        setDailyDiceRollGamesPlayed(data.dailyDiceRollGamesPlayed || 0);
+        setMilestoneClaimed(data.milestoneClaimed === true);
+        setMilestoneClaimDate(data.milestoneClaimDate || "");
+        // Optionally update local storage.
         if (data.dailyCheckinDate) {
           localStorage.setItem("dailyCheckinDate", data.dailyCheckinDate);
         } else {
@@ -82,7 +130,6 @@ export default function EarnPage() {
   const handleDailyCheckIn = async () => {
     if (isDailyClaimed || isCheckinProcessing) return;
     setIsCheckinProcessing(true);
-    // Calculate new streak and reward.
     let newStreak = streak ? streak + 1 : 1;
     if (newStreak > MAX_STREAK_DAYS) newStreak = 1;
     const newReward = 5 + newStreak * 5;
@@ -106,7 +153,6 @@ export default function EarnPage() {
       }
       setDailyPopupMessage(`You received ${newReward} tokens for daily check-in!`);
       setShowDailyPopup(true);
-      // Refresh user status.
       fetchUserStatus();
     } catch (error) {
       console.error("Error during daily check-in:", error);
@@ -150,13 +196,9 @@ export default function EarnPage() {
       const arrowTargetAngle = 0;
       const winningSegmentCenter = outcomeIndex * segmentAngle + segmentAngle / 2;
       const additionalRotation = baseRotation + (arrowTargetAngle - winningSegmentCenter);
-      
-      // Delay slightly to trigger the transition.
       setTimeout(() => {
-        setRotation(prev => prev + additionalRotation);
+        setRotation((prev) => prev + additionalRotation);
       }, 50);
-
-      // Wait 8 seconds (spin duration + extra delay) before showing popup.
       setTimeout(() => {
         setIsSpinProcessing(false);
         setSpinResult(outcome);
@@ -175,7 +217,40 @@ export default function EarnPage() {
     }
   };
 
-  // Render labels for each wheel segment.
+  // Milestone Section:
+  // Determine the next milestone in increments of 10, capped at 100.
+  const nextMilestone =
+    dailyDiceRollGamesPlayed === 0
+      ? 10
+      : Math.min(Math.ceil(dailyDiceRollGamesPlayed / 10) * 10, 100);
+  // Reward increases by 25 tokens for every 10 games.
+  const milestoneReward = (nextMilestone / 10) * 25;
+
+  const handleClaimMilestone = async () => {
+    setIsMilestoneProcessing(true);
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) return;
+    try {
+      const response = await fetch("/api/claim-daily-milestone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId, date: today, reward: milestoneReward }),
+      });
+      if (!response.ok) {
+        throw new Error("Milestone claim failed");
+      }
+      const data = await response.json();
+      if (data.newBalance !== undefined) {
+        setCasinoBalance(data.newBalance);
+      }
+      fetchUserStatus();
+    } catch (error) {
+      console.error("Error claiming milestone:", error);
+    } finally {
+      setIsMilestoneProcessing(false);
+    }
+  };
+
   const renderWheelSegments = () => {
     const outcomes: Outcome[] = [
       { type: "token", value: 10 },
@@ -272,6 +347,41 @@ export default function EarnPage() {
             ? "Already Spun Today"
             : "Spin"}
         </button>
+      </div>
+
+      {/* Milestone Section */}
+      <div className="earn-section milestone-section">
+        <h4>Dice Roll Milestone</h4>
+        {dailyDiceRollGamesPlayed >= 100 ? (
+          <p className="strike">
+            100 games reached! Milestone completed for today.
+          </p>
+        ) : (
+          <div>
+            <p>Games played today: {dailyDiceRollGamesPlayed}</p>
+            <p>
+              Next Milestone: {nextMilestone} games for {milestoneReward} tokens reward.
+            </p>
+            <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={100} step={10} />
+            {dailyDiceRollGamesPlayed >= nextMilestone ? (
+              <button
+                className="earn-btn"
+                onClick={handleClaimMilestone}
+                disabled={isMilestoneProcessing || milestoneClaimed}
+              >
+                {isMilestoneProcessing
+                  ? "Processing..."
+                  : milestoneClaimed
+                  ? "Already Claimed"
+                  : "Claim Milestone Reward"}
+              </button>
+            ) : (
+              <p>
+                Play {nextMilestone - dailyDiceRollGamesPlayed} more dice games to claim the reward.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Daily Check-In Popup */}
