@@ -28,20 +28,16 @@ export async function GET(req) {
     console.log(`🔍 Debug: Searching user with chatId ${numericChatId}`);
 
     const user = await users.findOne({ chatId: numericChatId });
-
     if (!user) {
       console.warn(`⚠️ Debug: No user found for chatId ${numericChatId}`);
       await client.close();
       return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
     }
-
     console.log(`✅ Debug: Found user data for chatId ${numericChatId}`);
 
-    // Calculate today's boundaries in UTC.
-    // Your createdAt field is a Date in UTC, e.g. "2025-02-14T06:15:27.071+00:00".
-    const now = new Date();
-    const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-    const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+    // Hard-coded date boundaries for testing (UTC boundaries for 2025-02-14)
+    const startOfDayUTC = new Date("2025-02-14T00:00:00.000Z");
+    const endOfDayUTC = new Date("2025-02-14T23:59:59.999Z");
 
     console.log("🔍 Debug: UTC range for dice-rolls:",
       "startOfDayUTC:", startOfDayUTC.toISOString(),
@@ -50,7 +46,6 @@ export async function GET(req) {
 
     // Query dice-roll collection for today's games using createdAt range.
     const rolls = db.collection("dice-roll");
-
     const dailyRollCount = await rolls.countDocuments({
       chatId: numericChatId,
       createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
@@ -58,7 +53,7 @@ export async function GET(req) {
 
     console.log(`✅ Debug: Total dice-roll games played today for chatId ${numericChatId}: ${dailyRollCount}`);
 
-    // Additional debug: Count all dice-roll documents for the given chatId (ignoring createdAt)
+    // Additional debug: count all dice-roll documents for the given chatId (ignoring createdAt)
     const totalRollCount = await rolls.countDocuments({
       chatId: numericChatId
     });
