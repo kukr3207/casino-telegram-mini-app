@@ -10,8 +10,8 @@ export async function GET(req) {
       return new Response(JSON.stringify({ error: "Missing chatId" }), { status: 400 });
     }
 
-    // Convert chatId to a DOUBLE (since it's stored as Double in MongoDB)
-    const numericChatId = parseFloat(chatId);
+    // 🔥 Convert chatId to Int32 (to match DB storage type)
+    const numericChatId = parseInt(chatId, 10);
     if (isNaN(numericChatId)) {
       return new Response(JSON.stringify({ error: "Invalid chatId format" }), { status: 400 });
     }
@@ -21,7 +21,7 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Find user by chatId (explicitly using Double type)
+    // 🔥 Query `chatId` as Int32 in MongoDB
     let user = await users.findOne({ chatId: numericChatId });
 
     if (!user) {
@@ -32,27 +32,29 @@ export async function GET(req) {
     // Query the dice-roll collection to count today's dice roll games.
     const rolls = db.collection("dice-roll");
 
-    // Get today's UTC date range
+    // 🔥 Get today's UTC date range (correctly formatted)
     const now = new Date();
     const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
     const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
     console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDayUTC.toISOString()} and ${endOfDayUTC.toISOString()}`);
 
-    // 🔥 **Debugging Step**: Print actual documents found (LIMIT TO 5)
+    // 🔥 Fetch sample documents for debugging
     const sampleRolls = await rolls
       .find({
-        chatId: numericChatId,
+        chatId: numericChatId, // Ensuring it matches Int32
+        seed: { $exists: true, $ne: null }, // Ensures only valid game records
         createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
       })
       .limit(5)
       .toArray();
 
-    console.log(`✅ Debug: Sample dice-roll documents found:`, sampleRolls);
+    console.log(`✅ Debug: Sample dice-roll documents found:`, sampleRolls.length, sampleRolls);
 
-    // Query for today's dice rolls
+    // 🔥 Query total count of dice rolls played today
     const dailyRollCount = await rolls.countDocuments({
-      chatId: numericChatId,
+      chatId: numericChatId, // Ensuring it's queried as Int32
+      seed: { $exists: true, $ne: null },
       createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
     });
 
@@ -60,7 +62,7 @@ export async function GET(req) {
 
     await client.close();
 
-    // Return user status with the daily dice roll games count
+    // Return user status with daily dice roll games count
     return new Response(
       JSON.stringify({
         casino_chips: user.casino_chips || 0,
