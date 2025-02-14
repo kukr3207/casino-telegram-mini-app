@@ -110,7 +110,7 @@ async function fetchUserStatusInternal(
       setDailyReward(5 + streakNum * 5);
       setIsDailyClaimed(data.dailyCheckinDate === today);
       setHasSpunToday(data.dailySpinDate === today);
-      setDailyGamesPlayed(data.dailyGamesPlayed || 0);
+      setDailyGamesPlayed(data.dailyDiceRollGamesPlayed || 0);
       setMilestoneClaimed(data.milestoneClaimed === true);
     }
   } catch (error) {
@@ -142,7 +142,7 @@ export default function DiceRollPage() {
   const [isDailyClaimed, setIsDailyClaimed] = useState<boolean>(false);
 
   // Milestone states (for dice roll game only)
-  const [dailyGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
+  const [dailyDiceRollGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
   const [milestoneClaimed, setMilestoneClaimed] = useState<boolean>(false);
 
   // Missing state: hasSpunToday and its setter
