@@ -87,7 +87,7 @@ function getDiceCubeTransform(value: number): string {
   }
 }
 
-// Helper function to fetch user status.
+// Helper function to fetch user status; state setters are passed as parameters.
 async function fetchUserStatusInternal(
   setCasinoChips: (chips: number) => void,
   setStreak: (streak: number) => void,
@@ -110,7 +110,7 @@ async function fetchUserStatusInternal(
       setDailyReward(5 + streakNum * 5);
       setIsDailyClaimed(data.dailyCheckinDate === today);
       setHasSpunToday(data.dailySpinDate === today);
-      // Note: using "dailyDiceRollGamesPlayed" as field name.
+      // Using "dailyDiceRollGamesPlayed" as field name.
       setDailyGamesPlayed(data.dailyDiceRollGamesPlayed || 0);
       setMilestoneClaimed(data.milestoneClaimed === true);
     }
@@ -120,7 +120,7 @@ async function fetchUserStatusInternal(
 }
 
 export default function DiceRollPage() {
-  // Dice roll game states
+  // --- Game States ---
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
@@ -137,23 +137,22 @@ export default function DiceRollPage() {
   ]);
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 
-  // Daily check-in states
+  // --- Daily Check-In States ---
   const [streak, setStreak] = useState<number>(0);
   const [dailyReward, setDailyReward] = useState<number>(10);
   const [isDailyClaimed, setIsDailyClaimed] = useState<boolean>(false);
 
-  // Milestone states for dice roll game only.
+  // --- Milestone States for Dice Roll Game ---
   const [dailyGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
   const [milestoneClaimed, setMilestoneClaimed] = useState<boolean>(false);
 
-  // Missing state: hasSpunToday.
+  // --- Additional States ---
   const [hasSpunToday, setHasSpunToday] = useState<boolean>(false);
-
-  // Other processing states.
   const [isCheckinProcessing, setIsCheckinProcessing] = useState<boolean>(false);
   const [isSpinProcessing, setIsSpinProcessing] = useState<boolean>(false);
+  const [isActionProcessing, setIsActionProcessing] = useState<boolean>(false);
 
-  // Popup states.
+  // --- Popup States ---
   const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
   const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
   const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
@@ -242,9 +241,7 @@ export default function DiceRollPage() {
 
     const rollingInterval = setInterval(() => {
       setDiceCubeStyles([
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
-          Math.random() * 360
-        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
         `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
       ]);
     }, 100);
@@ -264,7 +261,7 @@ export default function DiceRollPage() {
             setVerificationSeed(seed);
             highlightBets(dice1, dice2);
             setHasResult(true);
-            // Call the increment function only once here.
+            // Increment the dice roll counter only once here.
             awaitIncrementDiceRollCounter();
           });
         });
@@ -290,7 +287,6 @@ export default function DiceRollPage() {
         sessionStorage.setItem("dailyDiceRollGamesPlayed", String(data.dailyDiceRollGamesPlayed));
         setDailyGamesPlayed(data.dailyDiceRollGamesPlayed);
       }
-      // Refresh user status (if needed)
       fetchUserStatusInternal(
         setCasinoChips,
         setStreak,
@@ -353,18 +349,30 @@ export default function DiceRollPage() {
     }
   };
 
+  // Wrapper for Collect Rewards – change button text to processing and disable button.
+  const handleCollectRewardsWrapper = async () => {
+    setIsActionProcessing(true);
+    await handleCollectRewards();
+    setIsActionProcessing(false);
+  };
+
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
     await updateTokens(casinoChips, winnings, holdTokens);
-    // Do not call increment again here—counter is already incremented after result processing.
     resetGame();
   };
 
+  // Wrapper for Reset – change button text to processing and disable button.
+  const resetGameWrapper = async () => {
+    setIsActionProcessing(true);
+    await resetGame();
+    setIsActionProcessing(false);
+  };
+
   const resetGame = async () => {
-    // Do not call increment here as well.
     setSelectedBets([]);
     setDiceResult([1, 1]);
     setRollHash(null);
@@ -466,10 +474,22 @@ export default function DiceRollPage() {
           </button>
         )}
         {hasResult && hasWon && (
-          <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
+          <button
+            className="collect-button"
+            onClick={handleCollectRewardsWrapper}
+            disabled={isActionProcessing}
+          >
+            {isActionProcessing ? "Processing..." : "Collect Rewards"}
+          </button>
         )}
         {hasResult && !hasWon && (
-          <button className="reset-button" onClick={resetGame}>Reset</button>
+          <button
+            className="reset-button"
+            onClick={resetGameWrapper}
+            disabled={isActionProcessing}
+          >
+            {isActionProcessing ? "Processing..." : "Reset"}
+          </button>
         )}
       </div>
 
