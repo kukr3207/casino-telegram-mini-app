@@ -13,8 +13,8 @@ export async function GET(req) {
       return new Response(JSON.stringify({ error: "Missing chatId" }), { status: 400 });
     }
 
-    // Convert chatId to a number (ensure it matches MongoDB's data type)
-    const numericChatId = parseFloat(chatId);
+    // Convert chatId to a number (chatId is stored as int32)
+    const numericChatId = parseInt(chatId);
     if (isNaN(numericChatId)) {
       console.warn(`⚠️ Debug: Invalid chatId format received: ${chatId}`);
       return new Response(JSON.stringify({ error: "Invalid chatId format" }), { status: 400 });
@@ -27,7 +27,7 @@ export async function GET(req) {
 
     console.log(`🔍 Debug: Searching user with chatId ${numericChatId}`);
 
-    let user = await users.findOne({ chatId: numericChatId });
+    const user = await users.findOne({ chatId: numericChatId });
 
     if (!user) {
       console.warn(`⚠️ Debug: No user found for chatId ${numericChatId}`);
@@ -37,36 +37,30 @@ export async function GET(req) {
 
     console.log(`✅ Debug: Found user data for chatId ${numericChatId}`);
 
-    // Get today's date range in local time
+    // Calculate today's boundaries in UTC.
+    // Since your dice-roll createdAt field is stored as a Date in UTC (e.g., "2025-02-14T06:15:27.071+00:00"),
+    // we use UTC boundaries.
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
-    console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
+    console.log("🔍 Debug: UTC range for dice-rolls:",
+      "startOfDayUTC:", startOfDayUTC.toISOString(),
+      "endOfDayUTC:", endOfDayUTC.toISOString()
+    );
 
-    // Query dice-roll collection to count today's games
+    // Query dice-roll collection for today's games
     const rolls = db.collection("dice-roll");
 
-    // Try finding records using both Int32 and Double chatId
-    const sampleRolls = await rolls.find({
-      chatId: { $in: [numericChatId, Math.floor(numericChatId)] },
-      createdAt: { $gte: startOfDay, $lte: endOfDay }
-    })
-    .limit(5)
-    .toArray();
-
-    console.log(`✅ Debug: Sample dice-roll documents found for chatId ${numericChatId}:`, sampleRolls);
-
-    // Count total records for today
     const dailyRollCount = await rolls.countDocuments({
-      chatId: { $in: [numericChatId, Math.floor(numericChatId)] },
-      createdAt: { $gte: startOfDay, $lte: endOfDay }
+      chatId: numericChatId,
+      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
     });
 
     console.log(`✅ Debug: Total dice-roll games played today for chatId ${numericChatId}: ${dailyRollCount}`);
 
     await client.close();
-    
+
     return new Response(
       JSON.stringify({
         casino_chips: user.casino_chips || 0,
