@@ -19,6 +19,7 @@ interface DiceCubeProps {
 function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
     <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
+      {/* Face numbering: front = 1, back = 6, right = 3, left = 4, top = 2, bottom = 5 */}
       <div className="face front">
         <div className="pip pip-center"></div>
       </div>
@@ -56,62 +57,31 @@ function DiceCube({ style, rolling }: DiceCubeProps) {
   );
 }
 
+// Revised mapping: getDiceCubeTransform returns the inline transform string so that the result face faces front.
 function getDiceCubeTransform(value: number): string {
   switch (value) {
     case 1:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";      // Front (face 1)
     case 2:
-      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";     // Top (face 2) becomes front
     case 3:
-      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";
+      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";    // Right (face 3) becomes front
     case 4:
-      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";
+      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";     // Left (face 4) becomes front
     case 5:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";    // Bottom (face 5) becomes front
     case 6:
-      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";
+      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";    // Back (face 6) becomes front
     default:
       return "";
   }
 }
 
-// Helper function to fetch user status; state setters are passed as parameters.
-async function fetchUserStatusInternal(
-  setCasinoChips: (chips: number) => void,
-  setStreak: (streak: number) => void,
-  setDailyReward: (reward: number) => void,
-  setIsDailyClaimed: (flag: boolean) => void,
-  setHasSpunToday: (flag: boolean) => void,
-  setDailyGamesPlayed: (count: number) => void,
-  setMilestoneClaimed: (flag: boolean) => void,
-  today: string
-) {
-  const chatId = sessionStorage.getItem("chat_id");
-  if (!chatId) return;
-  try {
-    const response = await fetch(`/api/get-user-status?chatId=${chatId}`);
-    if (response.ok) {
-      const data = await response.json();
-      setCasinoChips(data.casino_chips || 0);
-      const streakNum = parseInt(data.streak) || 0;
-      setStreak(streakNum);
-      setDailyReward(5 + streakNum * 5);
-      setIsDailyClaimed(data.dailyCheckinDate === today);
-      setHasSpunToday(data.dailySpinDate === today);
-      // Using "dailyDiceRollGamesPlayed" as field name.
-      setDailyGamesPlayed(data.dailyDiceRollGamesPlayed || 0);
-      setMilestoneClaimed(data.milestoneClaimed === true);
-    }
-  } catch (error) {
-    console.error("Error fetching user status:", error);
-  }
-}
-
 export default function DiceRollPage() {
-  // --- Game States ---
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
+  const [isDiceRolled, setIsDiceRolled] = useState(false);
   const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
@@ -119,48 +89,12 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
-  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([
-    "rotateX(0deg) rotateY(0deg) rotateZ(0deg)",
-    "rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
-  ]);
+
+  // Holds the inline transform for each dice cube (final orientation when result arrives)
+  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
+
+  // Initial style: no rotation applied.
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
-
-  // --- Daily Check-In States ---
-  const [streak, setStreak] = useState<number>(0);
-  const [dailyReward, setDailyReward] = useState<number>(10);
-  const [isDailyClaimed, setIsDailyClaimed] = useState<boolean>(false);
-
-  // --- Milestone States for Dice Roll Game ---
-  const [dailyGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
-  const [milestoneClaimed, setMilestoneClaimed] = useState<boolean>(false);
-
-  // --- Additional States ---
-  const [hasSpunToday, setHasSpunToday] = useState<boolean>(false);
-  const [isCheckinProcessing, setIsCheckinProcessing] = useState<boolean>(false);
-  const [isSpinProcessing, setIsSpinProcessing] = useState<boolean>(false);
-  const [isActionProcessing, setIsActionProcessing] = useState<boolean>(false);
-
-  // --- Popup States ---
-  const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
-  const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
-  const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
-  const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
-
-  const MAX_STREAK_DAYS = 15;
-  const today = new Date().toISOString().split("T")[0];
-
-  useEffect(() => {
-    fetchUserStatusInternal(
-      setCasinoChips,
-      setStreak,
-      setDailyReward,
-      setIsDailyClaimed,
-      setHasSpunToday,
-      setDailyGamesPlayed,
-      setMilestoneClaimed,
-      today
-    );
-  }, []);
 
   useEffect(() => {
     if (showDicePopup) {
@@ -227,26 +161,27 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
+    // Start continuous roll (simulate dice spinning) before getting the result.
+    // (This part uses your old approach.)
     const rollingInterval = setInterval(() => {
+      // For spinning effect, we update diceCubeStyles randomly.
       setDiceCubeStyles([
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
+          Math.random() * 360
+        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
+          Math.random() * 360
+        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
       ]);
     }, 100);
 
     try {
-      // Retrieve chatId from sessionStorage and send it with the request
-      const chatId = sessionStorage.getItem("chat_id");
-
-      const response = await fetch("/api/dice-roll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId })
-      });
+      const response = await fetch("/api/dice-roll", { method: "POST" });
       const { dice1, dice2, hash, seed } = await response.json();
 
       setTimeout(() => {
         clearInterval(rollingInterval);
+        // Remove the rolling animation first then apply the final transforms.
         requestAnimationFrame(() => {
           setIsRolling(false);
           requestAnimationFrame(() => {
@@ -276,9 +211,9 @@ export default function DiceRollPage() {
 
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
 
-    const betAmountTotal = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
+    const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
-    const lossAmount = betAmountTotal - winAmount;
+    const lossAmount = betAmount - winAmount;
 
     const wonBets = selectedBets.filter(bet => bet.isWin);
     const lostBets = selectedBets.filter(bet => !bet.isWin);
@@ -297,7 +232,7 @@ export default function DiceRollPage() {
       placedBets: selectedBets,
       wonBets,
       lostBets,
-      betAmount: betAmountTotal,
+      betAmount,
       winAmount,
       lossAmount,
     };
@@ -313,30 +248,18 @@ export default function DiceRollPage() {
     }
   };
 
-  // Wrapper for Collect Rewards – change button text to processing and disable button.
-  const handleCollectRewardsWrapper = async () => {
-    setIsActionProcessing(true);
-    await handleCollectRewards();
-    setIsActionProcessing(false);
-  };
-
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
+
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
+
     await updateTokens(casinoChips, winnings, holdTokens);
     resetGame();
   };
 
-  // Wrapper for Reset – change button text to processing and disable button.
-  const resetGameWrapper = async () => {
-    setIsActionProcessing(true);
-    await resetGame();
-    setIsActionProcessing(false);
-  };
-
-  const resetGame = async () => {
+  const resetGame = () => {
     setSelectedBets([]);
     setDiceResult([1, 1]);
     setRollHash(null);
@@ -437,23 +360,13 @@ export default function DiceRollPage() {
             {isRolling ? "Rolling Dice..." : "Roll Dice"}
           </button>
         )}
+
         {hasResult && hasWon && (
-          <button
-            className="collect-button"
-            onClick={handleCollectRewardsWrapper}
-            disabled={isActionProcessing}
-          >
-            {isActionProcessing ? "Processing..." : "Collect Rewards"}
-          </button>
+          <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
         )}
+
         {hasResult && !hasWon && (
-          <button
-            className="reset-button"
-            onClick={resetGameWrapper}
-            disabled={isActionProcessing}
-          >
-            {isActionProcessing ? "Processing..." : "Reset"}
-          </button>
+          <button className="reset-button" onClick={resetGame}>Reset</button>
         )}
       </div>
 

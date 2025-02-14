@@ -36,6 +36,7 @@ export async function POST(req) {
     const users = db.collection("users");
     const rolls = db.collection("dice-rolls");
 
+    // Parse chatId to a number (double)
     const chatIdAsNumber = parseFloat(chatId);
     let user = await users.findOne({ chatId: chatIdAsNumber });
 
@@ -68,9 +69,9 @@ export async function POST(req) {
       }
     );
 
-    // ✅ Store Game Data in dice-rolls Collection
+    // ✅ Store Game Data in dice-rolls Collection with chatId as a number (double)
     await rolls.insertOne({
-      chatId,
+      chatId: chatIdAsNumber,
       dice1,
       dice2,
       verificationHash: hash,
