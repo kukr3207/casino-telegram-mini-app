@@ -13,7 +13,7 @@ export async function GET(req) {
       );
     }
 
-    // Convert chatId to an Int32 number
+    // Convert chatId to an Int32 (MongoDB stores it as Int32)
     const numericChatId = parseInt(chatId, 10);
     if (isNaN(numericChatId)) {
       return new Response(
@@ -41,17 +41,17 @@ export async function GET(req) {
     // Query the dice-roll collection to count today's dice roll games
     const rolls = db.collection("dice-roll");
 
-    // Get today's date range in UTC (matches MongoDB's stored date format)
+    // 🔹 Step 1: Get today's UTC date range (IMPORTANT: Matches MongoDB's stored format)
     const now = new Date();
-    const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-    const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+    const startOfDayUTC = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0);
+    const endOfDayUTC = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999);
 
     console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDayUTC} and ${endOfDayUTC}`);
 
-    // Corrected MongoDB Query
+    // 🔹 Step 2: Query for today's dice rolls
     const dailyRollCount = await rolls.countDocuments({
-      chatId: numericChatId, // Matches stored Int32 format
-      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC } // Today's date range
+      chatId: numericChatId, // Ensure it is treated as Int32
+      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
     });
 
     console.log(`✅ Debug: Found ${dailyRollCount} dice-roll games for chatId ${numericChatId}`);
