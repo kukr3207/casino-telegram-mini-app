@@ -151,7 +151,6 @@ export default function EarnPage() {
         setCasinoBalance(data.newBalance);
       }
       fetchUserStatus();
-      // For the daily check-in popup, show old and new balance details.
       const tokensAdded = data.newBalance - oldBalance;
       setDailyPopupMessage(`Daily Check-In: Old Balance: ${oldBalance}, New Balance: ${data.newBalance} (added ${tokensAdded} tokens)`);
       setShowDailyPopup(true);
@@ -207,7 +206,6 @@ export default function EarnPage() {
         let popupMsg = "";
         if (outcome.type === "token") {
           popupMsg = `Spin Result: Old Balance: ${oldBalance}, `;
-          // Assume the outcome tokens are added to balance.
           const newBalance = oldBalance + outcome.value;
           setCasinoBalance(newBalance);
           popupMsg += `New Balance: ${newBalance} (added ${outcome.value} tokens)!`;
@@ -224,7 +222,7 @@ export default function EarnPage() {
     }
   };
 
-  // Milestone Section:
+  // Milestone Section
   const nextMilestone =
     dailyDiceRollGamesPlayed === 0
       ? 10
