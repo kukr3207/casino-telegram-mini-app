@@ -1,11 +1,13 @@
 import { MongoClient } from "mongodb";
 
-export async function POST(req) {
+export async function GET(req) {
   try {
-    const { chatId, date, reward } = await req.json();
-    if (!chatId || !date || !reward) {
+    // Extract chatId from the query parameters.
+    const { searchParams } = new URL(req.url);
+    const chatId = searchParams.get("chatId");
+    if (!chatId) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Missing chatId" }),
         { status: 400 }
       );
     }
@@ -15,6 +17,7 @@ export async function POST(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
+    // Try to find the user using either a number or string form of chatId.
     const numericChatId = isNaN(chatId) ? chatId : parseFloat(chatId);
     let user = await users.findOne({ chatId: numericChatId });
     if (!user) {
@@ -28,47 +31,38 @@ export async function POST(req) {
       );
     }
 
-    // Check if milestone already claimed for today.
-    if (user.milestoneClaimed === true && user.milestoneClaimDate === date) {
-      await client.close();
-      return new Response(
-        JSON.stringify({ error: "Milestone already claimed today" }),
-        { status: 400 }
-      );
-    }
+    // Query the dice-roll collection to count today's dice roll games.
+    const rolls = db.collection("dice-roll");
 
-    // Calculate required games based on the reward.
-    // For every 10 games, reward = 25 tokens.
-    // Thus, requiredGames = (reward / 25) * 10.
-    const requiredGames = (reward / 25) * 10;
-    if ((user.dailyGamesPlayed || 0) < requiredGames) {
-      await client.close();
-      return new Response(
-        JSON.stringify({ error: "Not enough dice roll games played for milestone" }),
-        { status: 400 }
-      );
-    }
+    // Calculate today's start and end in UTC
+    const now = new Date();
+    const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
-    const newBalance = (user.casino_chips || 0) + reward;
-    await users.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          casino_chips: newBalance,
-          milestoneClaimed: true,
-          milestoneClaimDate: date,
-          updatedAt: new Date()
-        }
-      }
-    );
+    // Count documents where:
+    // - chatId matches either the numeric or string form.
+    // - The 'seed' field exists and is not null.
+    // - createdAt is between startOfDayUTC and endOfDayUTC.
+    const dailyRollCount = await rolls.countDocuments({
+      chatId: { $in: [numericChatId, chatId.toString()] },
+      seed: { $exists: true, $ne: null },
+      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
+    });
 
     await client.close();
+    // Return the user status data along with the daily dice roll games count.
     return new Response(
-      JSON.stringify({ newBalance }),
+      JSON.stringify({
+        casino_chips: user.casino_chips || 0,
+        dailyCheckinDate: user.dailyCheckinDate || null,
+        dailySpinDate: user.dailySpinDate || null,
+        streak: user.streak || 0,
+        dailyDiceRollGamesPlayed: dailyRollCount
+      }),
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error claiming milestone reward:", error);
+    console.error("Error fetching user status:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500 }
