@@ -4,7 +4,7 @@ export async function POST(req) {
   try {
     const body = await req.json();
     const { chatId, date, reward, milestoneThreshold } = body;
-    if (!chatId || !date || reward === undefined || !milestoneThreshold) {
+    if (!chatId || !date || reward === undefined || milestoneThreshold === undefined) {
       return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400 });
     }
 
@@ -25,13 +25,22 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
     }
 
-    // Determine last claimed milestone for today:
-    let lastClaimed = 0;
-    if (user.lastMilestoneClaimDate === date) {
-      lastClaimed = user.lastMilestoneClaimed || 0;
-    }
-    // Next eligible milestone is lastClaimed + 5.
-    if (milestoneThreshold !== lastClaimed + 5) {
+    // Determine last claimed milestone for today.
+    // If the stored date matches, use the stored value; otherwise treat it as 0.
+    const storedDate = user.lastMilestoneClaimDate || "";
+    const lastClaimed = storedDate === date ? Number(user.lastMilestoneClaimed || 0) : 0;
+    const incomingThreshold = Number(milestoneThreshold);
+    const expectedThreshold = lastClaimed + 5;
+
+    console.log(
+      "Milestone claim check:",
+      "lastClaimed =", lastClaimed,
+      "expectedThreshold =", expectedThreshold,
+      "incomingThreshold =", incomingThreshold
+    );
+
+    // Reject if the incoming milestone claim isn't exactly one step ahead.
+    if (incomingThreshold !== expectedThreshold) {
       await client.close();
       return new Response(
         JSON.stringify({
@@ -42,18 +51,16 @@ export async function POST(req) {
       );
     }
 
-    const oldBalance = user.casino_chips || 0;
+    const oldBalance = Number(user.casino_chips || 0);
     const newBalance = oldBalance + reward; // reward should be 15
 
-    // If the milestoneThreshold is 25 (i.e. the final milestone for the day),
-    // reset lastMilestoneClaimed to 0 (the cycle is complete) but keep the updated balance.
+    // If the milestoneThreshold equals the maximum (25), reset lastMilestoneClaimed to 0.
     const updateFields =
-      milestoneThreshold === 25
+      incomingThreshold === 25
         ? { casino_chips: newBalance, lastMilestoneClaimed: 0, lastMilestoneClaimDate: date }
-        : { casino_chips: newBalance, lastMilestoneClaimed: milestoneThreshold, lastMilestoneClaimDate: date };
+        : { casino_chips: newBalance, lastMilestoneClaimed: incomingThreshold, lastMilestoneClaimDate: date };
 
     await users.updateOne({ chatId: numericChatId }, { $set: updateFields });
-
     await client.close();
     return new Response(JSON.stringify({ newBalance }), { status: 200 });
   } catch (error) {
