@@ -16,10 +16,21 @@ interface DiceCubeProps {
   rolling: boolean;
 }
 
+interface Outcome {
+  type: "token" | "booster";
+  value: number;
+}
+
+interface SpinResponse {
+  outcome: Outcome;
+  outcomeIndex: number;
+  seed: string;
+  hash: string;
+}
+
 function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
     <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
-      {/* Face numbering: front = 1, back = 6, right = 3, left = 4, top = 2, bottom = 5 */}
       <div className="face front">
         <div className="pip pip-center"></div>
       </div>
@@ -57,31 +68,61 @@ function DiceCube({ style, rolling }: DiceCubeProps) {
   );
 }
 
-// Revised mapping: getDiceCubeTransform returns the inline transform string so that the result face faces front.
 function getDiceCubeTransform(value: number): string {
   switch (value) {
     case 1:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";      // Front (face 1)
+      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
     case 2:
-      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";     // Top (face 2) becomes front
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";
     case 3:
-      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";    // Right (face 3) becomes front
+      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";
     case 4:
-      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";     // Left (face 4) becomes front
+      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";
     case 5:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";    // Bottom (face 5) becomes front
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";
     case 6:
-      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";    // Back (face 6) becomes front
+      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";
     default:
       return "";
   }
 }
 
+// Helper function to fetch user status; state setters are passed as parameters.
+async function fetchUserStatusInternal(
+  setCasinoChips: (chips: number) => void,
+  setStreak: (streak: number) => void,
+  setDailyReward: (reward: number) => void,
+  setIsDailyClaimed: (flag: boolean) => void,
+  setHasSpunToday: (flag: boolean) => void,
+  setDailyGamesPlayed: (count: number) => void,
+  setMilestoneClaimed: (flag: boolean) => void,
+  today: string
+) {
+  const chatId = sessionStorage.getItem("chat_id");
+  if (!chatId) return;
+  try {
+    const response = await fetch(`/api/get-user-status?chatId=${chatId}`);
+    if (response.ok) {
+      const data = await response.json();
+      setCasinoChips(data.casino_chips || 0);
+      const streakNum = parseInt(data.streak) || 0;
+      setStreak(streakNum);
+      setDailyReward(5 + streakNum * 5);
+      setIsDailyClaimed(data.dailyCheckinDate === today);
+      setHasSpunToday(data.dailySpinDate === today);
+      setDailyGamesPlayed(data.dailyGamesPlayed || 0);
+      setMilestoneClaimed(data.milestoneClaimed === true);
+    }
+  } catch (error) {
+    console.error("Error fetching user status:", error);
+  }
+}
+
 export default function DiceRollPage() {
+  // Dice-roll game states
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
-  const [isDiceRolled, setIsDiceRolled] = useState(false);
   const [diceResult, setDiceResult] = useState<number[]>([1, 1]);
   const [rollHash, setRollHash] = useState<string | null>(null);
   const [verificationSeed, setVerificationSeed] = useState<string | null>(null);
@@ -89,12 +130,49 @@ export default function DiceRollPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
-
-  // Holds the inline transform for each dice cube (final orientation when result arrives)
-  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
-
-  // Initial style: no rotation applied.
+  const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([
+    "rotateX(0deg) rotateY(0deg) rotateZ(0deg)",
+    "rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+  ]);
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+
+  // Daily check-in states
+  const [streak, setStreak] = useState<number>(0);
+  const [dailyReward, setDailyReward] = useState<number>(10);
+  const [isDailyClaimed, setIsDailyClaimed] = useState<boolean>(false);
+
+  // Milestone states (for dice roll game only)
+  const [dailyGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
+  const [milestoneClaimed, setMilestoneClaimed] = useState<boolean>(false);
+
+  // Missing state: hasSpunToday and its setter
+  const [hasSpunToday, setHasSpunToday] = useState<boolean>(false);
+
+  // Other processing states
+  const [isCheckinProcessing, setIsCheckinProcessing] = useState<boolean>(false);
+  const [isSpinProcessing, setIsSpinProcessing] = useState<boolean>(false);
+
+  // Popup states
+  const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
+  const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
+  const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
+  const [spinPopupMessage, setSpinPopupMessage] = useState<string>("");
+
+  const MAX_STREAK_DAYS = 15;
+  const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    fetchUserStatusInternal(
+      setCasinoChips,
+      setStreak,
+      setDailyReward,
+      setIsDailyClaimed,
+      setHasSpunToday,
+      setDailyGamesPlayed,
+      setMilestoneClaimed,
+      today
+    );
+  }, []);
 
   useEffect(() => {
     if (showDicePopup) {
@@ -161,17 +239,10 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    // Start continuous roll (simulate dice spinning) before getting the result.
-    // (This part uses your old approach.)
     const rollingInterval = setInterval(() => {
-      // For spinning effect, we update diceCubeStyles randomly.
       setDiceCubeStyles([
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
-          Math.random() * 360
-        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
-          Math.random() * 360
-        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
       ]);
     }, 100);
 
@@ -181,7 +252,6 @@ export default function DiceRollPage() {
 
       setTimeout(() => {
         clearInterval(rollingInterval);
-        // Remove the rolling animation first then apply the final transforms.
         requestAnimationFrame(() => {
           setIsRolling(false);
           requestAnimationFrame(() => {
@@ -191,6 +261,8 @@ export default function DiceRollPage() {
             setVerificationSeed(seed);
             highlightBets(dice1, dice2);
             setHasResult(true);
+            // After processing the result, increment the dice roll counter.
+            awaitIncrementDiceRollCounter();
           });
         });
       }, 2500);
@@ -198,6 +270,35 @@ export default function DiceRollPage() {
       console.error("Error rolling dice:", error);
       clearInterval(rollingInterval);
       setIsRolling(false);
+    }
+  };
+
+  const awaitIncrementDiceRollCounter = async () => {
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) return;
+    try {
+      const response = await fetch("/api/increment-dice-roll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        sessionStorage.setItem("dailyDiceRollGamesPlayed", String(data.dailyDiceRollGamesPlayed));
+        setDailyGamesPlayed(data.dailyDiceRollGamesPlayed);
+      }
+      fetchUserStatusInternal(
+        setCasinoChips,
+        setStreak,
+        setDailyReward,
+        setIsDailyClaimed,
+        setHasSpunToday,
+        setDailyGamesPlayed,
+        setMilestoneClaimed,
+        today
+      );
+    } catch (error) {
+      console.error("Error incrementing dice roll counter:", error);
     }
   };
 
@@ -252,14 +353,14 @@ export default function DiceRollPage() {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
-
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
-
     await updateTokens(casinoChips, winnings, holdTokens);
+    await awaitIncrementDiceRollCounter();
     resetGame();
   };
 
-  const resetGame = () => {
+  const resetGame = async () => {
+    await awaitIncrementDiceRollCounter();
     setSelectedBets([]);
     setDiceResult([1, 1]);
     setRollHash(null);
@@ -360,11 +461,9 @@ export default function DiceRollPage() {
             {isRolling ? "Rolling Dice..." : "Roll Dice"}
           </button>
         )}
-
         {hasResult && hasWon && (
           <button className="collect-button" onClick={handleCollectRewards}>Collect Rewards</button>
         )}
-
         {hasResult && !hasWon && (
           <button className="reset-button" onClick={resetGame}>Reset</button>
         )}
