@@ -80,12 +80,13 @@ export default function EarnPage() {
   const [showMilestonePopup, setShowMilestonePopup] = useState<boolean>(false);
   const [milestonePopupMessage, setMilestonePopupMessage] = useState<string>("");
 
-  // Milestone states – also tracking the last claimed milestone info.
+  // Milestone states – tracking daily dice game count and last milestone claim info.
   const [dailyDiceRollGamesPlayed, setDailyDiceRollGamesPlayed] = useState<number>(0);
   const [lastMilestoneClaimed, setLastMilestoneClaimed] = useState<number>(0);
   const [lastMilestoneClaimDate, setLastMilestoneClaimDate] = useState<string>("");
 
-  const MAX_DICE_GAMES = 25; // now only 25 games max per day for milestone progress
+  // Constants: now max games is 25, and reward is given every 5 games.
+  const MAX_DICE_GAMES = 25;
   const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
@@ -116,7 +117,7 @@ export default function EarnPage() {
     }
   };
 
-  // Calculate the effective last milestone claimed.
+  // Calculate effective last milestone claimed.
   const effectiveLastClaimed = lastMilestoneClaimDate === today ? lastMilestoneClaimed : 0;
   // Next eligible milestone is effectiveLastClaimed + 5.
   const nextEligibleMilestone = effectiveLastClaimed + 5;
@@ -217,7 +218,9 @@ export default function EarnPage() {
     }
   };
 
-  // Milestone Claim Handler – the claim button is only shown when enough games have been played.
+  // Milestone Claim Handler
+  // The claim button is only shown when the user has reached the next eligible milestone
+  // and if the milestone reward hasn't already been claimed for that threshold.
   const handleClaimMilestone = async () => {
     setIsMilestoneProcessing(true);
     const chatId = sessionStorage.getItem("chat_id");
@@ -365,7 +368,9 @@ export default function EarnPage() {
           Next Milestone: {nextEligibleMilestone} games for {milestoneReward} tokens reward.
         </p>
         <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={MAX_DICE_GAMES} step={5} />
-        {dailyDiceRollGamesPlayed >= nextEligibleMilestone ? (
+        {dailyDiceRollGamesPlayed >= MAX_DICE_GAMES ? (
+          <p>Milestone completed for today.</p>
+        ) : dailyDiceRollGamesPlayed >= nextEligibleMilestone ? (
           effectiveLastClaimed >= nextEligibleMilestone ? (
             <p>Milestone already claimed for this threshold.</p>
           ) : (
