@@ -2,9 +2,10 @@ import { MongoClient } from "mongodb";
 
 export async function GET(req) {
   try {
-    // Extract chatId from the query parameters.
+    // Extract chatId from the query parameters
     const { searchParams } = new URL(req.url);
     const chatId = searchParams.get("chatId");
+
     if (!chatId) {
       return new Response(
         JSON.stringify({ error: "Missing chatId" }),
@@ -12,7 +13,7 @@ export async function GET(req) {
       );
     }
 
-    // Convert chatId to a number (keep it as Int32, since DB uses Int32)
+    // Convert chatId to an Int32 number
     const numericChatId = parseInt(chatId, 10);
     if (isNaN(numericChatId)) {
       return new Response(
@@ -26,7 +27,7 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Find user by numeric chatId (stored as Int32 in MongoDB)
+    // Find user by numeric chatId (ensuring Int32 consistency)
     let user = await users.findOne({ chatId: numericChatId });
 
     if (!user) {
@@ -37,27 +38,27 @@ export async function GET(req) {
       );
     }
 
-    // Query the dice-roll collection to count today's dice roll games.
+    // Query the dice-roll collection to count today's dice roll games
     const rolls = db.collection("dice-roll");
 
-    // Get today's date range in UTC
+    // Get today's date range in UTC (matches MongoDB's stored date format)
     const now = new Date();
     const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
     const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
-    console.log(`Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDayUTC} and ${endOfDayUTC}`);
+    console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDayUTC} and ${endOfDayUTC}`);
 
-    // Query for today's dice rolls matching the chatId and seed presence
+    // Corrected MongoDB Query
     const dailyRollCount = await rolls.countDocuments({
-      chatId: numericChatId, // Ensuring it's treated as Int32 in the query
-      seed: { $exists: true, $ne: null }, // Ensures only valid game records
-      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
+      chatId: numericChatId, // Matches stored Int32 format
+      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC } // Today's date range
     });
 
-    console.log(`Debug: Found ${dailyRollCount} dice-roll games for chatId ${numericChatId}`);
+    console.log(`✅ Debug: Found ${dailyRollCount} dice-roll games for chatId ${numericChatId}`);
 
     await client.close();
-    // Return the user status data along with the daily dice roll games count.
+
+    // Return user status with the daily dice roll games count
     return new Response(
       JSON.stringify({
         casino_chips: user.casino_chips || 0,
@@ -69,7 +70,7 @@ export async function GET(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching user status:", error);
+    console.error("❌ Error fetching user status:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500 }
