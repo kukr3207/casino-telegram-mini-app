@@ -2,17 +2,21 @@ import { MongoClient } from "mongodb";
 
 export async function GET(req) {
   try {
-    // Extract chatId from the query parameters.
+    console.log("🔍 Debug: Incoming request to get-user-status API");
+
+    // Extract chatId from query parameters.
     const { searchParams } = new URL(req.url);
     const chatId = searchParams.get("chatId");
 
     if (!chatId) {
+      console.warn("⚠️ Debug: Missing chatId in request");
       return new Response(JSON.stringify({ error: "Missing chatId" }), { status: 400 });
     }
 
-    // 🔥 Convert chatId to Int32 (to match DB storage type)
+    // Convert chatId to number (ensuring Int32 compatibility).
     const numericChatId = parseInt(chatId, 10);
     if (isNaN(numericChatId)) {
+      console.warn(`⚠️ Debug: Invalid chatId format received: ${chatId}`);
       return new Response(JSON.stringify({ error: "Invalid chatId format" }), { status: 400 });
     }
 
@@ -21,48 +25,47 @@ export async function GET(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // 🔥 Query `chatId` as Int32 in MongoDB
+    console.log(`🔍 Debug: Searching user with chatId ${numericChatId}`);
+
     let user = await users.findOne({ chatId: numericChatId });
 
     if (!user) {
+      console.warn(`⚠️ Debug: No user found for chatId ${numericChatId}`);
       await client.close();
       return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
     }
 
-    // Query the dice-roll collection to count today's dice roll games.
+    console.log(`✅ Debug: Found user data for chatId ${numericChatId}`);
+
+    // Get today's date range in UTC
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${todayStart.toISOString()} and ${todayEnd.toISOString()}`);
+
+    // Query dice-roll collection to count today's games
     const rolls = db.collection("dice-roll");
 
-    // 🔥 Get today's UTC date range (correctly formatted)
-    const now = new Date();
-    const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-    const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+    const sampleRolls = await rolls.find({
+      chatId: { $in: [numericChatId, parseFloat(chatId)] },
+      createdAt: { $gte: todayStart, $lte: todayEnd }
+    })
+    .limit(5)
+    .toArray();
 
-    console.log(`🔍 Debug: Checking dice-rolls for chatId ${numericChatId} between ${startOfDayUTC.toISOString()} and ${endOfDayUTC.toISOString()}`);
+    console.log(`✅ Debug: Sample dice-roll documents found for chatId ${numericChatId}:`, sampleRolls);
 
-    // 🔥 Fetch sample documents for debugging
-    const sampleRolls = await rolls
-      .find({
-        chatId: numericChatId, // Ensuring it matches Int32
-        seed: { $exists: true, $ne: null }, // Ensures only valid game records
-        createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
-      })
-      .limit(5)
-      .toArray();
-
-    console.log(`✅ Debug: Sample dice-roll documents found:`, sampleRolls.length, sampleRolls);
-
-    // 🔥 Query total count of dice rolls played today
+    // Count matching records
     const dailyRollCount = await rolls.countDocuments({
-      chatId: numericChatId, // Ensuring it's queried as Int32
-      seed: { $exists: true, $ne: null },
-      createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
+      chatId: { $in: [numericChatId, parseFloat(chatId)] },
+      createdAt: { $gte: todayStart, $lte: todayEnd }
     });
 
-    console.log(`✅ Debug: Found ${dailyRollCount} dice-roll games for chatId ${numericChatId}`);
+    console.log(`✅ Debug: Total dice-roll games played today for chatId ${numericChatId}: ${dailyRollCount}`);
 
     await client.close();
-
-    // Return user status with daily dice roll games count
+    
     return new Response(
       JSON.stringify({
         casino_chips: user.casino_chips || 0,
