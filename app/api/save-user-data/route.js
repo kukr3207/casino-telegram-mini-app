@@ -30,6 +30,7 @@ export async function POST(req) {
         casino_chips: 0,
         withdraw_tokens: 0,
         hol_tokens: 0,
+        dailyDiceRollGamesPlayed: 0,
       });
       isNewUser = true;
       console.log(`New user created in DB: ${chatId}`);

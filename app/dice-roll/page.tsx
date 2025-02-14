@@ -87,7 +87,7 @@ function getDiceCubeTransform(value: number): string {
   }
 }
 
-// Helper function to fetch user status; state setters are passed as parameters.
+// Helper function to fetch user status.
 async function fetchUserStatusInternal(
   setCasinoChips: (chips: number) => void,
   setStreak: (streak: number) => void,
@@ -110,6 +110,7 @@ async function fetchUserStatusInternal(
       setDailyReward(5 + streakNum * 5);
       setIsDailyClaimed(data.dailyCheckinDate === today);
       setHasSpunToday(data.dailySpinDate === today);
+      // Note: using "dailyDiceRollGamesPlayed" as field name.
       setDailyGamesPlayed(data.dailyDiceRollGamesPlayed || 0);
       setMilestoneClaimed(data.milestoneClaimed === true);
     }
@@ -119,7 +120,7 @@ async function fetchUserStatusInternal(
 }
 
 export default function DiceRollPage() {
-  // Dice-roll game states
+  // Dice roll game states
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isRolling, setIsRolling] = useState(false);
@@ -141,18 +142,18 @@ export default function DiceRollPage() {
   const [dailyReward, setDailyReward] = useState<number>(10);
   const [isDailyClaimed, setIsDailyClaimed] = useState<boolean>(false);
 
-  // Milestone states (for dice roll game only)
-  const [dailyDiceRollGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
+  // Milestone states for dice roll game only.
+  const [dailyGamesPlayed, setDailyGamesPlayed] = useState<number>(0);
   const [milestoneClaimed, setMilestoneClaimed] = useState<boolean>(false);
 
-  // Missing state: hasSpunToday and its setter
+  // Missing state: hasSpunToday.
   const [hasSpunToday, setHasSpunToday] = useState<boolean>(false);
 
-  // Other processing states
+  // Other processing states.
   const [isCheckinProcessing, setIsCheckinProcessing] = useState<boolean>(false);
   const [isSpinProcessing, setIsSpinProcessing] = useState<boolean>(false);
 
-  // Popup states
+  // Popup states.
   const [showDailyPopup, setShowDailyPopup] = useState<boolean>(false);
   const [dailyPopupMessage, setDailyPopupMessage] = useState<string>("");
   const [showSpinPopup, setShowSpinPopup] = useState<boolean>(false);
@@ -241,7 +242,9 @@ export default function DiceRollPage() {
 
     const rollingInterval = setInterval(() => {
       setDiceCubeStyles([
-        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
+        `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
+          Math.random() * 360
+        )}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`,
         `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(Math.random() * 360)}deg) rotateZ(${Math.floor(Math.random() * 360)}deg)`
       ]);
     }, 100);
@@ -261,7 +264,7 @@ export default function DiceRollPage() {
             setVerificationSeed(seed);
             highlightBets(dice1, dice2);
             setHasResult(true);
-            // After processing the result, increment the dice roll counter.
+            // Call the increment function only once here.
             awaitIncrementDiceRollCounter();
           });
         });
@@ -287,6 +290,7 @@ export default function DiceRollPage() {
         sessionStorage.setItem("dailyDiceRollGamesPlayed", String(data.dailyDiceRollGamesPlayed));
         setDailyGamesPlayed(data.dailyDiceRollGamesPlayed);
       }
+      // Refresh user status (if needed)
       fetchUserStatusInternal(
         setCasinoChips,
         setStreak,
@@ -355,12 +359,12 @@ export default function DiceRollPage() {
       .reduce((total, bet) => total + (bet.winAmount || 0), 0);
     const holdTokens = winnings - selectedBets.reduce((sum, bet) => sum + (bet.isWin ? bet.amount : 0), 0);
     await updateTokens(casinoChips, winnings, holdTokens);
-    await awaitIncrementDiceRollCounter();
+    // Do not call increment again here—counter is already incremented after result processing.
     resetGame();
   };
 
   const resetGame = async () => {
-    await awaitIncrementDiceRollCounter();
+    // Do not call increment here as well.
     setSelectedBets([]);
     setDiceResult([1, 1]);
     setRollHash(null);

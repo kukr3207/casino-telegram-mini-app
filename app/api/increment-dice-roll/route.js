@@ -28,11 +28,11 @@ export async function POST(req) {
       );
     }
     
-    // Use findOneAndUpdate to increment dailyDiceRollGamesPlayed and return the new value.
+    // Use upsert so that if dailyDiceRollGamesPlayed does not exist, it gets created.
     const result = await users.findOneAndUpdate(
       { _id: user._id },
       { $inc: { dailyDiceRollGamesPlayed: 1 }, $set: { updatedAt: new Date() } },
-      { returnDocument: "after" }
+      { returnDocument: "after", upsert: true }
     );
     
     await client.close();
