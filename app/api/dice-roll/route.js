@@ -8,14 +8,20 @@ const rolls = db.collection("dice-rolls");
 
 export async function POST(req) {
   try {
+    // Extract chatId from the request body
+    const { chatId } = await req.json();
+    
     const seed = crypto.randomBytes(32).toString("hex");
     const dice1 = (crypto.randomBytes(1)[0] % 6) + 1;
     const dice2 = (crypto.randomBytes(1)[0] % 6) + 1;
     const resultSum = dice1 + dice2;
 
-    const hash = crypto.createHash("sha256").update(seed + resultSum).digest("hex");
+    const hash = crypto.createHash("sha256")
+                       .update(seed + resultSum)
+                       .digest("hex");
 
-    await rolls.insertOne({ hash, seed, dice1, dice2, createdAt: new Date() });
+    // Insert chatId along with roll details
+    await rolls.insertOne({ chatId, hash, seed, dice1, dice2, createdAt: new Date() });
 
     return new Response(JSON.stringify({ dice1, dice2, hash, seed }), { status: 200 });
   } catch (error) {

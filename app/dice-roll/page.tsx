@@ -16,18 +16,6 @@ interface DiceCubeProps {
   rolling: boolean;
 }
 
-interface Outcome {
-  type: "token" | "booster";
-  value: number;
-}
-
-interface SpinResponse {
-  outcome: Outcome;
-  outcomeIndex: number;
-  seed: string;
-  hash: string;
-}
-
 function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
     <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
@@ -247,7 +235,14 @@ export default function DiceRollPage() {
     }, 100);
 
     try {
-      const response = await fetch("/api/dice-roll", { method: "POST" });
+      // Retrieve chatId from sessionStorage and send it with the request
+      const chatId = sessionStorage.getItem("chat_id");
+
+      const response = await fetch("/api/dice-roll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId })
+      });
       const { dice1, dice2, hash, seed } = await response.json();
 
       setTimeout(() => {
@@ -261,8 +256,6 @@ export default function DiceRollPage() {
             setVerificationSeed(seed);
             highlightBets(dice1, dice2);
             setHasResult(true);
-            // Increment the dice roll counter only once here.
-            awaitIncrementDiceRollCounter();
           });
         });
       }, 2500);
@@ -270,35 +263,6 @@ export default function DiceRollPage() {
       console.error("Error rolling dice:", error);
       clearInterval(rollingInterval);
       setIsRolling(false);
-    }
-  };
-
-  const awaitIncrementDiceRollCounter = async () => {
-    const chatId = sessionStorage.getItem("chat_id");
-    if (!chatId) return;
-    try {
-      const response = await fetch("/api/increment-dice-roll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        sessionStorage.setItem("dailyDiceRollGamesPlayed", String(data.dailyDiceRollGamesPlayed));
-        setDailyGamesPlayed(data.dailyDiceRollGamesPlayed);
-      }
-      fetchUserStatusInternal(
-        setCasinoChips,
-        setStreak,
-        setDailyReward,
-        setIsDailyClaimed,
-        setHasSpunToday,
-        setDailyGamesPlayed,
-        setMilestoneClaimed,
-        today
-      );
-    } catch (error) {
-      console.error("Error incrementing dice roll counter:", error);
     }
   };
 
@@ -312,9 +276,9 @@ export default function DiceRollPage() {
 
     sessionStorage.setItem("tokens", JSON.stringify(tokens));
 
-    const betAmount = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
+    const betAmountTotal = selectedBets.reduce((sum, bet) => sum + bet.amount, 0);
     const winAmount = selectedBets.filter(bet => bet.isWin).reduce((sum, bet) => sum + (bet.winAmount || 0), 0);
-    const lossAmount = betAmount - winAmount;
+    const lossAmount = betAmountTotal - winAmount;
 
     const wonBets = selectedBets.filter(bet => bet.isWin);
     const lostBets = selectedBets.filter(bet => !bet.isWin);
@@ -333,7 +297,7 @@ export default function DiceRollPage() {
       placedBets: selectedBets,
       wonBets,
       lostBets,
-      betAmount,
+      betAmount: betAmountTotal,
       winAmount,
       lossAmount,
     };
