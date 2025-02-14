@@ -23,10 +23,13 @@ export async function GET(req) {
     const client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db("casino-mini-app");
+
+    // Debug: list all collections to ensure you're connected to the correct DB.
+    const collections = await db.listCollections().toArray();
+    console.log("✅ Debug: Available collections:", collections.map(col => col.name));
+
     const users = db.collection("users");
-
     console.log(`🔍 Debug: Searching user with chatId ${numericChatId}`);
-
     const user = await users.findOne({ chatId: numericChatId });
     if (!user) {
       console.warn(`⚠️ Debug: No user found for chatId ${numericChatId}`);
@@ -38,7 +41,6 @@ export async function GET(req) {
     // Hard-coded date boundaries for testing (UTC boundaries for 2025-02-14)
     const startOfDayUTC = new Date("2025-02-14T00:00:00.000Z");
     const endOfDayUTC = new Date("2025-02-14T23:59:59.999Z");
-
     console.log("🔍 Debug: UTC range for dice-rolls:",
       "startOfDayUTC:", startOfDayUTC.toISOString(),
       "endOfDayUTC:", endOfDayUTC.toISOString()
@@ -50,7 +52,6 @@ export async function GET(req) {
       chatId: numericChatId,
       createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
     });
-
     console.log(`✅ Debug: Total dice-roll games played today for chatId ${numericChatId}: ${dailyRollCount}`);
 
     // Additional debug: count all dice-roll documents for the given chatId (ignoring createdAt)
