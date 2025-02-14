@@ -26,11 +26,6 @@
   transition: opacity 0.3s ease;
 }
 
-.earn-section.completed {
-  opacity: 0.6;
-  text-decoration: line-through;
-}
-
 .earn-section h4 {
   font-size: 18px;
   color: #ffd700;
@@ -179,11 +174,6 @@
   padding: 4px 10px;
   border-radius: 8px;
   margin-left: 5px;
-}
-
-.strike {
-  text-decoration: line-through;
-  opacity: 0.6;
 }
 
 /* Milestone Progress Bar Styles */
