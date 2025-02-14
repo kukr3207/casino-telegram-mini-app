@@ -49,7 +49,7 @@ export async function GET(req) {
     );
 
     // Query dice-roll collection for today's games using createdAt range.
-    const rolls = db.collection("dice-roll");
+    const rolls = db.collection("dice-rolls");
     const dailyRollCount = await rolls.countDocuments({
       chatId: numericChatId,
       createdAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
