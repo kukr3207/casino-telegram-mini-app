@@ -230,3 +230,29 @@
   color: #ffd700;
   font-weight: bold;
 }
+
+/* Popup Styles with background blur and glowing border */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: #121212;
+  padding: 20px;
+  border: 2px solid #ffd700;
+  border-radius: 8px;
+  text-align: center;
+  color: #ffd700;
+  box-shadow: 0 0 15px #ffd700;
+}
