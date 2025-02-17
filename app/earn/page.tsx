@@ -91,10 +91,13 @@ export default function EarnPage() {
 
   // Use stored milestone progress only if last claim date is today.
   const effectiveLastClaimed = lastMilestoneClaimDate === today ? lastMilestoneClaimed : 0;
-  // Next eligible milestone should never exceed MAX_DICE_GAMES.
+  // Next eligible milestone should not exceed MAX_DICE_GAMES.
   const nextEligibleMilestone = Math.min(effectiveLastClaimed + 5, MAX_DICE_GAMES);
-  // Dynamic reward: first claim gives 15 tokens, second gives 30 tokens, etc.
+  // Dynamic reward: first claim gives 15 tokens, second gives 30, etc.
   const milestoneReward = ((effectiveLastClaimed / 5) + 1) * 15;
+  // Determine if the milestone reward for the current milestone has been claimed.
+  const milestoneClaimed =
+    dailyDiceRollGamesPlayed >= nextEligibleMilestone && effectiveLastClaimed >= nextEligibleMilestone;
 
   useEffect(() => {
     fetchUserStatus();
@@ -226,7 +229,7 @@ export default function EarnPage() {
         body: JSON.stringify({
           chatId,
           date: today,
-          reward: milestoneReward, // dynamic reward based on current milestone progress
+          reward: milestoneReward,
           milestoneThreshold: nextEligibleMilestone,
         }),
       });
@@ -292,7 +295,7 @@ export default function EarnPage() {
       <h3 className="earn-title">Earn Free Casino Tokens 🎰</h3>
 
       {/* Daily Check-In Section */}
-      <div className="earn-section">
+      <div className="earn-section" style={isDailyClaimed ? { opacity: 0.5 } : {}}>
         {isDailyClaimed ? (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>✅ Daily Check-In Streak (Streak: {streak}/15)</h4>
@@ -312,7 +315,7 @@ export default function EarnPage() {
       </div>
 
       {/* Spin Wheel Section */}
-      <div className="earn-section">
+      <div className="earn-section" style={hasSpunToday ? { opacity: 0.5 } : {}}>
         {hasSpunToday ? (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h4>🎡 Spin the Wheel</h4>
@@ -350,10 +353,10 @@ export default function EarnPage() {
       </div>
 
       {/* Milestone Section */}
-      <div className="earn-section milestone-section">
+      <div className="earn-section milestone-section" style={milestoneClaimed ? { opacity: 0.5 } : {}}>
         {dailyDiceRollGamesPlayed >= MAX_DICE_GAMES && effectiveLastClaimed === MAX_DICE_GAMES ? (
-          // Final milestone claimed: show only title and disabled "Claimed" button (dimmed)
-          <div className="completed-final-milestone" style={{ opacity: 0.5 }}>
+          // Final milestone claimed: show only title and disabled "Claimed" button.
+          <div className="completed-final-milestone">
             <h4>Dice Roll Milestone Completed</h4>
             <button className="earn-btn claimed" disabled>
               Claimed
