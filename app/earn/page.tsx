@@ -85,15 +85,15 @@ export default function EarnPage() {
   const [lastMilestoneClaimed, setLastMilestoneClaimed] = useState<number>(0);
   const [lastMilestoneClaimDate, setLastMilestoneClaimDate] = useState<string>("");
 
-  // Constants: max games is 25 per day and rewards are given at every 5 games.
+  // Constants: max games is 25 per day; rewards are given at every 5 games.
   const MAX_DICE_GAMES = 25;
   const today = new Date().toISOString().split("T")[0];
 
-  // Use effective milestone progress only if last claim date is today.
+  // Use stored milestone progress only if last claim date is today.
   const effectiveLastClaimed = lastMilestoneClaimDate === today ? lastMilestoneClaimed : 0;
-  // Next eligible milestone: do not exceed MAX_DICE_GAMES.
+  // Next eligible milestone should never exceed MAX_DICE_GAMES.
   const nextEligibleMilestone = Math.min(effectiveLastClaimed + 5, MAX_DICE_GAMES);
-  // Dynamic reward: first claim gives 15 tokens, second gives 30, etc.
+  // Dynamic reward: first claim gives 15 tokens, second gives 30 tokens, etc.
   const milestoneReward = ((effectiveLastClaimed / 5) + 1) * 15;
 
   useEffect(() => {
@@ -351,29 +351,36 @@ export default function EarnPage() {
 
       {/* Milestone Section */}
       <div className="earn-section milestone-section">
-        <h4>Dice Roll Milestone</h4>
-        <p>Games played today: {dailyDiceRollGamesPlayed}</p>
-        <p>
-          Next Milestone: {nextEligibleMilestone} games for {milestoneReward} tokens reward.
-        </p>
-        <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={MAX_DICE_GAMES} step={5} />
-        {dailyDiceRollGamesPlayed < nextEligibleMilestone ? (
-          <p>
-            Play {nextEligibleMilestone - dailyDiceRollGamesPlayed} more dice games to claim the reward.
-          </p>
-        ) : effectiveLastClaimed < nextEligibleMilestone ? (
-          <button className="earn-btn" onClick={handleClaimMilestone} disabled={isMilestoneProcessing}>
-            {isMilestoneProcessing ? "Processing..." : "Claim Milestone Reward"}
-          </button>
-        ) : (
-          // For a completed milestone (including the final one), display a dimmed title if it's the last milestone,
-          // and a disabled "Claimed" button.
-          <div className="completed-milestone" style={{ opacity: 0.5 }}>
-            {nextEligibleMilestone === MAX_DICE_GAMES && <h4>Dice Roll Milestone Completed</h4>}
+        {dailyDiceRollGamesPlayed >= MAX_DICE_GAMES && effectiveLastClaimed === MAX_DICE_GAMES ? (
+          // Final milestone claimed: show only title and disabled "Claimed" button (dimmed)
+          <div className="completed-final-milestone" style={{ opacity: 0.5 }}>
+            <h4>Dice Roll Milestone Completed</h4>
             <button className="earn-btn claimed" disabled>
               Claimed
             </button>
           </div>
+        ) : (
+          <>
+            <h4>Dice Roll Milestone</h4>
+            <p>Games played today: {dailyDiceRollGamesPlayed}</p>
+            <p>
+              Next Milestone: {nextEligibleMilestone} games for {milestoneReward} tokens reward.
+            </p>
+            <MilestoneProgressBar current={dailyDiceRollGamesPlayed} max={MAX_DICE_GAMES} step={5} />
+            {dailyDiceRollGamesPlayed < nextEligibleMilestone ? (
+              <p>
+                Play {nextEligibleMilestone - dailyDiceRollGamesPlayed} more dice games to claim the reward.
+              </p>
+            ) : effectiveLastClaimed < nextEligibleMilestone ? (
+              <button className="earn-btn" onClick={handleClaimMilestone} disabled={isMilestoneProcessing}>
+                {isMilestoneProcessing ? "Processing..." : "Claim Milestone Reward"}
+              </button>
+            ) : (
+              <button className="earn-btn claimed" disabled>
+                Claimed
+              </button>
+            )}
+          </>
         )}
       </div>
 
