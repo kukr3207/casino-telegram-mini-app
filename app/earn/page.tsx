@@ -298,7 +298,7 @@ export default function EarnPage() {
       <div className="earn-section" style={isDailyClaimed ? { opacity: 0.5 } : {}}>
         {isDailyClaimed ? (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h4>✅ Daily Check-In (Streak: {streak}/15)</h4>
+            <h4>Daily Check-In Streak: {streak}/15</h4>
             <button className="earn-btn" disabled>
               Already Claimed
             </button>
