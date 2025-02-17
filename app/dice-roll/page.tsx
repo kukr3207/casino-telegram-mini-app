@@ -61,17 +61,17 @@ function DiceCube({ style, rolling }: DiceCubeProps) {
 function getDiceCubeTransform(value: number): string {
   switch (value) {
     case 1:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)"; // Front (face 1)
+      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
     case 2:
-      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)"; // Top (face 2) becomes front
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";
     case 3:
-      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)"; // Right (face 3) becomes front
+      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";
     case 4:
-      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";  // Left (face 4) becomes front
+      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";
     case 5:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";  // Bottom (face 5) becomes front
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";
     case 6:
-      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)"; // Back (face 6) becomes front
+      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";
     default:
       return "";
   }
@@ -99,7 +99,7 @@ export default function DiceRollPage() {
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
   const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
-  // const [isActionProcessing, setIsActionProcessing] = useState(false);
+  const [isActionProcessing, setIsActionProcessing] = useState(false);
   const [verificationResult, setVerificationResult] = useState<string>("");
 
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
@@ -264,7 +264,6 @@ export default function DiceRollPage() {
     setIsActionProcessing(false);
   };
 
-  const [isActionProcessing, setIsActionProcessing] = useState(false);
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
@@ -326,11 +325,14 @@ export default function DiceRollPage() {
   // --- Verification Functions ---
   const handleVerify = async () => {
     if (!verificationSeed || !rollHash) return;
-    const computedHash = await computeSHA256(verificationSeed);
+    // Trim seed to avoid whitespace mismatches
+    const computedHash = await computeSHA256(verificationSeed.trim());
     if (computedHash === rollHash) {
       setVerificationResult("Verification Successful: The hash matches!");
     } else {
       setVerificationResult("Verification Failed: The computed hash does not match.");
+      console.log("Computed Hash:", computedHash);
+      console.log("Fairness Proof:", rollHash);
     }
   };
 
@@ -431,21 +433,27 @@ export default function DiceRollPage() {
         </div>
       )}
 
-      {/* Dice Result Section */}
+      {/* Dice Result & Verification Section */}
       {!isRolling && rollHash && verificationSeed && (
         <div className="dice-result">
-          <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
-          <p><strong>Fairness Proof:</strong> {rollHash}</p>
-          <p><strong>Verification Seed:</strong> {verificationSeed}</p>
+          <div className="result-container">
+            <div className="result-value">Result: {diceResult[0]} + {diceResult[1]}</div>
+            <div className="hash-block">
+              <strong>Fairness Proof:</strong> {rollHash}
+            </div>
+            <div className="hash-block">
+              <strong>Verification Seed:</strong> {verificationSeed}
+            </div>
+          </div>
           <div className="verification-section">
             <button className="earn-btn" onClick={handleVerify}>Verify</button>
             {verificationResult && <p>{verificationResult}</p>}
             <div className="verification-instructions">
               <p>How to verify:</p>
               <ol>
-                <li>Click "Verify" to automatically compute the SHA‑256 hash of the Verification Seed.</li>
+                <li>Click "Verify" to automatically compute the SHA‑256 hash of the trimmed Verification Seed.</li>
                 <li>If you prefer manual verification, copy the Verification Seed.</li>
-                <li>Paste it into an online SHA‑256 calculator (e.g. <a href="https://emn178.github.io/online-tools/sha256.html" target="_blank" rel="noreferrer">this one</a>).</li>
+                <li>Paste it into an online SHA‑256 calculator tool.</li>
                 <li>Compare the computed hash with the Fairness Proof above.</li>
               </ol>
             </div>
