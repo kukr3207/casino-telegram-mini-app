@@ -179,10 +179,37 @@ button {
   word-wrap: break-word;
   box-shadow: 0 4px 10px rgba(255, 215, 0, 0.5);
 }
+.dice-result h2 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
 .dice-result p {
   color: #ffd700;
   font-size: 14px;
   margin: 5px 0;
+}
+
+/* Verification Section */
+.verification-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  text-align: center;
+}
+.verification-section p {
+  font-size: 14px;
+  color: #ffd700;
+}
+.verification-instructions {
+  text-align: left;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #bbb;
+}
+.verification-instructions ol {
+  padding-left: 20px;
 }
 
 /* Popup Overlay & Content */
@@ -248,11 +275,9 @@ button {
   height: 80px;
   transform-style: preserve-3d;
   transition: transform 1s ease-out;
-  /* A subtle drop shadow for realism */
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Position each face of the cube */
 .face {
   position: absolute;
   width: 80px;
@@ -264,7 +289,6 @@ button {
   backface-visibility: hidden;
 }
 
-/* Cube face positions */
 .face.front  { transform: rotateY(0deg)   translateZ(40px); }
 .face.back   { transform: rotateY(180deg) translateZ(40px); }
 .face.right  { transform: rotateY(90deg)  translateZ(40px); }
@@ -288,7 +312,7 @@ button {
 .pip.pip-middle-left  { top: 50%; left: 15%; transform: translateY(-50%); }
 .pip.pip-middle-right { top: 50%; right: 15%; transform: translateY(-50%); }
 
-/* Continuous Rolling Animation for Realistic Bounce & Roll */
+/* Rolling Animation */
 @keyframes continuousRoll {
   0% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
   25% { transform: translateY(-15px) rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
@@ -324,4 +348,51 @@ button {
   border: 2px solid #ff1744;
   box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
   color: white;
+}
+
+/* Verification Section */
+.verification-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(255,215,0,0.3);
+  text-align: center;
+}
+.verification-section p {
+  font-size: 14px;
+  color: #ffd700;
+}
+.verification-instructions {
+  text-align: left;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #bbb;
+}
+.verification-instructions ol {
+  padding-left: 20px;
+}
+
+/* Single-line Layout for Completed Tasks */
+.milestone-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 5px 10px;
+}
+.milestone-title,
+.reward-text {
+  flex: 1;
+  text-align: left;
+  color: #ffd700;
+}
+.milestone-prompt {
+  margin-right: 10px;
+  color: #bbb;
+  font-size: 13px;
+}
+.completed-task {
+  font-size: 12px;
+  padding: 3px 8px;
 }

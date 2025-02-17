@@ -61,20 +61,30 @@ function DiceCube({ style, rolling }: DiceCubeProps) {
 function getDiceCubeTransform(value: number): string {
   switch (value) {
     case 1:
-      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";      // Front (face 1)
+      return "rotateX(0deg) rotateY(0deg) rotateZ(0deg)"; // Front (face 1)
     case 2:
-      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)";     // Top (face 2) becomes front
+      return "rotateX(-90deg) rotateY(0deg) rotateZ(0deg)"; // Top (face 2) becomes front
     case 3:
-      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)";     // Right (face 3) becomes front
+      return "rotateY(-90deg) rotateX(0deg) rotateZ(0deg)"; // Right (face 3) becomes front
     case 4:
-      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";      // Left (face 4) becomes front
+      return "rotateY(90deg) rotateX(0deg) rotateZ(0deg)";  // Left (face 4) becomes front
     case 5:
-      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";      // Bottom (face 5) becomes front
+      return "rotateX(90deg) rotateY(0deg) rotateZ(0deg)";  // Bottom (face 5) becomes front
     case 6:
-      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)";     // Back (face 6) becomes front
+      return "rotateY(180deg) rotateX(0deg) rotateZ(0deg)"; // Back (face 6) becomes front
     default:
       return "";
   }
+}
+
+// Computes the SHA-256 hash of a given seed and returns it as a hex string.
+async function computeSHA256(seed: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(seed);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return hashHex;
 }
 
 export default function DiceRollPage() {
@@ -89,7 +99,8 @@ export default function DiceRollPage() {
   const [hasResult, setHasResult] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(false);
   const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
-  const [isActionProcessing, setIsActionProcessing] = useState(false);
+  // const [isActionProcessing, setIsActionProcessing] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<string>("");
 
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 
@@ -171,7 +182,6 @@ export default function DiceRollPage() {
     }, 100);
 
     try {
-      // Retrieve chatId from sessionStorage and send it in the body.
       const chatId = sessionStorage.getItem("chat_id");
       const response = await fetch("/api/dice-roll", {
         method: "POST",
@@ -248,13 +258,13 @@ export default function DiceRollPage() {
     }
   };
 
-  // Wrapper for Collect Rewards with processing state.
   const handleCollectRewardsClick = async () => {
     setIsActionProcessing(true);
     await handleCollectRewards();
     setIsActionProcessing(false);
   };
 
+  const [isActionProcessing, setIsActionProcessing] = useState(false);
   const handleCollectRewards = async () => {
     const winnings = selectedBets
       .filter((bet) => bet.isWin)
@@ -265,7 +275,6 @@ export default function DiceRollPage() {
     resetGame();
   };
 
-  // Wrapper for Reset with processing state.
   const handleResetClick = async () => {
     setIsActionProcessing(true);
     resetGame();
@@ -278,6 +287,7 @@ export default function DiceRollPage() {
     setRollHash(null);
     setVerificationSeed(null);
     setHasResult(false);
+    setVerificationResult("");
   };
 
   const highlightBets = (dice1: number, dice2: number): void => {
@@ -312,6 +322,17 @@ export default function DiceRollPage() {
   };
 
   const hasWon = selectedBets.some((bet) => bet.isWin);
+
+  // --- Verification Functions ---
+  const handleVerify = async () => {
+    if (!verificationSeed || !rollHash) return;
+    const computedHash = await computeSHA256(verificationSeed);
+    if (computedHash === rollHash) {
+      setVerificationResult("Verification Successful: The hash matches!");
+    } else {
+      setVerificationResult("Verification Failed: The computed hash does not match.");
+    }
+  };
 
   return (
     <div className="dice-roll-page">
@@ -411,11 +432,24 @@ export default function DiceRollPage() {
       )}
 
       {/* Dice Result Section */}
-      {!isRolling && rollHash && (
+      {!isRolling && rollHash && verificationSeed && (
         <div className="dice-result">
           <h2>Result: {diceResult[0]} + {diceResult[1]}</h2>
           <p><strong>Fairness Proof:</strong> {rollHash}</p>
           <p><strong>Verification Seed:</strong> {verificationSeed}</p>
+          <div className="verification-section">
+            <button className="earn-btn" onClick={handleVerify}>Verify</button>
+            {verificationResult && <p>{verificationResult}</p>}
+            <div className="verification-instructions">
+              <p>How to verify:</p>
+              <ol>
+                <li>Click "Verify" to automatically compute the SHA‑256 hash of the Verification Seed.</li>
+                <li>If you prefer manual verification, copy the Verification Seed.</li>
+                <li>Paste it into an online SHA‑256 calculator (e.g. <a href="https://emn178.github.io/online-tools/sha256.html" target="_blank" rel="noreferrer">this one</a>).</li>
+                <li>Compare the computed hash with the Fairness Proof above.</li>
+              </ol>
+            </div>
+          </div>
         </div>
       )}
     </div>
