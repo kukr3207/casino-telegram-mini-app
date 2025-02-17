@@ -52,7 +52,7 @@ export async function POST(req) {
     }
 
     const oldBalance = Number(user.casino_chips || 0);
-    const newBalance = oldBalance + reward; // reward should be 15
+    const newBalance = oldBalance + reward; // reward is now dynamic
 
     // If the milestoneThreshold equals the maximum (25), reset lastMilestoneClaimed to 0.
     const updateFields =

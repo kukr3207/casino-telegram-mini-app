@@ -85,10 +85,16 @@ export default function EarnPage() {
   const [lastMilestoneClaimed, setLastMilestoneClaimed] = useState<number>(0);
   const [lastMilestoneClaimDate, setLastMilestoneClaimDate] = useState<string>("");
 
-  // Constants: now max games is 25 per day, reward is given every 5 games,
-  // and each claim gives 15 tokens.
+  // Constants: max games is 25 per day and rewards are given at every 5 games.
   const MAX_DICE_GAMES = 25;
   const today = new Date().toISOString().split("T")[0];
+
+  // Determine effective milestone progress (resetting if the last claim is not today).
+  const effectiveLastClaimed = lastMilestoneClaimDate === today ? lastMilestoneClaimed : 0;
+  // Next eligible milestone (increments by 5 games).
+  const nextEligibleMilestone = effectiveLastClaimed + 5;
+  // Dynamic reward: first claim gives 15, second gives 30, third gives 45, etc.
+  const milestoneReward = ((effectiveLastClaimed / 5) + 1) * 15;
 
   useEffect(() => {
     fetchUserStatus();
@@ -117,12 +123,6 @@ export default function EarnPage() {
       console.error("Error fetching user status:", error);
     }
   };
-
-  // Calculate the effective last claimed milestone (if the claim is from today).
-  const effectiveLastClaimed = lastMilestoneClaimDate === today ? lastMilestoneClaimed : 0;
-  // Next eligible milestone is effectiveLastClaimed + 5.
-  const nextEligibleMilestone = effectiveLastClaimed + 5;
-  const milestoneReward = 15; // fixed reward per milestone claim
 
   // Daily Check-In Handler
   const handleDailyCheckIn = async () => {
@@ -232,7 +232,7 @@ export default function EarnPage() {
         body: JSON.stringify({
           chatId,
           date: today,
-          reward: milestoneReward, // 15 tokens per claim
+          reward: milestoneReward, // dynamic reward based on current milestone progress
           milestoneThreshold: nextEligibleMilestone,
         }),
       });
