@@ -263,7 +263,7 @@ export default function WalletPage() {
           </p>
           <div className="conversion-header">
             <img src="/images/token2.png" alt="Withdrawable Token" className="header-image" />
-            <span className="conversion-arrow">&#8594; 1:1.5 &#8594;</span>
+            <span className="conversion-arrow">&#8594; 1:1 &#8594;</span>
             <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
           </div>
           <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
@@ -301,7 +301,7 @@ export default function WalletPage() {
           />
           <button
             className="buy-button custom"
-            onClick={() => handleBuy(customBuyAmount * 1.5, "Normal", customBuyAmount)}
+            onClick={() => handleBuy(customBuyAmount * 1, "Normal", customBuyAmount)}
           >
             Buy
           </button>
@@ -383,7 +383,7 @@ export default function WalletPage() {
             <h3>Processing Conversion...</h3>
             <div className="conversion-header">
               <img src="/images/token2.png" alt="Withdrawable Token" className="header-image" />
-              <span className="conversion-arrow">&#8594; 1:1.5 &#8594;</span>
+              <span className="conversion-arrow">&#8594; 1:1 &#8594;</span>
               <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
             </div>
             <p>Please wait while we process your conversion.</p>
@@ -399,7 +399,7 @@ export default function WalletPage() {
               &#x2715;
             </div>
             <h3>Conversion Successful!</h3>
-            <p className="conversion-ratio">Conversion Ratio: 1:1.5</p>
+            <p className="conversion-ratio">Conversion Ratio: 1:1</p>
             <p>
               Casino Chips: {confirmationData.prevCasino} → {confirmationData.newCasino}
             </p>
