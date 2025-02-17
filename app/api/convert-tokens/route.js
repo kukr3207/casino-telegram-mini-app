@@ -43,7 +43,7 @@ export async function POST(req) {
 
     // Conversion logic: For each token converted, add 1.5 casino chips.
     const currentCasino = user.casino_chips || 0;
-    const additionalCasino = Math.floor(convertAmount * 1.5); // 1:1.5 ratio
+    const additionalCasino = Math.floor(convertAmount * 1); // 1:1.5 ratio
     const newCasino = currentCasino + additionalCasino;
     const newWithdraw = currentWithdraw - convertAmount;
 
