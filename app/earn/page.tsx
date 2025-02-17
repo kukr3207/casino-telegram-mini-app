@@ -85,15 +85,15 @@ export default function EarnPage() {
   const [lastMilestoneClaimed, setLastMilestoneClaimed] = useState<number>(0);
   const [lastMilestoneClaimDate, setLastMilestoneClaimDate] = useState<string>("");
 
-  // Constants: max games is 25 per day and rewards are given every 5 games.
+  // Constants: max games is 25 per day and rewards are given at every 5 games.
   const MAX_DICE_GAMES = 25;
   const today = new Date().toISOString().split("T")[0];
 
-  // Determine effective milestone progress (if the last claim date is today, use the stored value; otherwise reset to 0).
+  // Use effective milestone progress only if last claim date is today.
   const effectiveLastClaimed = lastMilestoneClaimDate === today ? lastMilestoneClaimed : 0;
-  // Next eligible milestone is the smallest milestone that is greater than the last claimed milestone.
-  const nextEligibleMilestone = effectiveLastClaimed + 5;
-  // Dynamic reward: first claim gives 15 tokens, second gives 30, third gives 45, etc.
+  // Next eligible milestone: do not exceed MAX_DICE_GAMES.
+  const nextEligibleMilestone = Math.min(effectiveLastClaimed + 5, MAX_DICE_GAMES);
+  // Dynamic reward: first claim gives 15 tokens, second gives 30, etc.
   const milestoneReward = ((effectiveLastClaimed / 5) + 1) * 15;
 
   useEffect(() => {
@@ -140,13 +140,9 @@ export default function EarnPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, date: today, streak: newStreak, reward: newReward }),
       });
-      if (!response.ok) {
-        throw new Error("Daily check-in failed");
-      }
+      if (!response.ok) throw new Error("Daily check-in failed");
       const data = await response.json();
-      if (data.newBalance !== undefined) {
-        setCasinoBalance(data.newBalance);
-      }
+      if (data.newBalance !== undefined) setCasinoBalance(data.newBalance);
       fetchUserStatus();
       const tokensAdded = data.newBalance - oldBalance;
       setDailyPopupMessage(`Daily Check-In: Old Balance: ${oldBalance}, New Balance: ${data.newBalance} (added ${tokensAdded} tokens)`);
@@ -172,9 +168,7 @@ export default function EarnPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId }),
       });
-      if (!response.ok) {
-        throw new Error("Failed to spin the wheel");
-      }
+      if (!response.ok) throw new Error("Failed to spin the wheel");
       const data: SpinResponse = await response.json();
       const { outcome, outcomeIndex } = data;
       const outcomes: Outcome[] = [
@@ -243,14 +237,10 @@ export default function EarnPage() {
         throw new Error("Milestone claim failed");
       }
       const data = await response.json();
-      if (data.newBalance !== undefined) {
-        setCasinoBalance(data.newBalance);
-      }
+      if (data.newBalance !== undefined) setCasinoBalance(data.newBalance);
       fetchUserStatus();
       const tokensAdded = data.newBalance - oldBalance;
-      setMilestonePopupMessage(
-        `Milestone Claim: Old Balance: ${oldBalance}, New Balance: ${data.newBalance} (added ${tokensAdded} tokens)`
-      );
+      setMilestonePopupMessage(`Milestone Claim: Old Balance: ${oldBalance}, New Balance: ${data.newBalance} (added ${tokensAdded} tokens)`);
       setShowMilestonePopup(true);
     } catch (error) {
       console.error("Error claiming milestone:", error);
@@ -376,9 +366,14 @@ export default function EarnPage() {
             {isMilestoneProcessing ? "Processing..." : "Claim Milestone Reward"}
           </button>
         ) : (
-          <button className="earn-btn claimed" disabled>
-            Claimed
-          </button>
+          // For a completed milestone (including the final one), display a dimmed title if it's the last milestone,
+          // and a disabled "Claimed" button.
+          <div className="completed-milestone" style={{ opacity: 0.5 }}>
+            {nextEligibleMilestone === MAX_DICE_GAMES && <h4>Dice Roll Milestone Completed</h4>}
+            <button className="earn-btn claimed" disabled>
+              Claimed
+            </button>
+          </div>
         )}
       </div>
 
