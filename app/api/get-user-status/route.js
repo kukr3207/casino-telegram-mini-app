@@ -40,9 +40,23 @@ export async function GET(req) {
     }
     console.log(`✅ Debug: Found user data for chatId ${numericChatId}`);
 
-    // Hard-coded date boundaries for testing (UTC boundaries for 2025-02-14)
-    const startOfDayUTC = new Date("2025-02-14T00:00:00.000Z");
-    const endOfDayUTC = new Date("2025-02-14T23:59:59.999Z");
+    // Get today's date in YYYY-MM-DD format.
+    const today = new Date().toISOString().split("T")[0];
+
+    // Reset milestone progress if the stored date is not today.
+    if (user.lastMilestoneClaimDate !== today) {
+      console.log("🔍 Debug: Resetting milestone progress for new day.");
+      await users.updateOne(
+        { chatId: numericChatId },
+        { $set: { lastMilestoneClaimed: 0, lastMilestoneClaimDate: today } }
+      );
+      user.lastMilestoneClaimed = 0;
+      user.lastMilestoneClaimDate = today;
+    }
+
+    // Set dynamic date boundaries for today.
+    const startOfDayUTC = new Date(`${today}T00:00:00.000Z`);
+    const endOfDayUTC = new Date(`${today}T23:59:59.999Z`);
     console.log("🔍 Debug: UTC range for dice-rolls:",
       "startOfDayUTC:", startOfDayUTC.toISOString(),
       "endOfDayUTC:", endOfDayUTC.toISOString()
@@ -70,7 +84,9 @@ export async function GET(req) {
         dailyCheckinDate: user.dailyCheckinDate || null,
         dailySpinDate: user.dailySpinDate || null,
         streak: user.dailyCheckinStreak || 0,
-        dailyDiceRollGamesPlayed: dailyRollCount
+        dailyDiceRollGamesPlayed: dailyRollCount,
+        lastMilestoneClaimed: user.lastMilestoneClaimed,
+        lastMilestoneClaimDate: user.lastMilestoneClaimDate
       }),
       { status: 200 }
     );

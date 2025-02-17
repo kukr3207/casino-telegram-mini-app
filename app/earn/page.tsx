@@ -124,7 +124,7 @@ export default function EarnPage() {
   const nextEligibleMilestone = effectiveLastClaimed + 5;
   const milestoneReward = 15; // fixed reward per milestone claim
 
-  // Daily Check-In Handler (unchanged)
+  // Daily Check-In Handler
   const handleDailyCheckIn = async () => {
     if (isDailyClaimed || isCheckinProcessing) return;
     setIsCheckinProcessing(true);
@@ -158,7 +158,7 @@ export default function EarnPage() {
     }
   };
 
-  // Spin Wheel Handler (unchanged)
+  // Spin Wheel Handler
   const handleSpin = async () => {
     if (hasSpunToday || isSpinProcessing) return;
     setIsSpinProcessing(true);
@@ -220,11 +220,6 @@ export default function EarnPage() {
   };
 
   // Milestone Claim Handler
-  // The claim button is shown only if:
-  // - The user has played at least nextEligibleMilestone games.
-  // - The user has not already claimed the reward for that threshold.
-  // Once claimed, the button is removed.
-  // When 25 games are reached, the milestone section shows "Milestone completed for today."
   const handleClaimMilestone = async () => {
     setIsMilestoneProcessing(true);
     const chatId = sessionStorage.getItem("chat_id");
