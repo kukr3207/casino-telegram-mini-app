@@ -33,12 +33,16 @@ export default function WalletPage() {
   const [processingChip, setProcessingChip] = useState<number | null>(null);
   const [purchaseSuccessful, setPurchaseSuccessful] = useState(false);
 
+  // New state for purchase confirmation data
+  const [purchaseConfirmationData, setPurchaseConfirmationData] = useState<{ prevCasino: number; newCasino: number } | null>(null);
+  const [prevCasino, setPrevCasino] = useState<number>(0);
+
   // Conversion popup state
   const [showConvertPopup, setShowConvertPopup] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
 
-  // Additional popups for processing and confirmation
+  // Additional popups for processing and confirmation (for conversion)
   const [showProcessingPopup, setShowProcessingPopup] = useState(false);
   const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
   const [customBuyAmount, setCustomBuyAmount] = useState(50);
@@ -57,7 +61,7 @@ export default function WalletPage() {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Predefined buy options.
-  // For bundles (1000 & 5000 chips), add bundle flag and baseBonus of 10%.
+  // For bundles (1000 & 5000 chips), add baseBonus of 10%.
   const pricingTiers = [
     { chips: 50, price: 75, bundle: false },
     { chips: 100, price: 149, bundle: false },
@@ -122,6 +126,13 @@ export default function WalletPage() {
       if (event.data && event.data.type === "update_tokens") {
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
         setProcessingChip(null);
+        // Assuming event.data.tokens is an array where index 0 holds casino chips.
+        const newCasino = event.data.tokens[0]?.count || 0;
+        // Set purchase confirmation data using previous and new balances.
+        setPurchaseConfirmationData({ prevCasino, newCasino });
+        // Trigger confetti on successful purchase.
+        setPurchaseSuccessful(true);
+        setTimeout(() => setPurchaseSuccessful(false), 4000);
       }
     };
     if (typeof window !== "undefined") {
@@ -134,14 +145,16 @@ export default function WalletPage() {
         window.removeEventListener("message", handleMessage);
       }
     };
-  }, []);
+  }, [prevCasino]);
 
   const handleBuy = async (amount: number, packageType: string = "Tier", chipsBought: number = amount) => {
-    if (amount < 50) {
+    if (amount < 0) {
       setErrorMessage("Minimum purchase amount is 50 tokens.");
       setTimeout(() => setErrorMessage(""), 4000);
       return;
     }
+    // Store current casino balance as previous balance before purchase.
+    setPrevCasino(Number(casinoChips));
     setIsBuying(true);
     setProcessingChip(amount);
     try {
@@ -161,9 +174,6 @@ export default function WalletPage() {
             setBoosterFlash("Booster applied: Extra bonus chips added (valid only today)!");
             setTimeout(() => setBoosterFlash(""), 4000);
           }
-          // Trigger confetti only after a successful purchase.
-          setPurchaseSuccessful(true);
-          setTimeout(() => setPurchaseSuccessful(false), 4000);
         } else {
           console.error("Telegram WebApp is not available.");
         }
@@ -182,7 +192,7 @@ export default function WalletPage() {
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
-    const prevCasino = Number(casinoChips);
+    const prevCasinoConversion = Number(casinoChips);
     const prevWithdraw = Number(withdrawTokens);
     setShowConvertPopup(false);
     setShowProcessingPopup(true);
@@ -205,7 +215,7 @@ export default function WalletPage() {
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
           setConfirmationData({
-            prevCasino,
+            prevCasino: prevCasinoConversion,
             newCasino: data.newCasinoChips,
             prevWithdraw,
             newWithdraw: data.newWithdrawTokens,
@@ -312,11 +322,11 @@ export default function WalletPage() {
             {pricingTiers.map(({ chips, price, bundle, baseBonus }, index) => {
               let extraBonus = 0;
               if (bundle) {
-                // For bundles, always add base bonus of 10% (or as specified by baseBonus)
+                // For bundles, add a base bonus of 10% plus any booster bonus.
                 const base = Math.floor(chips * (baseBonus as number) / 100);
                 if (booster) {
                   const boosterPercentage = booster.boosterValue || 25;
-                  extraBonus = Math.floor(chips * (baseBonus as number + boosterPercentage) / 100);
+                  extraBonus = Math.floor(chips * ((baseBonus as number) + boosterPercentage) / 100);
                 } else {
                   extraBonus = base;
                 }
@@ -344,7 +354,7 @@ export default function WalletPage() {
           <div className="custom-buy">
             <input
               type="number"
-              min="50"
+              min="0"
               value={customBuyAmount}
               onChange={(e) => setCustomBuyAmount(Number(e.target.value))}
               placeholder="Custom amount (min 50)"
@@ -478,7 +488,7 @@ export default function WalletPage() {
         </div>
       )}
 
-      {/* Confirmation Popup */}
+      {/* Confirmation Popup for Conversion */}
       {showConfirmationPopup && confirmationData && (
         <div className="popup" onClick={() => setShowConfirmationPopup(false)}>
           <div className="popup-content confirmation-popup">
@@ -492,6 +502,21 @@ export default function WalletPage() {
             </p>
             <p>
               Withdrawable Tokens: {confirmationData.prevWithdraw} → {confirmationData.newWithdraw}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase Confirmation Popup */}
+      {purchaseConfirmationData && (
+        <div className="popup" onClick={() => setPurchaseConfirmationData(null)}>
+          <div className="popup-content confirmation-popup">
+            <div className="popup-close" onClick={() => setPurchaseConfirmationData(null)}>
+              &#x2715;
+            </div>
+            <h3>Purchase Successful!</h3>
+            <p>
+              Casino Chips: {purchaseConfirmationData.prevCasino} → {purchaseConfirmationData.newCasino}
             </p>
           </div>
         </div>
