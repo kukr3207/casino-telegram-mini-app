@@ -30,8 +30,6 @@ export default function WalletPage() {
   } | null>(null);
 
   // Booster state – boosters can be used only once per day.
-  // When a booster is available, its extra bonus percentage is applied.
-  // Once used, the booster is cleared.
   const [booster, setBooster] = useState<{ boosterValue: number; createdAt: string } | null>(null);
   // Flash message to show when booster bonus is applied.
   const [boosterFlash, setBoosterFlash] = useState("");
@@ -39,7 +37,7 @@ export default function WalletPage() {
   // Dimensions for Confetti (client-only)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  // Predefined buy options (custom buy removed)
+  // Predefined buy options
   const pricingTiers = [
     { chips: 50, price: 75 },
     { chips: 100, price: 149 },
@@ -47,24 +45,6 @@ export default function WalletPage() {
     { chips: 1000, price: 1399, bonus: 50 },
     { chips: 5000, price: 6750, bonus: 300 },
   ];
-
-  // Fetch booster info from a new API endpoint.
-  const fetchBooster = async () => {
-    const chatId = sessionStorage.getItem("chat_id");
-    if (!chatId) return;
-    try {
-      const response = await fetch(`/api/get-booster?chatId=${chatId}`);
-      if (response.ok) {
-        const data = await response.json();
-        // data.booster is expected to be either null or an object with boosterValue and createdAt
-        setBooster(data.booster || null);
-      } else {
-        console.error("Failed to fetch booster info");
-      }
-    } catch (error) {
-      console.error("Error fetching booster info:", error);
-    }
-  };
 
   const fetchTokenCounts = async () => {
     if (typeof window === "undefined") return;
@@ -79,7 +59,6 @@ export default function WalletPage() {
         const { tokenCounts } = await response.json();
         setCasinoChips(tokenCounts.casino_chips || 0);
         setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
-        // Save tokens as an array for other components that might use .map
         const updatedTokens = [
           { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
           { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
@@ -91,6 +70,23 @@ export default function WalletPage() {
       }
     } catch (error) {
       console.error("Error fetching token counts:", error);
+    }
+  };
+
+  // Booster fetching from API
+  const fetchBooster = async () => {
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) return;
+    try {
+      const response = await fetch(`/api/get-booster?chatId=${chatId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setBooster(data.booster || null);
+      } else {
+        console.error("Failed to fetch booster info");
+      }
+    } catch (error) {
+      console.error("Error fetching booster info:", error);
     }
   };
 
@@ -141,7 +137,6 @@ export default function WalletPage() {
         const { invoiceLink } = await response.json();
         if (typeof window !== "undefined" && window.Telegram?.WebApp) {
           window.Telegram.WebApp.openLink(invoiceLink);
-          // If a booster was available, mark it as used (only once per day)
           if (booster) {
             setBooster(null);
             setBoosterFlash("Booster applied: Extra bonus chips added (valid only today)!");
@@ -214,7 +209,6 @@ export default function WalletPage() {
     }
   };
 
-  // Allow closing the conversion popup by clicking outside its content.
   const closePopup = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (e.target === e.currentTarget) {
       setShowConvertPopup(false);
@@ -253,7 +247,7 @@ export default function WalletPage() {
         </>
       )}
 
-      {/* Booster Banner – displayed if booster exists */}
+      {/* Booster Banner */}
       {booster && (
         <div className="booster-banner">
           <p>
@@ -261,31 +255,6 @@ export default function WalletPage() {
           </p>
         </div>
       )}
-
-      {/* Token Descriptions */}
-      <div className="description">
-        <div className="description-item">
-          <img src="/images/token1.png" alt="Casino Chips" />
-          <div className="description-content">
-            <h2>Casino Chips</h2>
-            <p>Your primary gaming currency. Use these to play games.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token2.png" alt="Withdrawable Tokens" />
-          <div className="description-content">
-            <h2>Withdrawable Tokens</h2>
-            <p>Earned by winning games. Redeem them for rewards.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token3.png" alt="HOL Tokens" />
-          <div className="description-content">
-            <h2>HOL Tokens</h2>
-            <p>Your leaderboard rank and rewards in the House of Luck.</p>
-          </div>
-        </div>
-      </div>
 
       {/* Conversion Section */}
       {Number(withdrawTokens) >= 10 && (
@@ -311,7 +280,6 @@ export default function WalletPage() {
         {errorMessage && <div className="error-message">{errorMessage}</div>}
         <div className="predefined-options">
           {pricingTiers.map(({ chips, price, bonus }, index) => {
-            // If a booster is available, calculate extra bonus (default to 25% if not provided)
             const boosterPercentage = booster ? (booster.boosterValue || 25) : 0;
             const extraBonus = booster ? Math.floor(chips * boosterPercentage / 100) : 0;
             const totalChips = chips + extraBonus;
@@ -448,6 +416,31 @@ export default function WalletPage() {
           </div>
         </div>
       )}
+
+      {/* Tokens Description Section (Moved to the bottom) */}
+      <div className="description">
+        <div className="description-item">
+          <img src="/images/token1.png" alt="Casino Chips" />
+          <div className="description-content">
+            <h2>Casino Chips</h2>
+            <p>Your primary gaming currency. Use these to play games.</p>
+          </div>
+        </div>
+        <div className="description-item">
+          <img src="/images/token2.png" alt="Withdrawable Tokens" />
+          <div className="description-content">
+            <h2>Withdrawable Tokens</h2>
+            <p>Earned by winning games. Redeem them for rewards.</p>
+          </div>
+        </div>
+        <div className="description-item">
+          <img src="/images/token3.png" alt="HOL Tokens" />
+          <div className="description-content">
+            <h2>HOL Tokens</h2>
+            <p>Your leaderboard rank and rewards in the House of Luck.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

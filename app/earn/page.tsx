@@ -204,7 +204,7 @@ export default function EarnPage() {
           setCasinoBalance(newBalance);
           popupMsg += `New Balance: ${newBalance} (added ${outcome.value} tokens)!`;
         } else if (outcome.type === "booster") {
-          popupMsg = `Spin Result: Booster won! (No token change)`;
+          popupMsg = `Spin Result: Booster won! (Check wallet page)`;
         }
         setSpinPopupMessage(popupMsg);
         setShowSpinPopup(true);
