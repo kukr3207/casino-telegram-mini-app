@@ -10,10 +10,13 @@ export async function POST(req) {
   try {
     // Extract chatId from the request body
     const { chatId } = await req.json();
+    // Generate a random seed
     const seed = crypto.randomBytes(32).toString("hex");
+    // Generate dice values (1-6)
     const dice1 = (crypto.randomBytes(1)[0] % 6) + 1;
     const dice2 = (crypto.randomBytes(1)[0] % 6) + 1;
     const resultSum = dice1 + dice2;
+    // Concatenate seed and dice total to compute hash (for fairness)
     const hash = crypto.createHash("sha256")
                        .update(seed + resultSum)
                        .digest("hex");

@@ -77,10 +77,10 @@ function getDiceCubeTransform(value: number): string {
   }
 }
 
-// Computes the SHA-256 hash of a given seed and returns it as a hex string.
-async function computeSHA256(seed: string): Promise<string> {
+// Computes the SHA-256 hash of a given input and returns it as a hex string.
+async function computeSHA256(input: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(seed);
+  const data = encoder.encode(input);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -325,8 +325,10 @@ export default function DiceRollPage() {
   // --- Verification Functions ---
   const handleVerify = async () => {
     if (!verificationSeed || !rollHash) return;
-    // Trim seed to avoid whitespace mismatches
-    const computedHash = await computeSHA256(verificationSeed.trim());
+    const total = diceResult[0] + diceResult[1];
+    // Concatenate the trimmed seed and the dice result sum (as done on the server)
+    const verificationInput = verificationSeed.trim() + total;
+    const computedHash = await computeSHA256(verificationInput);
     if (computedHash === rollHash) {
       setVerificationResult("Verification Successful: The hash matches!");
     } else {
@@ -449,12 +451,13 @@ export default function DiceRollPage() {
             <button className="earn-btn" onClick={handleVerify}>Verify</button>
             {verificationResult && <p>{verificationResult}</p>}
             <div className="verification-instructions">
-              <p>How to verify:</p>
+              <p>Manual Verification Steps:</p>
               <ol>
-                <li>Click "Verify" to automatically compute the SHA‑256 hash of the trimmed Verification Seed.</li>
-                <li>If you prefer manual verification, copy the Verification Seed.</li>
-                <li>Paste it into an online SHA‑256 calculator tool.</li>
-                <li>Compare the computed hash with the Fairness Proof above.</li>
+                <li>Copy the Verification Seed above.</li>
+                <li>Calculate the dice total: add the two dice results.</li>
+                <li>Concatenate the trimmed Verification Seed with the dice total (e.g., if seed is "abc123" and dice total is 7, then the input is "abc1237").</li>
+                <li>Use an online SHA‑256 calculator (such as <a href="https://emn178.github.io/online-tools/sha256.html" target="_blank" rel="noopener noreferrer">this one</a>) to compute the SHA‑256 hash of the concatenated string.</li>
+                <li>Compare the computed hash with the Fairness Proof displayed above.</li>
               </ol>
             </div>
           </div>
