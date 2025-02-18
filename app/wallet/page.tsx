@@ -25,17 +25,12 @@ function CollapsibleSection({ title, defaultOpen = false, children }: Collapsibl
 }
 
 export default function WalletPage() {
-  // Tab state
-  const [activeTab, setActiveTab] = useState("overview");
-
   // Token balances and error/confetti states
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [withdrawTokens, setWithdrawTokens] = useState("Loading...");
   const [isBuying, setIsBuying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [processingChip, setProcessingChip] = useState<number | null>(null);
-
-  // Purchase success flag to trigger confetti
   const [purchaseSuccessful, setPurchaseSuccessful] = useState(false);
 
   // Conversion popup state
@@ -56,19 +51,19 @@ export default function WalletPage() {
 
   // Booster state – boosters can be used only once per day.
   const [booster, setBooster] = useState<{ boosterValue: number; createdAt: string } | null>(null);
-  // Flash message to show when booster bonus is applied.
   const [boosterFlash, setBoosterFlash] = useState("");
 
   // Dimensions for Confetti (client-only)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  // Predefined buy options
+  // Predefined buy options.
+  // For bundles (1000 & 5000 chips), add bundle flag and baseBonus of 10%.
   const pricingTiers = [
-    { chips: 50, price: 75 },
-    { chips: 100, price: 149 },
-    { chips: 500, price: 725 },
-    { chips: 1000, price: 1399, bonus: 50 },
-    { chips: 5000, price: 6750, bonus: 300 },
+    { chips: 50, price: 75, bundle: false },
+    { chips: 100, price: 149, bundle: false },
+    { chips: 500, price: 725, bundle: false },
+    { chips: 1000, price: 1399, bundle: true, baseBonus: 10 },
+    { chips: 5000, price: 6750, bundle: true, baseBonus: 10 },
   ];
 
   const fetchTokenCounts = async () => {
@@ -127,7 +122,6 @@ export default function WalletPage() {
       if (event.data && event.data.type === "update_tokens") {
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
         setProcessingChip(null);
-        // We remove confetti trigger here since we now control it in handleBuy.
       }
     };
     if (typeof window !== "undefined") {
@@ -161,7 +155,7 @@ export default function WalletPage() {
         const { invoiceLink } = await response.json();
         if (typeof window !== "undefined" && window.Telegram?.WebApp) {
           window.Telegram.WebApp.openLink(invoiceLink);
-          // Mark booster as used if available.
+          // If a booster was available, mark it as used and show flash message.
           if (booster) {
             setBooster(null);
             setBoosterFlash("Booster applied: Extra bonus chips added (valid only today)!");
@@ -276,6 +270,7 @@ export default function WalletPage() {
         </>
       )}
 
+      {/* Collapsible Panels */}
       <CollapsibleSection title="Booster Info" defaultOpen={true}>
         {booster ? (
           <div className="booster-banner">
@@ -314,9 +309,23 @@ export default function WalletPage() {
           <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
           {errorMessage && <div className="error-message">{errorMessage}</div>}
           <div className="predefined-options">
-            {pricingTiers.map(({ chips, price, bonus }, index) => {
-              const boosterPercentage = booster ? (booster.boosterValue || 25) : 0;
-              const extraBonus = booster ? Math.floor(chips * boosterPercentage / 100) : 0;
+            {pricingTiers.map(({ chips, price, bundle, baseBonus }, index) => {
+              let extraBonus = 0;
+              if (bundle) {
+                // For bundles, always add base bonus of 10% (or as specified by baseBonus)
+                const base = Math.floor(chips * (baseBonus as number) / 100);
+                if (booster) {
+                  const boosterPercentage = booster.boosterValue || 25;
+                  extraBonus = Math.floor(chips * (baseBonus as number + boosterPercentage) / 100);
+                } else {
+                  extraBonus = base;
+                }
+              } else {
+                if (booster) {
+                  const boosterPercentage = booster.boosterValue || 25;
+                  extraBonus = Math.floor(chips * boosterPercentage / 100);
+                }
+              }
               const totalChips = chips + extraBonus;
               return (
                 <button
@@ -327,7 +336,7 @@ export default function WalletPage() {
                 >
                   {processingChip === price
                     ? "Processing..."
-                    : `${chips} Chips${booster ? ` + ${extraBonus} Bonus` : ""} 🌟 ${price} Stars`}
+                    : `${chips} Chips${extraBonus > 0 ? ` + ${extraBonus} Bonus` : ""} 🌟 ${price} Stars`}
                 </button>
               );
             })}
@@ -346,7 +355,9 @@ export default function WalletPage() {
                 handleBuy(
                   customBuyAmount,
                   "Normal",
-                  booster ? Math.floor(customBuyAmount * 1.25) : customBuyAmount
+                  booster
+                    ? Math.floor(customBuyAmount + customBuyAmount * (booster.boosterValue || 25) / 100)
+                    : customBuyAmount
                 )
               }
             >

@@ -95,6 +95,7 @@
   border: 2px solid #ffd700;
   border-radius: 50%;
   margin: 0 10px;
+  box-shadow: 0 0 8px rgba(255,215,0,0.7);
 }
 
 .conversion-arrow {
@@ -226,48 +227,45 @@
   box-shadow: 0 0 10px rgba(255,215,0,0.8);
 }
 
-/* Description Section (Token Info) */
+/* Description Section (Token Info) - Simplified styling */
 .description {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
   margin-top: 30px;
   margin-bottom: 20px;
+  padding: 10px;
+  background: transparent;
+  border: none;
 }
 
 .description-item {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 15px;
-  background: linear-gradient(145deg, #1e1e1e, #2c2c2c);
-  border-radius: 15px;
-  box-shadow: 5px 5px 15px rgba(0,0,0,0.5),
-              -5px -5px 15px rgba(50,50,50,0.3);
+  gap: 15px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
 }
 
 .description-item img {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   border: 2px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255,215,0,0.7);
 }
 
 .description-content h2 {
-  font-size: 16px;
+  font-size: 18px;
   margin-bottom: 5px;
   color: #ffd700;
   text-transform: uppercase;
 }
 
 .description-content p {
-  font-size: 10px;
+  font-size: 12px;
   color: #b0b0b0;
-}
-
-/* Tabs Navigation (if needed, remove if using only accordion) */
-.tabs {
-  display: none;
 }
 
 /* Popup Styles */
