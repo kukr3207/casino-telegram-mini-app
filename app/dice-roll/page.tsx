@@ -456,7 +456,7 @@ export default function DiceRollPage() {
                 <li>Copy the Verification Seed above.</li>
                 <li>Calculate the dice total: add the two dice results.</li>
                 <li>Concatenate the trimmed Verification Seed with the dice total (e.g., if seed is "abc123" and dice total is 7, then the input is "abc1237").</li>
-                <li>Use an online SHA‑256 calculator (such as <a href="https://emn178.github.io/online-tools/sha256.html" target="_blank" rel="noopener noreferrer">this one</a>) to compute the SHA‑256 hash of the concatenated string.</li>
+                <li>Use any online SHA‑256 calculator to compute the SHA‑256 hash of the concatenated string.</li>
                 <li>Compare the computed hash with the Fairness Proof displayed above.</li>
               </ol>
             </div>
