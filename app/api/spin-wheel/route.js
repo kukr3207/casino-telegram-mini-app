@@ -4,9 +4,7 @@ import { MongoClient } from "mongodb";
 
 export async function POST(req) {
   try {
-    // Expected payload: { chatId }
     const { chatId } = await req.json();
-
     if (!chatId) {
       return new Response(
         JSON.stringify({ error: "Missing chatId" }),
@@ -21,7 +19,7 @@ export async function POST(req) {
     const db = client.db("casino-mini-app");
     const users = db.collection("users");
 
-    // Convert chatId if needed (number or string)
+    // Convert chatId if necessary
     const numericChatId = isNaN(chatId) ? chatId : parseFloat(chatId);
     let user = await users.findOne({ chatId: numericChatId });
     if (!user) {
@@ -57,25 +55,36 @@ export async function POST(req) {
       { type: "booster", value: 35 },
     ];
 
-    // Randomly select an outcome using a random byte.
+    // Randomly select an outcome
     const randomByte = crypto.randomBytes(1)[0];
     const outcomeIndex = randomByte % outcomes.length;
     const outcome = outcomes[outcomeIndex];
 
-    // Generate a random seed and hash for provable fairness.
+    // Generate a random seed and a hash combining the seed and outcome data.
     const seed = crypto.randomBytes(32).toString("hex");
     const hash = crypto
       .createHash("sha256")
       .update(seed + JSON.stringify(outcome))
       .digest("hex");
 
-    // Update token balance if the outcome is a token reward.
+    // If a token outcome, update token balance; if booster, store booster info.
     let newBalance = user.casino_chips || 0;
     if (outcome.type === "token") {
       newBalance += outcome.value;
+    } else if (outcome.type === "booster") {
+      // Insert a booster document with a 24-hour TTL.
+      const boosters = db.collection("boosters");
+      // Ensure a TTL index exists on 'createdAt' (expires after 86400 seconds)
+      await boosters.createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+      await boosters.insertOne({
+        chatId: numericChatId,
+        boosterValue: outcome.value,
+        createdAt: new Date(),
+        claimed: false, // Mark as unclaimed initially
+      });
     }
 
-    // Update the user's record with today's spin date (and new token balance if applicable).
+    // Update the user's record: set dailySpinDate and, if token, update balance.
     await users.updateOne(
       { _id: user._id },
       {

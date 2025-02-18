@@ -29,17 +29,42 @@ export default function WalletPage() {
     newWithdraw: number;
   } | null>(null);
 
+  // Booster state – boosters can be used only once per day.
+  // When a booster is available, its extra bonus percentage is applied.
+  // Once used, the booster is cleared.
+  const [booster, setBooster] = useState<{ boosterValue: number; createdAt: string } | null>(null);
+  // Flash message to show when booster bonus is applied.
+  const [boosterFlash, setBoosterFlash] = useState("");
+
   // Dimensions for Confetti (client-only)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Predefined buy options (custom buy removed)
   const pricingTiers = [
-    { chips: 50, price: 75, bonus: 0 },
-    { chips: 100, price: 149, bonus: 0 },
-    { chips: 500, price: 725, bonus: 0 },
+    { chips: 50, price: 75 },
+    { chips: 100, price: 149 },
+    { chips: 500, price: 725 },
     { chips: 1000, price: 1399, bonus: 50 },
     { chips: 5000, price: 6750, bonus: 300 },
   ];
+
+  // Fetch booster info from a new API endpoint.
+  const fetchBooster = async () => {
+    const chatId = sessionStorage.getItem("chat_id");
+    if (!chatId) return;
+    try {
+      const response = await fetch(`/api/get-booster?chatId=${chatId}`);
+      if (response.ok) {
+        const data = await response.json();
+        // data.booster is expected to be either null or an object with boosterValue and createdAt
+        setBooster(data.booster || null);
+      } else {
+        console.error("Failed to fetch booster info");
+      }
+    } catch (error) {
+      console.error("Error fetching booster info:", error);
+    }
+  };
 
   const fetchTokenCounts = async () => {
     if (typeof window === "undefined") return;
@@ -89,6 +114,7 @@ export default function WalletPage() {
       window.addEventListener("message", handleMessage);
     }
     fetchTokenCounts();
+    fetchBooster();
     return () => {
       if (typeof window !== "undefined") {
         window.removeEventListener("message", handleMessage);
@@ -115,6 +141,12 @@ export default function WalletPage() {
         const { invoiceLink } = await response.json();
         if (typeof window !== "undefined" && window.Telegram?.WebApp) {
           window.Telegram.WebApp.openLink(invoiceLink);
+          // If a booster was available, mark it as used (only once per day)
+          if (booster) {
+            setBooster(null);
+            setBoosterFlash("Booster applied: Extra bonus chips added (valid only today)!");
+            setTimeout(() => setBoosterFlash(""), 4000);
+          }
         } else {
           console.error("Telegram WebApp is not available.");
         }
@@ -133,10 +165,8 @@ export default function WalletPage() {
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
-    // Save current balances for confirmation
     const prevCasino = Number(casinoChips);
     const prevWithdraw = Number(withdrawTokens);
-    // Immediately close the conversion selection popup and show the processing popup
     setShowConvertPopup(false);
     setShowProcessingPopup(true);
     try {
@@ -149,7 +179,6 @@ export default function WalletPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          // Update balances and session storage
           setCasinoChips(data.newCasinoChips);
           setWithdrawTokens(data.newWithdrawTokens);
           const updatedTokens = [
@@ -158,14 +187,12 @@ export default function WalletPage() {
             { id: 3, image: "/images/token3.png", count: 0 },
           ];
           sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
-          // Save confirmation data for later display
           setConfirmationData({
             prevCasino,
             newCasino: data.newCasinoChips,
             prevWithdraw,
             newWithdraw: data.newWithdrawTokens,
           });
-          // Close processing popup and show confirmation popup after a short delay
           setTimeout(() => {
             setShowProcessingPopup(false);
             setShowConfirmationPopup(true);
@@ -226,6 +253,15 @@ export default function WalletPage() {
         </>
       )}
 
+      {/* Booster Banner – displayed if booster exists */}
+      {booster && (
+        <div className="booster-banner">
+          <p>
+            Booster Available: Extra {booster.boosterValue || 25}% bonus chips! (Valid only today)
+          </p>
+        </div>
+      )}
+
       {/* Token Descriptions */}
       <div className="description">
         <div className="description-item">
@@ -251,13 +287,10 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Conversion Section – show only if withdrawTokens >= 10 */}
+      {/* Conversion Section */}
       {Number(withdrawTokens) >= 10 && (
         <div className="conversion-section">
           <h3>Convert Withdrawable Tokens to Casino Chips</h3>
-          {/* <p>
-            Conversion Ratio: <strong>1:1</strong>
-          </p> */}
           <p>
             You have <strong>{withdrawTokens}</strong> withdrawable tokens.
           </p>
@@ -275,21 +308,26 @@ export default function WalletPage() {
       {/* Buy Casino Chips Section */}
       <div className="buy-chips">
         <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
-        {/* <p>1 Telegram Star = 1 Casino Chip</p> */}
         {errorMessage && <div className="error-message">{errorMessage}</div>}
         <div className="predefined-options">
-          {pricingTiers.map(({ chips, price, bonus }) => (
-            <button
-              key={chips}
-              className="buy-button"
-              onClick={() => handleBuy(price, "Tier", chips + bonus)}
-              disabled={isBuying && processingChip === price}
-            >
-              {processingChip === price
-                ? "Processing..."
-                : `${chips} Chips ${bonus > 0 ? `+ ${bonus} Bonus` : ""} 🌟 ${price} Stars`}
-            </button>
-          ))}
+          {pricingTiers.map(({ chips, price, bonus }, index) => {
+            // If a booster is available, calculate extra bonus (default to 25% if not provided)
+            const boosterPercentage = booster ? (booster.boosterValue || 25) : 0;
+            const extraBonus = booster ? Math.floor(chips * boosterPercentage / 100) : 0;
+            const totalChips = chips + extraBonus;
+            return (
+              <button
+                key={index}
+                className="buy-button"
+                onClick={() => handleBuy(price, "Tier", totalChips)}
+                disabled={isBuying && processingChip === price}
+              >
+                {processingChip === price
+                  ? "Processing..."
+                  : `${chips} Chips${booster ? ` + ${extraBonus} Bonus` : ""} 🌟 ${price} Stars`}
+              </button>
+            );
+          })}
         </div>
         <div className="custom-buy">
           <input
@@ -301,11 +339,12 @@ export default function WalletPage() {
           />
           <button
             className="buy-button custom"
-            onClick={() => handleBuy(customBuyAmount * 1, "Normal", customBuyAmount)}
+            onClick={() => handleBuy(customBuyAmount, "Normal", booster ? Math.floor(customBuyAmount * 1.25) : customBuyAmount)}
           >
             Buy
           </button>
         </div>
+        {boosterFlash && <div className="booster-flash">{boosterFlash}</div>}
       </div>
 
       {/* Withdrawal Section */}

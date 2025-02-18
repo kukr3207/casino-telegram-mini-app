@@ -453,3 +453,26 @@
 .custom-buy .buy-button.custom {
   max-width: 150px;
 }
+
+/* Booster Banner */
+.booster-banner {
+  background: linear-gradient(145deg, #ff9900, #ffcc00);
+  color: #000;
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+/* Booster Flash Message */
+.booster-flash {
+  margin-top: 10px;
+  background: #66ff66;
+  color: #000;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* (Rest of your CSS remains unchanged) */
