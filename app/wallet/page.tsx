@@ -33,7 +33,7 @@ export default function WalletPage() {
   const [processingChip, setProcessingChip] = useState<number | null>(null);
   const [purchaseSuccessful, setPurchaseSuccessful] = useState(false);
 
-  // New state for purchase confirmation data
+  // Purchase confirmation data
   const [purchaseConfirmationData, setPurchaseConfirmationData] = useState<{ prevCasino: number; newCasino: number } | null>(null);
   const [prevCasino, setPrevCasino] = useState<number>(0);
 
@@ -42,7 +42,7 @@ export default function WalletPage() {
   const [isConverting, setIsConverting] = useState(false);
   const [selectedPercentage, setSelectedPercentage] = useState<number | null>(null);
 
-  // Additional popups for processing and confirmation (for conversion)
+  // Additional popups for conversion processing and confirmation
   const [showProcessingPopup, setShowProcessingPopup] = useState(false);
   const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
   const [customBuyAmount, setCustomBuyAmount] = useState(50);
@@ -53,7 +53,7 @@ export default function WalletPage() {
     newWithdraw: number;
   } | null>(null);
 
-  // Booster state – boosters can be used only once per day.
+  // Booster state – available booster can be used only once per day.
   const [booster, setBooster] = useState<{ boosterValue: number; createdAt: string } | null>(null);
   const [boosterFlash, setBoosterFlash] = useState("");
 
@@ -130,7 +130,6 @@ export default function WalletPage() {
         const newCasino = event.data.tokens[0]?.count || 0;
         // Set purchase confirmation data using previous and new balances.
         setPurchaseConfirmationData({ prevCasino, newCasino });
-        // Trigger confetti on successful purchase.
         setPurchaseSuccessful(true);
         setTimeout(() => setPurchaseSuccessful(false), 4000);
       }
@@ -148,7 +147,7 @@ export default function WalletPage() {
   }, [prevCasino]);
 
   const handleBuy = async (amount: number, packageType: string = "Tier", chipsBought: number = amount) => {
-    if (amount < 0) {
+    if (amount < 50) {
       setErrorMessage("Minimum purchase amount is 50 tokens.");
       setTimeout(() => setErrorMessage(""), 4000);
       return;
@@ -174,6 +173,17 @@ export default function WalletPage() {
             setBoosterFlash("Booster applied: Extra bonus chips added (valid only today)!");
             setTimeout(() => setBoosterFlash(""), 4000);
           }
+          // Instead of relying solely on update_tokens message, use a timeout as a fallback
+          setTimeout(() => {
+            fetchTokenCounts().then(() => {
+              // Retrieve new casino balance from session storage.
+              const tokens = JSON.parse(sessionStorage.getItem("tokens") || "[]");
+              const newCasino = tokens[0]?.count || 0;
+              setPurchaseConfirmationData({ prevCasino, newCasino });
+              setPurchaseSuccessful(true);
+              setTimeout(() => setPurchaseSuccessful(false), 4000);
+            });
+          }, 5000);
         } else {
           console.error("Telegram WebApp is not available.");
         }
@@ -322,7 +332,7 @@ export default function WalletPage() {
             {pricingTiers.map(({ chips, price, bundle, baseBonus }, index) => {
               let extraBonus = 0;
               if (bundle) {
-                // For bundles, add a base bonus of 10% plus any booster bonus.
+                // For bundles, add base bonus of 10% plus any booster bonus.
                 const base = Math.floor(chips * (baseBonus as number) / 100);
                 if (booster) {
                   const boosterPercentage = booster.boosterValue || 25;
@@ -354,7 +364,7 @@ export default function WalletPage() {
           <div className="custom-buy">
             <input
               type="number"
-              min="0"
+              min="50"
               value={customBuyAmount}
               onChange={(e) => setCustomBuyAmount(Number(e.target.value))}
               placeholder="Custom amount (min 50)"
