@@ -19,7 +19,6 @@ interface DiceCubeProps {
 function DiceCube({ style, rolling }: DiceCubeProps) {
   return (
     <div className={`dice-cube ${rolling ? "rolling" : ""}`} style={style}>
-      {/* Face numbering: front = 1, back = 6, right = 3, left = 4, top = 2, bottom = 5 */}
       <div className="face front">
         <div className="pip pip-center"></div>
       </div>
@@ -57,7 +56,6 @@ function DiceCube({ style, rolling }: DiceCubeProps) {
   );
 }
 
-// Returns the inline transform string to bring the desired face to the front.
 function getDiceCubeTransform(value: number): string {
   switch (value) {
     case 1:
@@ -77,7 +75,6 @@ function getDiceCubeTransform(value: number): string {
   }
 }
 
-// Computes the SHA-256 hash of a given input and returns it as a hex string.
 async function computeSHA256(input: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(input);
@@ -101,6 +98,9 @@ export default function DiceRollPage() {
   const [diceCubeStyles, setDiceCubeStyles] = useState<string[]>([]);
   const [isActionProcessing, setIsActionProcessing] = useState(false);
   const [verificationResult, setVerificationResult] = useState<string>("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [draggedBetIndex, setDraggedBetIndex] = useState<number | null>(null);
+  const [isOverTrash, setIsOverTrash] = useState(false);
 
   const initialDiceCubeStyle = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
 
@@ -132,12 +132,18 @@ export default function DiceRollPage() {
     evenodd: 2,
   };
 
+  const toggleCategory = (category: string) => {
+    setActiveCategory(activeCategory === category ? null : category);
+  };
+
   const handleBetSelect = (category: string, option: string): void => {
-    const existingBet = selectedBets.find(
+    const existingIndex = selectedBets.findIndex(
       (bet) => bet.category === category && bet.option === option
     );
-    if (existingBet) {
-      setSelectedBets(selectedBets.filter((bet) => bet !== existingBet));
+    if (existingIndex > -1) {
+      const updated = [...selectedBets];
+      updated.splice(existingIndex, 1);
+      setSelectedBets(updated);
     } else {
       setSelectedBets([...selectedBets, { category, option, amount: betAmount }]);
     }
@@ -147,6 +153,42 @@ export default function DiceRollPage() {
     const updatedBets = [...selectedBets];
     updatedBets[index].amount = amount;
     setSelectedBets(updatedBets);
+  };
+
+  const handleCancelBet = (index: number) => {
+    const updatedBets = selectedBets.filter((_, i) => i !== index);
+    setSelectedBets(updatedBets);
+  };
+
+  // Drag handlers for bet cards (only when result is not shown)
+  const handleDragStart = (index: number, event: React.DragEvent<HTMLDivElement>) => {
+    if (hasResult) return;
+    event.dataTransfer.setData("text/plain", index.toString());
+    setDraggedBetIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedBetIndex(null);
+  };
+
+  const handleTrashDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsOverTrash(true);
+  };
+
+  const handleTrashDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    setIsOverTrash(false);
+  };
+
+  const handleTrashDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const indexString = event.dataTransfer.getData("text/plain");
+    const index = parseInt(indexString);
+    if (!isNaN(index)) {
+      handleCancelBet(index);
+    }
+    setIsOverTrash(false);
+    setDraggedBetIndex(null);
   };
 
   const handleRollDice = () => {
@@ -169,7 +211,6 @@ export default function DiceRollPage() {
     setCasinoChips(updatedChips);
     await updateTokens(updatedChips, 0, 0);
 
-    // Start continuous roll (simulate dice spinning)
     const rollingInterval = setInterval(() => {
       setDiceCubeStyles([
         `rotateX(${Math.floor(Math.random() * 360)}deg) rotateY(${Math.floor(
@@ -322,11 +363,9 @@ export default function DiceRollPage() {
 
   const hasWon = selectedBets.some((bet) => bet.isWin);
 
-  // --- Verification Functions ---
   const handleVerify = async () => {
     if (!verificationSeed || !rollHash) return;
     const total = diceResult[0] + diceResult[1];
-    // Concatenate the trimmed seed and the dice result sum (as done on the server)
     const verificationInput = verificationSeed.trim() + total;
     const computedHash = await computeSHA256(verificationInput);
     if (computedHash === rollHash) {
@@ -340,73 +379,124 @@ export default function DiceRollPage() {
 
   return (
     <div className="dice-roll-page">
-      <h3 className="dice-roll-title">Place Your Bets and Roll the Dice 🎲</h3>
+      <h3 className="dice-roll-title">Place Your Bets and Roll 🎲</h3>
 
+      {/* Category Buttons */}
       <div className="category-options">
         {Object.keys(betOptions).map((category) => (
-          <div key={category} className="category">
-            <h3>{category.charAt(0).toUpperCase() + category.slice(1)}</h3>
-            <div className="bet-buttons">
-              {betOptions[category].map((option) => (
-                <button
-                  key={option}
-                  className={`bet-button ${
-                    selectedBets.some((bet) => bet.category === category && bet.option === option)
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() => handleBetSelect(category, option)}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-            <p className="payout-ratio">Payout: {payoutRatios[category]}x</p>
-          </div>
+          <button
+            key={category}
+            onClick={() => toggleCategory(category)}
+            className="category-button"
+          >
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+            <span className="toggle-icon">{activeCategory === category ? "−" : "+"}</span>
+          </button>
         ))}
       </div>
+      <p className="section-description">
+        Click on any section to place bets (multiple bets are allowed).
+      </p>
 
+      {/* Bet Options Section */}
+      {activeCategory && (
+        <div className="bet-options">
+          <h4 className="bet-options-title">
+            Bet Options for {activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
+          </h4>
+          <div className="bet-buttons">
+            {betOptions[activeCategory].map((option) => (
+              <button
+                key={option}
+                className={`bet-button ${
+                  selectedBets.some((bet) => bet.category === activeCategory && bet.option === option)
+                    ? "selected"
+                    : ""
+                }`}
+                onClick={() => handleBetSelect(activeCategory, option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <p className="payout-ratio">Payout: {payoutRatios[activeCategory]}x</p>
+        </div>
+      )}
+
+      {/* Selected Bets Section */}
       <div className="selected-bets">
         <h3>Your Bets</h3>
         {selectedBets.length === 0 ? (
-          <p className="no-bets">No bets selected. Pick one above!</p>
+          <p className="no-bets">No bets selected. Pick a section above!</p>
         ) : (
-          <div className="bet-list">
-            {selectedBets.map((bet, index) => (
-              <div key={`${bet.category}-${bet.option}`} className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}>
-                <span className="bet-text">{bet.category} - {bet.option}</span>
-                {bet.isWin !== undefined ? (
-                  <p>{bet.isWin ? `Won: ${bet.winAmount} tokens` : `Lost: ${bet.amount} tokens`}</p>
-                ) : (
-                  <input
-                    type="number"
-                    min={10}
-                    value={bet.amount}
-                    className="bet-input"
-                    onChange={(e) => handleBetAmountChange(Number(e.target.value), index)}
-                  />
-                )}
+          <>
+            <div className="bet-list">
+              {selectedBets.map((bet, index) => (
+                <div
+                  key={`${bet.category}-${bet.option}-${index}`}
+                  className={`bet-card ${bet.isWin ? "win" : bet.isWin === false ? "lose" : ""}`}
+                  draggable={!hasResult}
+                  onDragStart={(e) => handleDragStart(index, e)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <span className="bet-text">
+                    {bet.category} - {bet.option}
+                  </span>
+                  {bet.isWin !== undefined ? (
+                    <p>{bet.isWin ? `Won: ${bet.winAmount} tokens` : `Lost: ${bet.amount} tokens`}</p>
+                  ) : (
+                    <input
+                      type="number"
+                      min={10}
+                      value={bet.amount}
+                      className="bet-input"
+                      onChange={(e) => handleBetAmountChange(Number(e.target.value), index)}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Trash Bin inside Your Bets section (only when result not shown) */}
+            {!hasResult && (
+              <div
+                className={`trash-bin ${isOverTrash ? "over" : ""}`}
+                onDragOver={handleTrashDragOver}
+                onDragLeave={handleTrashDragLeave}
+                onDrop={handleTrashDrop}
+              >
+                Drag here to delete bet
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 
+      {/* Action Buttons */}
       <div className="place-bet">
         {!hasResult && (
-          <button className="place-bet-button" onClick={handleRollDice} disabled={selectedBets.length === 0 || isRolling}>
+          <button
+            className="full-width-button place-bet-button"
+            onClick={handleRollDice}
+            disabled={selectedBets.length === 0 || isRolling}
+          >
             {isRolling ? "Rolling Dice..." : "Roll Dice"}
           </button>
         )}
-
         {hasResult && hasWon && (
-          <button className="collect-button" onClick={handleCollectRewardsClick} disabled={isActionProcessing}>
+          <button
+            className="full-width-button collect-button"
+            onClick={handleCollectRewardsClick}
+            disabled={isActionProcessing}
+          >
             {isActionProcessing ? "Processing..." : "Collect Rewards"}
           </button>
         )}
-
         {hasResult && !hasWon && (
-          <button className="reset-button" onClick={handleResetClick} disabled={isActionProcessing}>
+          <button
+            className="full-width-button reset-button"
+            onClick={handleResetClick}
+            disabled={isActionProcessing}
+          >
             {isActionProcessing ? "Processing..." : "Reset"}
           </button>
         )}
@@ -417,8 +507,12 @@ export default function DiceRollPage() {
           <div className="popup-content">
             <h3>Confirm Your Bet</h3>
             <p>Total Bet: {selectedBets.reduce((sum, bet) => sum + bet.amount, 0)} Chips</p>
-            <button onClick={confirmBet} className="confirm-button">Yes, Confirm</button>
-            <button onClick={() => setShowConfirmation(false)} className="cancel-button">No, Go Back</button>
+            <button onClick={confirmBet} className="confirm-button full-width-button">
+              Yes, Confirm
+            </button>
+            <button onClick={() => setShowConfirmation(false)} className="cancel-button full-width-button">
+              No, Go Back
+            </button>
           </div>
         </div>
       )}
@@ -435,11 +529,12 @@ export default function DiceRollPage() {
         </div>
       )}
 
-      {/* Dice Result & Verification Section */}
       {!isRolling && rollHash && verificationSeed && (
         <div className="dice-result">
           <div className="result-container">
-            <div className="result-value">Result: {diceResult[0]} + {diceResult[1]}</div>
+            <div className="result-value">
+              Result: {diceResult[0]} + {diceResult[1]}
+            </div>
             <div className="hash-block">
               <strong>Fairness Proof:</strong> {rollHash}
             </div>
@@ -448,16 +543,20 @@ export default function DiceRollPage() {
             </div>
           </div>
           <div className="verification-section">
-            <button className="earn-btn" onClick={handleVerify}>Verify</button>
+            <button className="earn-btn" onClick={handleVerify}>
+              Verify
+            </button>
             {verificationResult && <p>{verificationResult}</p>}
             <div className="verification-instructions">
               <p>Manual Verification Steps:</p>
               <ol>
                 <li>Copy the Verification Seed above.</li>
-                <li>Calculate the dice total: add the two dice results.</li>
-                <li>Concatenate the trimmed Verification Seed with the dice total (e.g., if seed is "abc123" and dice total is 7, then the input is "abc1237").</li>
-                <li>Use any online SHA‑256 calculator to compute the SHA‑256 hash of the concatenated string.</li>
-                <li>Compare the computed hash with the Fairness Proof displayed above.</li>
+                <li>Add the two dice results together.</li>
+                <li>
+                  Concatenate the trimmed Verification Seed with the dice total.
+                </li>
+                <li>Use an online SHA‑256 calculator to compute the hash.</li>
+                <li>Compare the computed hash with the Fairness Proof.</li>
               </ol>
             </div>
           </div>
