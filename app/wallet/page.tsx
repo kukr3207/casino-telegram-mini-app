@@ -26,14 +26,14 @@ function CollapsibleSection({ title, defaultOpen = false, children }: Collapsibl
 
 export default function WalletPage() {
   // Token balances and error/confetti states
-  const [casinoChips, setCasinoChips] = useState("Loading...");
-  const [withdrawTokens, setWithdrawTokens] = useState("Loading...");
+  const [casinoChips, setCasinoChips] = useState<number>(0);
+  const [withdrawTokens, setWithdrawTokens] = useState<number>(0);
   const [isBuying, setIsBuying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [processingChip, setProcessingChip] = useState<number | null>(null);
   const [purchaseSuccessful, setPurchaseSuccessful] = useState(false);
 
-  // Purchase confirmation data
+  // Purchase confirmation data (old and new casino chip balances)
   const [purchaseConfirmationData, setPurchaseConfirmationData] = useState<{ prevCasino: number; newCasino: number } | null>(null);
   const [prevCasino, setPrevCasino] = useState<number>(0);
 
@@ -53,7 +53,7 @@ export default function WalletPage() {
     newWithdraw: number;
   } | null>(null);
 
-  // Booster state – available booster can be used only once per day.
+  // Booster state – boosters can be used only once per day.
   const [booster, setBooster] = useState<{ boosterValue: number; createdAt: string } | null>(null);
   const [boosterFlash, setBoosterFlash] = useState("");
 
@@ -71,7 +71,6 @@ export default function WalletPage() {
   ];
 
   const fetchTokenCounts = async () => {
-    if (typeof window === "undefined") return;
     const chatId = sessionStorage.getItem("chat_id");
     if (!chatId) {
       console.error("Chat ID not found in sessionStorage.");
@@ -81,12 +80,12 @@ export default function WalletPage() {
       const response = await fetch(`/api/get-token-counts?chatId=${chatId}`);
       if (response.ok) {
         const { tokenCounts } = await response.json();
-        setCasinoChips(tokenCounts.casino_chips || 0);
-        setWithdrawTokens(tokenCounts.withdraw_tokens || 0);
+        setCasinoChips(Number(tokenCounts.casino_chips) || 0);
+        setWithdrawTokens(Number(tokenCounts.withdraw_tokens) || 0);
         const updatedTokens = [
-          { id: 1, image: "/images/token1.png", count: tokenCounts.casino_chips || 0 },
-          { id: 2, image: "/images/token2.png", count: tokenCounts.withdraw_tokens || 0 },
-          { id: 3, image: "/images/token3.png", count: tokenCounts.hol_tokens || 0 },
+          { id: 1, image: "/images/token1.png", count: Number(tokenCounts.casino_chips) || 0 },
+          { id: 2, image: "/images/token2.png", count: Number(tokenCounts.withdraw_tokens) || 0 },
+          { id: 3, image: "/images/token3.png", count: Number(tokenCounts.hol_tokens) || 0 },
         ];
         sessionStorage.setItem("tokens", JSON.stringify(updatedTokens));
       } else {
@@ -126,23 +125,18 @@ export default function WalletPage() {
       if (event.data && event.data.type === "update_tokens") {
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
         setProcessingChip(null);
-        // Assuming event.data.tokens is an array where index 0 holds casino chips.
+        // Assuming event.data.tokens[0] contains the new casino chips count.
         const newCasino = event.data.tokens[0]?.count || 0;
-        // Set purchase confirmation data using previous and new balances.
         setPurchaseConfirmationData({ prevCasino, newCasino });
         setPurchaseSuccessful(true);
         setTimeout(() => setPurchaseSuccessful(false), 4000);
       }
     };
-    if (typeof window !== "undefined") {
-      window.addEventListener("message", handleMessage);
-    }
+    window.addEventListener("message", handleMessage);
     fetchTokenCounts();
     fetchBooster();
     return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("message", handleMessage);
-      }
+      window.removeEventListener("message", handleMessage);
     };
   }, [prevCasino]);
 
@@ -153,7 +147,7 @@ export default function WalletPage() {
       return;
     }
     // Store current casino balance as previous balance before purchase.
-    setPrevCasino(Number(casinoChips));
+    setPrevCasino(casinoChips);
     setIsBuying(true);
     setProcessingChip(amount);
     try {
@@ -165,7 +159,7 @@ export default function WalletPage() {
       });
       if (response.ok) {
         const { invoiceLink } = await response.json();
-        if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+        if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.openLink(invoiceLink);
           // If a booster was available, mark it as used and show flash message.
           if (booster) {
@@ -173,7 +167,7 @@ export default function WalletPage() {
             setBoosterFlash("Booster applied: Extra bonus chips added (valid only today)!");
             setTimeout(() => setBoosterFlash(""), 4000);
           }
-          // Instead of relying solely on update_tokens message, use a timeout as a fallback
+          // Use a fallback timeout to fetch updated token counts after invoice link is opened.
           setTimeout(() => {
             fetchTokenCounts().then(() => {
               // Retrieve new casino balance from session storage.
@@ -181,6 +175,7 @@ export default function WalletPage() {
               const newCasino = tokens[0]?.count || 0;
               setPurchaseConfirmationData({ prevCasino, newCasino });
               setPurchaseSuccessful(true);
+              setProcessingChip(null); // Clear processing state.
               setTimeout(() => setPurchaseSuccessful(false), 4000);
             });
           }, 5000);
@@ -202,8 +197,8 @@ export default function WalletPage() {
   const handleSubmitConversion = async () => {
     if (!selectedPercentage) return;
     setIsConverting(true);
-    const prevCasinoConversion = Number(casinoChips);
-    const prevWithdraw = Number(withdrawTokens);
+    const prevCasinoConversion = casinoChips;
+    const prevWithdraw = withdrawTokens;
     setShowConvertPopup(false);
     setShowProcessingPopup(true);
     try {
@@ -332,7 +327,7 @@ export default function WalletPage() {
             {pricingTiers.map(({ chips, price, bundle, baseBonus }, index) => {
               let extraBonus = 0;
               if (bundle) {
-                // For bundles, add base bonus of 10% plus any booster bonus.
+                // For bundles, add a base bonus of 10% plus any booster bonus.
                 const base = Math.floor(chips * (baseBonus as number) / 100);
                 if (booster) {
                   const boosterPercentage = booster.boosterValue || 25;
