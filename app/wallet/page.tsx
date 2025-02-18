@@ -1,17 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import "../../styles/wallet.css";
 import Confetti from "react-confetti";
 
+// Reusable collapsible panel component
+interface CollapsibleSectionProps {
+  title: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}
+
+function CollapsibleSection({ title, defaultOpen = false, children }: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div className="collapsible-section">
+      <div className="collapsible-header" onClick={() => setIsOpen(!isOpen)}>
+        <h3>{title}</h3>
+        <span className="collapsible-toggle">{isOpen ? "-" : "+"}</span>
+      </div>
+      {isOpen && <div className="collapsible-content">{children}</div>}
+    </div>
+  );
+}
+
 export default function WalletPage() {
+  // Tab state
+  const [activeTab, setActiveTab] = useState("overview");
+
   // Token balances and error/confetti states
   const [casinoChips, setCasinoChips] = useState("Loading...");
   const [withdrawTokens, setWithdrawTokens] = useState("Loading...");
   const [isBuying, setIsBuying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [showConfetti, setShowConfetti] = useState(false);
   const [processingChip, setProcessingChip] = useState<number | null>(null);
+
+  // Purchase success flag to trigger confetti
+  const [purchaseSuccessful, setPurchaseSuccessful] = useState(false);
 
   // Conversion popup state
   const [showConvertPopup, setShowConvertPopup] = useState(false);
@@ -101,9 +126,8 @@ export default function WalletPage() {
       console.log("📩 Received message:", event.data);
       if (event.data && event.data.type === "update_tokens") {
         sessionStorage.setItem("tokens", JSON.stringify(event.data.tokens));
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 4000);
         setProcessingChip(null);
+        // We remove confetti trigger here since we now control it in handleBuy.
       }
     };
     if (typeof window !== "undefined") {
@@ -137,11 +161,15 @@ export default function WalletPage() {
         const { invoiceLink } = await response.json();
         if (typeof window !== "undefined" && window.Telegram?.WebApp) {
           window.Telegram.WebApp.openLink(invoiceLink);
+          // Mark booster as used if available.
           if (booster) {
             setBooster(null);
             setBoosterFlash("Booster applied: Extra bonus chips added (valid only today)!");
             setTimeout(() => setBoosterFlash(""), 4000);
           }
+          // Trigger confetti only after a successful purchase.
+          setPurchaseSuccessful(true);
+          setTimeout(() => setPurchaseSuccessful(false), 4000);
         } else {
           console.error("Telegram WebApp is not available.");
         }
@@ -209,6 +237,7 @@ export default function WalletPage() {
     }
   };
 
+  // Explicitly typed closePopup function
   const closePopup = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (e.target === e.currentTarget) {
       setShowConvertPopup(false);
@@ -218,7 +247,7 @@ export default function WalletPage() {
 
   return (
     <div className="wallet-page">
-      {showConfetti && (
+      {purchaseSuccessful && (
         <>
           <Confetti
             numberOfPieces={150}
@@ -247,83 +276,123 @@ export default function WalletPage() {
         </>
       )}
 
-      {/* Booster Banner */}
-      {booster && (
-        <div className="booster-banner">
-          <p>
-            Booster Available: Extra {booster.boosterValue || 25}% bonus chips! (Valid only today)
-          </p>
-        </div>
-      )}
-
-      {/* Conversion Section */}
-      {Number(withdrawTokens) >= 10 && (
-        <div className="conversion-section">
-          <h3>Convert Withdrawable Tokens to Casino Chips</h3>
-          <p>
-            You have <strong>{withdrawTokens}</strong> withdrawable tokens.
-          </p>
-          <div className="conversion-header">
-            <img src="/images/token2.png" alt="Withdrawable Token" className="header-image" />
-            <span className="conversion-arrow">&#8594; 1:1 &#8594;</span>
-            <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
+      <CollapsibleSection title="Booster Info" defaultOpen={true}>
+        {booster ? (
+          <div className="booster-banner">
+            <p>
+              Booster Available: Extra {booster.boosterValue || 25}% bonus chips! (Valid only today)
+            </p>
           </div>
-          <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
-            Convert Tokens
-          </button>
-        </div>
-      )}
+        ) : (
+          <p>No active booster.</p>
+        )}
+      </CollapsibleSection>
 
-      {/* Buy Casino Chips Section */}
-      <div className="buy-chips">
-        <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
-        {errorMessage && <div className="error-message">{errorMessage}</div>}
-        <div className="predefined-options">
-          {pricingTiers.map(({ chips, price, bonus }, index) => {
-            const boosterPercentage = booster ? (booster.boosterValue || 25) : 0;
-            const extraBonus = booster ? Math.floor(chips * boosterPercentage / 100) : 0;
-            const totalChips = chips + extraBonus;
-            return (
-              <button
-                key={index}
-                className="buy-button"
-                onClick={() => handleBuy(price, "Tier", totalChips)}
-                disabled={isBuying && processingChip === price}
-              >
-                {processingChip === price
-                  ? "Processing..."
-                  : `${chips} Chips${booster ? ` + ${extraBonus} Bonus` : ""} 🌟 ${price} Stars`}
-              </button>
-            );
-          })}
-        </div>
-        <div className="custom-buy">
-          <input
-            type="number"
-            min="50"
-            value={customBuyAmount}
-            onChange={(e) => setCustomBuyAmount(Number(e.target.value))}
-            placeholder="Custom amount (min 50)"
-          />
-          <button
-            className="buy-button custom"
-            onClick={() => handleBuy(customBuyAmount, "Normal", booster ? Math.floor(customBuyAmount * 1.25) : customBuyAmount)}
-          >
-            Buy
-          </button>
-        </div>
-        {boosterFlash && <div className="booster-flash">{boosterFlash}</div>}
-      </div>
+      <CollapsibleSection title="Conversion">
+        {Number(withdrawTokens) >= 10 ? (
+          <div className="conversion-section">
+            <h3>Convert Withdrawable Tokens to Casino Chips</h3>
+            <p>
+              You have <strong>{withdrawTokens}</strong> withdrawable tokens.
+            </p>
+            <div className="conversion-header">
+              <img src="/images/token2.png" alt="Withdrawable Token" className="header-image" />
+              <span className="conversion-arrow">&#8594; 1:1 &#8594;</span>
+              <img src="/images/token1.png" alt="Casino Chip" className="header-image" />
+            </div>
+            <button className="convert-button" onClick={() => setShowConvertPopup(true)}>
+              Convert Tokens
+            </button>
+          </div>
+        ) : (
+          <p>You need at least 10 withdrawable tokens to convert.</p>
+        )}
+      </CollapsibleSection>
 
-      {/* Withdrawal Section */}
-      <div className="withdrawal">
-        <h3>Withdraw Tokens</h3>
-        <p>
-          Withdrawable tokens can be exchanged for Stars. Each token earns <strong>1.4 Stars</strong>. A 5%
-          withdrawal fee applies.
-        </p>
-        <button className="withdraw-button">Request Withdrawal</button>
-      </div>
+      <CollapsibleSection title="Buy Casino Chips">
+        <div className="buy-chips">
+          <h3>Buy Casino Chips with Telegram Stars 🌟</h3>
+          {errorMessage && <div className="error-message">{errorMessage}</div>}
+          <div className="predefined-options">
+            {pricingTiers.map(({ chips, price, bonus }, index) => {
+              const boosterPercentage = booster ? (booster.boosterValue || 25) : 0;
+              const extraBonus = booster ? Math.floor(chips * boosterPercentage / 100) : 0;
+              const totalChips = chips + extraBonus;
+              return (
+                <button
+                  key={index}
+                  className="buy-button"
+                  onClick={() => handleBuy(price, "Tier", totalChips)}
+                  disabled={isBuying && processingChip === price}
+                >
+                  {processingChip === price
+                    ? "Processing..."
+                    : `${chips} Chips${booster ? ` + ${extraBonus} Bonus` : ""} 🌟 ${price} Stars`}
+                </button>
+              );
+            })}
+          </div>
+          <div className="custom-buy">
+            <input
+              type="number"
+              min="50"
+              value={customBuyAmount}
+              onChange={(e) => setCustomBuyAmount(Number(e.target.value))}
+              placeholder="Custom amount (min 50)"
+            />
+            <button
+              className="buy-button custom"
+              onClick={() =>
+                handleBuy(
+                  customBuyAmount,
+                  "Normal",
+                  booster ? Math.floor(customBuyAmount * 1.25) : customBuyAmount
+                )
+              }
+            >
+              Buy
+            </button>
+          </div>
+          {boosterFlash && <div className="booster-flash">{boosterFlash}</div>}
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Withdraw Tokens">
+        <div className="withdrawal">
+          <h3>Withdraw Tokens</h3>
+          <p>
+            Withdrawable tokens can be exchanged for Stars. Each token earns <strong>1.4 Stars</strong>. A 5%
+            withdrawal fee applies.
+          </p>
+          <button className="withdraw-button">Request Withdrawal</button>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Token Info">
+        <div className="description">
+          <div className="description-item">
+            <img src="/images/token1.png" alt="Casino Chips" />
+            <div className="description-content">
+              <h2>Casino Chips</h2>
+              <p>Your primary gaming currency. Use these to play games.</p>
+            </div>
+          </div>
+          <div className="description-item">
+            <img src="/images/token2.png" alt="Withdrawable Tokens" />
+            <div className="description-content">
+              <h2>Withdrawable Tokens</h2>
+              <p>Earned by winning games. Redeem them for rewards.</p>
+            </div>
+          </div>
+          <div className="description-item">
+            <img src="/images/token3.png" alt="HOL Tokens" />
+            <div className="description-content">
+              <h2>HOL Tokens</h2>
+              <p>Your leaderboard rank and rewards in the House of Luck.</p>
+            </div>
+          </div>
+        </div>
+      </CollapsibleSection>
 
       {/* Conversion Popup */}
       {showConvertPopup && (
@@ -416,31 +485,6 @@ export default function WalletPage() {
           </div>
         </div>
       )}
-
-      {/* Tokens Description Section (Moved to the bottom) */}
-      <div className="description">
-        <div className="description-item">
-          <img src="/images/token1.png" alt="Casino Chips" />
-          <div className="description-content">
-            <h2>Casino Chips</h2>
-            <p>Your primary gaming currency. Use these to play games.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token2.png" alt="Withdrawable Tokens" />
-          <div className="description-content">
-            <h2>Withdrawable Tokens</h2>
-            <p>Earned by winning games. Redeem them for rewards.</p>
-          </div>
-        </div>
-        <div className="description-item">
-          <img src="/images/token3.png" alt="HOL Tokens" />
-          <div className="description-content">
-            <h2>HOL Tokens</h2>
-            <p>Your leaderboard rank and rewards in the House of Luck.</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
