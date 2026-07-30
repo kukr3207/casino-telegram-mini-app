@@ -13,7 +13,7 @@ const JSON_HEADERS = {
  * Create a JSON response with consistent headers. Undefined object properties
  * are omitted by JSON.stringify, matching the platform Response behavior.
  */
-export function jsonResponse(payload: JsonValue, status = 200): Response {
+export function jsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,
     headers: JSON_HEADERS,
@@ -21,7 +21,7 @@ export function jsonResponse(payload: JsonValue, status = 200): Response {
 }
 
 export function jsonSuccess(
-  data: { [key: string]: JsonValue | undefined } = {},
+  data: Record<string, unknown> = {},
   status = 200,
 ): Response {
   return jsonResponse({ success: true, ...data }, status);
@@ -58,4 +58,3 @@ export async function readJsonObject(
 
   return value as Record<string, unknown>;
 }
-

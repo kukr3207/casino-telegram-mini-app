@@ -1,4 +1,6 @@
 import { casinoDatabase } from "../../../lib/database/mongo";
+import { recordWheelSpin } from "../../../lib/database/game-history";
+import { WHEEL_OUTCOMES } from "../../../lib/domain/wheel-outcomes";
 import { jsonError, jsonResponse, readJsonObject } from "../../../lib/http/responses";
 import { selectVerifiableOutcome } from "../../../lib/security/fair-random";
 import { chatIdFilter, InvalidChatIdError, parseChatId } from "../../../lib/validation/chat-id";
@@ -25,18 +27,7 @@ export async function POST(req) {
     }
 
     // Define outcomes (the order should match your front-end display)
-    const outcomes = [
-      { type: "token", value: 10 },
-      { type: "token", value: 25 },
-      { type: "token", value: 50 },
-      { type: "token", value: 100 },
-      { type: "token", value: 150 },
-      { type: "booster", value: 15 },
-      { type: "booster", value: 25 },
-      { type: "booster", value: 35 },
-    ];
-
-    const selection = selectVerifiableOutcome(outcomes);
+    const selection = selectVerifiableOutcome(WHEEL_OUTCOMES);
     const { outcome } = selection;
 
     // If a token outcome, update token balance; if booster, store booster info.
@@ -67,6 +58,8 @@ export async function POST(req) {
         },
       }
     );
+
+    await recordWheelSpin(normalizedChatId, selection);
 
     return jsonResponse(selection);
   } catch (error) {

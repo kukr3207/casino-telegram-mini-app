@@ -1,4 +1,5 @@
 import { casinoDatabase } from "../../../lib/database/mongo";
+import { recordDiceRoll } from "../../../lib/database/game-history";
 import { jsonError, jsonResponse, readJsonObject } from "../../../lib/http/responses";
 import { rollVerifiableDice } from "../../../lib/security/fair-random";
 import { parseChatId, InvalidChatIdError } from "../../../lib/validation/chat-id";
@@ -12,13 +13,7 @@ export async function POST(req) {
     const { chatId } = await readJsonObject(req);
     const normalizedChatId = parseChatId(chatId);
     const roll = rollVerifiableDice();
-    const rolls = await rollsCollection();
-
-    await rolls.insertOne({
-      chatId: normalizedChatId,
-      ...roll,
-      createdAt: new Date()
-    });
+    await recordDiceRoll(normalizedChatId, roll);
 
     return jsonResponse(roll);
   } catch (error) {

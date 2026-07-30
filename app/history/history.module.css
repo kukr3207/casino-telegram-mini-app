@@ -1,0 +1,74 @@
+.page {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 28px 18px 120px;
+  color: #f7f7fb;
+}
+
+.hero {
+  padding: 26px;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(37, 29, 71, 0.96), rgba(14, 17, 32, 0.98));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.26);
+}
+
+.hero h1 { margin: 4px 0 8px; font-size: clamp(30px, 6vw, 48px); }
+.hero p { margin: 0; max-width: 680px; color: #c9c7d7; line-height: 1.6; }
+.eyebrow { color: #ffd95a !important; font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+
+.summaryGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+.summaryGrid div { padding: 16px; border: 1px solid rgba(255,255,255,.09); border-radius: 16px; background: rgba(255,255,255,.045); }
+.summaryGrid span { display: block; color: #aaa7b9; font-size: 12px; }
+.summaryGrid strong { display: block; margin-top: 6px; font-size: 25px; color: #ffe27d; }
+
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0; }
+.filters { display: flex; gap: 8px; padding: 5px; border-radius: 14px; background: rgba(255,255,255,.06); }
+.filters button, .refresh, .loadMore { border: 0; border-radius: 10px; padding: 10px 14px; color: #d8d6e2; background: transparent; cursor: pointer; font-weight: 700; }
+.filters .activeFilter { color: #1d1824; background: #ffd95a; }
+.refresh { border: 1px solid rgba(255,255,255,.13); }
+
+.historyList { display: grid; gap: 14px; }
+.historyCard { padding: 18px; border: 1px solid rgba(255,255,255,.09); border-radius: 18px; background: rgba(20,21,39,.96); }
+.cardHeading, .gameIdentity, .proofActions { display: flex; align-items: center; }
+.cardHeading { justify-content: space-between; gap: 14px; }
+.gameIdentity { gap: 12px; }
+.gameIcon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: rgba(255,217,90,.12); font-size: 24px; }
+.gameIdentity h2 { margin: 0 0 3px; font-size: 17px; }
+.gameIdentity time { color: #9693a8; font-size: 12px; }
+.statusBadge { padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+.verified { color: #83f2b2; background: rgba(35,192,105,.13); }
+.invalid { color: #ff9b9b; background: rgba(239,68,68,.14); }
+.unchecked { color: #bebacc; background: rgba(255,255,255,.07); }
+
+.resultGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
+.resultGrid div { padding: 12px; border-radius: 12px; background: rgba(255,255,255,.04); }
+.resultGrid span { display: block; color: #9996aa; font-size: 11px; }
+.resultGrid strong { display: block; margin-top: 4px; font-size: 17px; }
+.disclosure { display: flex; width: 100%; justify-content: space-between; padding: 11px 0 0; border: 0; border-top: 1px solid rgba(255,255,255,.08); color: #d8d6e2; background: transparent; cursor: pointer; }
+
+.proofPanel { margin-top: 12px; padding: 14px; border-radius: 12px; background: #0f1020; }
+.proofPanel dl { margin: 0; }
+.proofPanel dl div { display: grid; grid-template-columns: 100px minmax(0,1fr); gap: 10px; padding: 6px 0; }
+.proofPanel dt { color: #8f8ca0; }
+.proofPanel dd { overflow: hidden; margin: 0; color: #dad8e5; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; }
+.proofSuccess { color: #83f2b2; }
+.proofFailure { color: #ff9b9b; }
+.proofActions { gap: 8px; margin-top: 12px; }
+.proofActions button { padding: 9px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 9px; color: #f5f4f8; background: rgba(255,255,255,.06); cursor: pointer; }
+
+.errorBanner, .emptyState { padding: 30px 18px; border-radius: 16px; text-align: center; }
+.errorBanner { color: #ffc0c0; background: rgba(239,68,68,.12); }
+.emptyState { color: #aaa7b9; border: 1px dashed rgba(255,255,255,.14); }
+.loadMore { display: block; margin: 18px auto 0; color: #1d1824; background: #ffd95a; }
+.page button:disabled { cursor: wait; opacity: .6; }
+
+@media (max-width: 620px) {
+  .summaryGrid { grid-template-columns: repeat(2, 1fr); }
+  .toolbar { align-items: stretch; flex-direction: column; }
+  .filters { justify-content: space-between; }
+  .filters button { flex: 1; padding-inline: 8px; }
+  .refresh { width: 100%; }
+  .resultGrid { gap: 5px; }
+  .resultGrid div { padding: 10px 8px; }
+}

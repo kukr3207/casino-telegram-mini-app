@@ -15,6 +15,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "jsx": "preserve", // Use the modern JSX transform
     "incremental": true,
