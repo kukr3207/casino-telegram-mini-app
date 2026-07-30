@@ -1,46 +1,27 @@
-// File: app/api/spin-wheel/route.js
-import crypto from "crypto";
-import { MongoClient } from "mongodb";
+import { casinoDatabase } from "../../../lib/database/mongo";
+import { jsonError, jsonResponse, readJsonObject } from "../../../lib/http/responses";
+import { selectVerifiableOutcome } from "../../../lib/security/fair-random";
+import { chatIdFilter, InvalidChatIdError, parseChatId } from "../../../lib/validation/chat-id";
 
 export async function POST(req) {
   try {
-    const { chatId } = await req.json();
+    const { chatId } = await readJsonObject(req);
     if (!chatId) {
-      return new Response(
-        JSON.stringify({ error: "Missing chatId" }),
-        { status: 400 }
-      );
+      return jsonError("Missing chatId", 400, "missing_chat_id");
     }
 
-    console.log("Processing spin wheel for chatId:", chatId);
-
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-    const db = client.db("casino-mini-app");
+    const db = await casinoDatabase();
     const users = db.collection("users");
-
-    // Convert chatId if necessary
-    const numericChatId = isNaN(chatId) ? chatId : parseFloat(chatId);
-    let user = await users.findOne({ chatId: numericChatId });
+    const normalizedChatId = parseChatId(chatId);
+    const user = await users.findOne(chatIdFilter(chatId));
     if (!user) {
-      user = await users.findOne({ chatId: chatId.toString() });
-    }
-    if (!user) {
-      await client.close();
-      return new Response(
-        JSON.stringify({ error: "User not found" }),
-        { status: 404 }
-      );
+      return jsonError("User not found", 404, "user_not_found");
     }
 
     // Prevent multiple spins in one day
     const today = new Date().toISOString().split("T")[0];
     if (user.dailySpinDate === today) {
-      await client.close();
-      return new Response(
-        JSON.stringify({ error: "Already spun today" }),
-        { status: 400 }
-      );
+      return jsonError("Already spun today", 400, "already_spun");
     }
 
     // Define outcomes (the order should match your front-end display)
@@ -55,17 +36,8 @@ export async function POST(req) {
       { type: "booster", value: 35 },
     ];
 
-    // Randomly select an outcome
-    const randomByte = crypto.randomBytes(1)[0];
-    const outcomeIndex = randomByte % outcomes.length;
-    const outcome = outcomes[outcomeIndex];
-
-    // Generate a random seed and a hash combining the seed and outcome data.
-    const seed = crypto.randomBytes(32).toString("hex");
-    const hash = crypto
-      .createHash("sha256")
-      .update(seed + JSON.stringify(outcome))
-      .digest("hex");
+    const selection = selectVerifiableOutcome(outcomes);
+    const { outcome } = selection;
 
     // If a token outcome, update token balance; if booster, store booster info.
     let newBalance = user.casino_chips || 0;
@@ -77,7 +49,7 @@ export async function POST(req) {
       // Ensure a TTL index exists on 'createdAt' (expires after 86400 seconds)
       await boosters.createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 });
       await boosters.insertOne({
-        chatId: numericChatId,
+        chatId: normalizedChatId,
         boosterValue: outcome.value,
         createdAt: new Date(),
         claimed: false, // Mark as unclaimed initially
@@ -96,18 +68,12 @@ export async function POST(req) {
       }
     );
 
-    await client.close();
-    console.log("Spin wheel processed successfully.");
-
-    return new Response(
-      JSON.stringify({ outcome, outcomeIndex, seed, hash }),
-      { status: 200 }
-    );
+    return jsonResponse(selection);
   } catch (error) {
+    if (error instanceof InvalidChatIdError || error instanceof TypeError) {
+      return jsonError(error.message, 400, "invalid_request");
+    }
     console.error("Error processing spin wheel:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500 }
-    );
+    return jsonError("Internal server error", 500, "internal_error");
   }
 }

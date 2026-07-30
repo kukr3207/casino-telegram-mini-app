@@ -1,56 +1,47 @@
-import crypto from "crypto";
-import { MongoClient } from "mongodb";
+import { casinoDatabase } from "../../../lib/database/mongo";
+import { jsonError, jsonResponse, readJsonObject } from "../../../lib/http/responses";
+import { rollVerifiableDice } from "../../../lib/security/fair-random";
+import { parseChatId, InvalidChatIdError } from "../../../lib/validation/chat-id";
 
-const MONGO_URI = process.env.MONGO_URI;
-const client = new MongoClient(MONGO_URI);
-const db = client.db("casino-mini-app");
-const rolls = db.collection("dice-rolls");
+async function rollsCollection() {
+  return (await casinoDatabase()).collection("dice-rolls");
+}
 
 export async function POST(req) {
   try {
-    // Extract chatId from the request body
-    const { chatId } = await req.json();
-    // Generate a random seed
-    const seed = crypto.randomBytes(32).toString("hex");
-    // Generate dice values (1-6)
-    const dice1 = (crypto.randomBytes(1)[0] % 6) + 1;
-    const dice2 = (crypto.randomBytes(1)[0] % 6) + 1;
-    const resultSum = dice1 + dice2;
-    // Concatenate seed and dice total to compute hash (for fairness)
-    const hash = crypto.createHash("sha256")
-                       .update(seed + resultSum)
-                       .digest("hex");
-
-    // Convert chatId to a number (double)
-    const chatIdAsNumber = parseFloat(chatId);
+    const { chatId } = await readJsonObject(req);
+    const normalizedChatId = parseChatId(chatId);
+    const roll = rollVerifiableDice();
+    const rolls = await rollsCollection();
 
     await rolls.insertOne({
-      chatId: chatIdAsNumber,
-      hash,
-      seed,
-      dice1,
-      dice2,
+      chatId: normalizedChatId,
+      ...roll,
       createdAt: new Date()
     });
 
-    return new Response(JSON.stringify({ dice1, dice2, hash, seed }), { status: 200 });
+    return jsonResponse(roll);
   } catch (error) {
+    if (error instanceof InvalidChatIdError || error instanceof TypeError) {
+      return jsonError(error.message, 400, "invalid_request");
+    }
     console.error("❌ Error generating roll:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
+    return jsonError("Internal server error", 500, "internal_error");
   }
 }
 
-export async function GET(req) {
+export async function GET() {
   try {
+    const rolls = await rollsCollection();
     const lastRoll = await rolls.findOne({}, { sort: { createdAt: -1 } });
 
     if (!lastRoll) {
-      return new Response(JSON.stringify({ error: "No roll found" }), { status: 404 });
+      return jsonError("No roll found", 404, "roll_not_found");
     }
 
-    return new Response(JSON.stringify(lastRoll), { status: 200 });
+    return jsonResponse(JSON.parse(JSON.stringify(lastRoll)));
   } catch (error) {
     console.error("❌ Error fetching roll:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
+    return jsonError("Internal server error", 500, "internal_error");
   }
 }
