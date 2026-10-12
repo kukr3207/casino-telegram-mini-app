@@ -1,4 +1,9 @@
-export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expense";
+export type AccountType =
+  | "asset"
+  | "liability"
+  | "equity"
+  | "revenue"
+  | "expense";
 export type NormalBalance = "debit" | "credit";
 export type JournalStatus = "draft" | "posted" | "reversed";
 export type LedgerSide = "debit" | "credit";
@@ -78,7 +83,12 @@ export interface FxRate {
 export interface RevenueContract {
   id: string;
   playerId?: string;
-  kind: "wager" | "tournament_fee" | "subscription" | "advertising" | "affiliate";
+  kind:
+    | "wager"
+    | "tournament_fee"
+    | "subscription"
+    | "advertising"
+    | "affiliate";
   currency: string;
   considerationMinor: bigint;
   startsAt: string;
@@ -155,19 +165,22 @@ export class AccountingConflictError extends Error {
 }
 
 export function accountingText(value: string, field: string): string {
-  if (typeof value !== "string" || !value.trim()) throw new AccountingValidationError(`${field} is required`);
+  if (typeof value !== "string" || !value.trim())
+    throw new AccountingValidationError(`${field} is required`);
   return value.trim();
 }
 
 export function accountingCurrency(value: string): string {
   const currency = accountingText(value, "currency").toUpperCase();
-  if (!/^[A-Z][A-Z0-9]{2,7}$/.test(currency)) throw new AccountingValidationError("currency is invalid");
+  if (!/^[A-Z][A-Z0-9]{2,7}$/.test(currency))
+    throw new AccountingValidationError("currency is invalid");
   return currency;
 }
 
 export function accountingDate(value: string | Date, field: string): Date {
   const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) throw new AccountingValidationError(`${field} is invalid`);
+  if (!Number.isFinite(date.getTime()))
+    throw new AccountingValidationError(`${field} is invalid`);
   return date;
 }
 

@@ -1,7 +1,20 @@
 import { createHash, createHmac } from "node:crypto";
 
 export type Suit = "clubs" | "diamonds" | "hearts" | "spades";
-export type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "T" | "J" | "Q" | "K" | "A";
+export type Rank =
+  | "2"
+  | "3"
+  | "4"
+  | "5"
+  | "6"
+  | "7"
+  | "8"
+  | "9"
+  | "T"
+  | "J"
+  | "Q"
+  | "K"
+  | "A";
 
 export interface Card {
   rank: Rank;
@@ -15,7 +28,21 @@ export interface ShuffledDeck {
 }
 
 export const suits: readonly Suit[] = ["clubs", "diamonds", "hearts", "spades"];
-export const ranks: readonly Rank[] = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+export const ranks: readonly Rank[] = [
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "T",
+  "J",
+  "Q",
+  "K",
+  "A",
+];
 
 export function cardCode(card: Card): string {
   validateCard(card);
@@ -30,7 +57,8 @@ export function cardCode(card: Card): string {
 
 export function parseCard(value: string): Card {
   const code = value.trim();
-  if (!/^[2-9TJQKA][cdhs]$/.test(code)) throw new RangeError("card code is invalid");
+  if (!/^[2-9TJQKA][cdhs]$/.test(code))
+    throw new RangeError("card code is invalid");
   const suitByCode: Readonly<Record<string, Suit>> = {
     c: "clubs",
     d: "diamonds",
@@ -47,10 +75,15 @@ export function standardDeck(): readonly Card[] {
   return suits.flatMap((suit) => ranks.map((rank) => ({ rank, suit })));
 }
 
-export function shuffledDeck(serverSeed: string, clientSeed: string, nonce: number): ShuffledDeck {
+export function shuffledDeck(
+  serverSeed: string,
+  clientSeed: string,
+  nonce: number,
+): ShuffledDeck {
   if (!serverSeed) throw new RangeError("server seed is required");
   if (!clientSeed) throw new RangeError("client seed is required");
-  if (!Number.isSafeInteger(nonce) || nonce < 0) throw new RangeError("nonce is invalid");
+  if (!Number.isSafeInteger(nonce) || nonce < 0)
+    throw new RangeError("nonce is invalid");
   const cards = [...standardDeck()];
   let cursor = 0;
   for (let index = cards.length - 1; index > 0; index -= 1) {
@@ -73,10 +106,17 @@ export function verifyShuffle(
 ): boolean {
   const expected = shuffledDeck(serverSeed, clientSeed, deck.nonce);
   if (expected.commitment !== deck.commitment) return false;
-  return expected.cards.every((card, index) => cardCode(card) === cardCode(deck.cards[index]));
+  return expected.cards.every(
+    (card, index) => cardCode(card) === cardCode(deck.cards[index]),
+  );
 }
 
-function randomWord(serverSeed: string, clientSeed: string, nonce: number, cursor: number): number {
+function randomWord(
+  serverSeed: string,
+  clientSeed: string,
+  nonce: number,
+  cursor: number,
+): number {
   const digest = createHmac("sha256", serverSeed)
     .update(`${clientSeed}:${nonce}:${cursor}`)
     .digest();
@@ -140,7 +180,9 @@ const categoryRank: Readonly<Record<HandCategory, number>> = {
 export function evaluateFive(cards: readonly Card[]): EvaluatedHand {
   if (cards.length !== 5) throw new RangeError("five cards are required");
   assertUniqueCards(cards);
-  const values = cards.map((card) => rankValue[card.rank]).sort((left, right) => right - left);
+  const values = cards
+    .map((card) => rankValue[card.rank])
+    .sort((left, right) => right - left);
   const groups = groupedValues(values);
   const flush = cards.every((card) => card.suit === cards[0].suit);
   const straightHigh = straightHighCard(values);
@@ -163,14 +205,29 @@ export function evaluateFive(cards: readonly Card[]): EvaluatedHand {
     kickers = [straightHigh];
   } else if (groups[0].count === 3) {
     category = "three_of_a_kind";
-    kickers = [groups[0].value, ...groups.slice(1).map((group) => group.value).sort((a, b) => b - a)];
+    kickers = [
+      groups[0].value,
+      ...groups
+        .slice(1)
+        .map((group) => group.value)
+        .sort((a, b) => b - a),
+    ];
   } else if (groups[0].count === 2 && groups[1].count === 2) {
     category = "two_pair";
-    const pairs = groups.slice(0, 2).map((group) => group.value).sort((a, b) => b - a);
+    const pairs = groups
+      .slice(0, 2)
+      .map((group) => group.value)
+      .sort((a, b) => b - a);
     kickers = [...pairs, groups[2].value];
   } else if (groups[0].count === 2) {
     category = "one_pair";
-    kickers = [groups[0].value, ...groups.slice(1).map((group) => group.value).sort((a, b) => b - a)];
+    kickers = [
+      groups[0].value,
+      ...groups
+        .slice(1)
+        .map((group) => group.value)
+        .sort((a, b) => b - a),
+    ];
   } else {
     category = "high_card";
     kickers = values;
@@ -187,29 +244,40 @@ export function evaluateFive(cards: readonly Card[]): EvaluatedHand {
 }
 
 export function evaluateBest(cards: readonly Card[]): EvaluatedHand {
-  if (cards.length < 5 || cards.length > 7) throw new RangeError("five to seven cards are required");
+  if (cards.length < 5 || cards.length > 7)
+    throw new RangeError("five to seven cards are required");
   assertUniqueCards(cards);
   const hands = combinations(cards, 5).map(evaluateFive);
-  hands.sort((left, right) => left.score === right.score ? 0 : left.score > right.score ? -1 : 1);
+  hands.sort((left, right) =>
+    left.score === right.score ? 0 : left.score > right.score ? -1 : 1,
+  );
   return hands[0];
 }
 
-export function compareHands(left: EvaluatedHand, right: EvaluatedHand): -1 | 0 | 1 {
+export function compareHands(
+  left: EvaluatedHand,
+  right: EvaluatedHand,
+): -1 | 0 | 1 {
   if (left.score === right.score) return 0;
   return left.score > right.score ? 1 : -1;
 }
 
 function assertUniqueCards(cards: readonly Card[]): void {
   const codes = cards.map(cardCode);
-  if (new Set(codes).size !== codes.length) throw new RangeError("cards must be unique");
+  if (new Set(codes).size !== codes.length)
+    throw new RangeError("cards must be unique");
 }
 
-function groupedValues(values: readonly number[]): { value: number; count: number }[] {
+function groupedValues(
+  values: readonly number[],
+): { value: number; count: number }[] {
   const counts = new Map<number, number>();
   for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
   return [...counts.entries()]
     .map(([value, count]) => ({ value, count }))
-    .sort((left, right) => right.count - left.count || right.value - left.value);
+    .sort(
+      (left, right) => right.count - left.count || right.value - left.value,
+    );
 }
 
 function straightHighCard(values: readonly number[]): number | null {
@@ -217,7 +285,12 @@ function straightHighCard(values: readonly number[]): number | null {
   if (unique.includes(14)) unique.push(1);
   for (let index = 0; index <= unique.length - 5; index += 1) {
     const high = unique[index];
-    if (unique.slice(index, index + 5).every((value, offset) => value === high - offset)) return high;
+    if (
+      unique
+        .slice(index, index + 5)
+        .every((value, offset) => value === high - offset)
+    )
+      return high;
   }
   return null;
 }
@@ -242,7 +315,11 @@ function combinations<T>(values: readonly T[], size: number): T[][] {
       output.push([...current]);
       return;
     }
-    for (let index = start; index <= values.length - (size - current.length); index += 1) {
+    for (
+      let index = start;
+      index <= values.length - (size - current.length);
+      index += 1
+    ) {
       current.push(values[index]);
       select(index + 1, current);
       current.pop();

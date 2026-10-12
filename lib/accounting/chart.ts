@@ -21,22 +21,30 @@ export class ChartOfAccounts {
   readonly #accounts = new Map<string, LedgerAccount>();
   readonly #byCode = new Map<string, string>();
 
-  create(input: Omit<LedgerAccount, "normalBalance" | "createdAt" | "version"> & {
-    normalBalance?: LedgerAccount["normalBalance"];
-    createdAt?: Date;
-  }): LedgerAccount {
+  create(
+    input: Omit<LedgerAccount, "normalBalance" | "createdAt" | "version"> & {
+      normalBalance?: LedgerAccount["normalBalance"];
+      createdAt?: Date;
+    },
+  ): LedgerAccount {
     const account = validateAccount({
       ...input,
       normalBalance: input.normalBalance ?? accountNormalBalance(input.type),
       createdAt: (input.createdAt ?? new Date()).toISOString(),
       version: 1,
     });
-    if (this.#accounts.has(account.id)) throw new AccountingConflictError("account id already exists");
-    if (this.#byCode.has(account.code)) throw new AccountingConflictError("account code already exists");
+    if (this.#accounts.has(account.id))
+      throw new AccountingConflictError("account id already exists");
+    if (this.#byCode.has(account.code))
+      throw new AccountingConflictError("account code already exists");
     if (account.parentId) {
       const parent = this.#accounts.get(account.parentId);
-      if (!parent) throw new AccountingValidationError("parent account does not exist");
-      if (parent.type !== account.type) throw new AccountingValidationError("parent and child account types must match");
+      if (!parent)
+        throw new AccountingValidationError("parent account does not exist");
+      if (parent.type !== account.type)
+        throw new AccountingValidationError(
+          "parent and child account types must match",
+        );
     }
     this.#accounts.set(account.id, account);
     this.#byCode.set(account.code, account.id);
@@ -49,8 +57,13 @@ export class ChartOfAccounts {
     changes: Partial<Pick<LedgerAccount, "name" | "tags" | "active">>,
   ): LedgerAccount {
     const current = this.require(accountId);
-    if (current.version !== expectedVersion) throw new AccountingConflictError("account version does not match");
-    const changed = validateAccount({ ...current, ...changes, version: current.version + 1 });
+    if (current.version !== expectedVersion)
+      throw new AccountingConflictError("account version does not match");
+    const changed = validateAccount({
+      ...current,
+      ...changes,
+      version: current.version + 1,
+    });
     this.#accounts.set(changed.id, changed);
     return cloneAccount(changed);
   }
@@ -67,14 +80,31 @@ export class ChartOfAccounts {
 
   search(query: AccountQuery = {}): readonly LedgerAccount[] {
     const text = query.text?.trim().toLocaleLowerCase();
-    const currency = query.currency ? accountingCurrency(query.currency) : undefined;
+    const currency = query.currency
+      ? accountingCurrency(query.currency)
+      : undefined;
     return [...this.#accounts.values()]
       .filter((account) => !query.type || account.type === query.type)
-      .filter((account) => query.parentId === undefined || account.parentId === (query.parentId ?? undefined))
+      .filter(
+        (account) =>
+          query.parentId === undefined ||
+          account.parentId === (query.parentId ?? undefined),
+      )
       .filter((account) => !currency || account.currency === currency)
-      .filter((account) => query.active === undefined || account.active === query.active)
-      .filter((account) => !query.tag || account.tags.includes(query.tag.trim().toLocaleLowerCase()))
-      .filter((account) => !text || `${account.code} ${account.name}`.toLocaleLowerCase().includes(text))
+      .filter(
+        (account) =>
+          query.active === undefined || account.active === query.active,
+      )
+      .filter(
+        (account) =>
+          !query.tag ||
+          account.tags.includes(query.tag.trim().toLocaleLowerCase()),
+      )
+      .filter(
+        (account) =>
+          !text ||
+          `${account.code} ${account.name}`.toLocaleLowerCase().includes(text),
+      )
       .sort((left, right) => left.code.localeCompare(right.code))
       .map(cloneAccount);
   }
@@ -83,8 +113,12 @@ export class ChartOfAccounts {
     this.require(accountId);
     const output: LedgerAccount[] = [];
     const visit = (parentId: string): void => {
-      const children = [...this.#accounts.values()].filter((account) => account.parentId === parentId);
-      for (const child of children.sort((left, right) => left.code.localeCompare(right.code))) {
+      const children = [...this.#accounts.values()].filter(
+        (account) => account.parentId === parentId,
+      );
+      for (const child of children.sort((left, right) =>
+        left.code.localeCompare(right.code),
+      )) {
         output.push(cloneAccount(child));
         visit(child.id);
       }
@@ -104,11 +138,20 @@ function validateAccount(value: LedgerAccount): LedgerAccount {
   const id = accountingText(value.id, "account id");
   const code = accountingText(value.code, "account code").toUpperCase();
   const name = accountingText(value.name, "account name");
-  if (!/^[A-Z0-9][A-Z0-9.-]{1,31}$/.test(code)) throw new AccountingValidationError("account code is invalid");
+  if (!/^[A-Z0-9][A-Z0-9.-]{1,31}$/.test(code))
+    throw new AccountingValidationError("account code is invalid");
   if (value.normalBalance !== accountNormalBalance(value.type)) {
-    throw new AccountingValidationError("normal balance does not match account type");
+    throw new AccountingValidationError(
+      "normal balance does not match account type",
+    );
   }
-  const tags = [...new Set(value.tags.map((tag) => accountingText(tag, "account tag").toLocaleLowerCase()))].sort();
+  const tags = [
+    ...new Set(
+      value.tags.map((tag) =>
+        accountingText(tag, "account tag").toLocaleLowerCase(),
+      ),
+    ),
+  ].sort();
   return {
     ...value,
     id,

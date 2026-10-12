@@ -49,23 +49,26 @@ export class SportsbookSettlementService {
   readonly #bets: BetRepository;
   readonly #wallet: BetWallet;
 
-  constructor(
-    bets: BetRepository,
-    wallet: BetWallet,
-  ) {
+  constructor(bets: BetRepository, wallet: BetWallet) {
     this.#bets = bets;
     this.#wallet = wallet;
   }
 
   setTaxPolicy(value: TaxPolicy): TaxPolicy {
     const currency = value.currency.trim().toUpperCase();
-    if (!currency) throw new SportsbookValidationError("tax currency is required");
-    if (!Number.isSafeInteger(value.winTaxBasisPoints)
-      || value.winTaxBasisPoints < 0
-      || value.winTaxBasisPoints > 10_000) {
+    if (!currency)
+      throw new SportsbookValidationError("tax currency is required");
+    if (
+      !Number.isSafeInteger(value.winTaxBasisPoints) ||
+      value.winTaxBasisPoints < 0 ||
+      value.winTaxBasisPoints > 10_000
+    ) {
       throw new SportsbookValidationError("win tax rate is invalid");
     }
-    if (value.taxFreeWinMinor < 0n || (value.maximumTaxMinor !== undefined && value.maximumTaxMinor < 0n)) {
+    if (
+      value.taxFreeWinMinor < 0n ||
+      (value.maximumTaxMinor !== undefined && value.maximumTaxMinor < 0n)
+    ) {
       throw new SportsbookValidationError("tax thresholds cannot be negative");
     }
     const policy = { ...value, currency };
@@ -73,33 +76,48 @@ export class SportsbookSettlementService {
     return { ...policy };
   }
 
-  settleMarket(input: Omit<MarketSettlement, "fingerprint">): readonly BetPayout[] {
+  settleMarket(
+    input: Omit<MarketSettlement, "fingerprint">,
+  ): readonly BetPayout[] {
     const settlement = validateSettlement(input);
     const existing = this.#marketSettlements.get(settlement.marketId);
     if (existing) {
       if (settlement.sourceRevision < existing.sourceRevision) {
-        throw new SportsbookConflictError("settlement source revision moved backwards");
+        throw new SportsbookConflictError(
+          "settlement source revision moved backwards",
+        );
       }
       if (settlement.sourceRevision === existing.sourceRevision) {
         if (settlement.fingerprint !== existing.fingerprint) {
-          throw new SportsbookConflictError("settlement revision contains different results");
+          throw new SportsbookConflictError(
+            "settlement revision contains different results",
+          );
         }
         return this.affectedPayouts(settlement.marketId);
       }
       this.assertCorrectionSafe(existing, settlement);
     }
     this.#marketSettlements.set(settlement.marketId, settlement);
-    this.recordAudit(existing ? "market_corrected" : "market_settled", settlement.marketId, settlement.settledAt, settlement);
+    this.recordAudit(
+      existing ? "market_corrected" : "market_settled",
+      settlement.marketId,
+      settlement.settledAt,
+      settlement,
+    );
     const payouts: BetPayout[] = [];
     for (const bet of this.#bets.open()) {
-      if (!bet.legs.some((leg) => leg.marketId === settlement.marketId)) continue;
+      if (!bet.legs.some((leg) => leg.marketId === settlement.marketId))
+        continue;
       const changed = this.applyMarketResult(bet, settlement);
       const complete = changed.legs.every((leg) => leg.result !== "pending");
-      const updated = this.#bets.replace({
-        ...changed,
-        status: complete ? finalStatus(changed.legs) : "partially_settled",
-        settledAt: complete ? settlement.settledAt : undefined,
-      }, bet.version);
+      const updated = this.#bets.replace(
+        {
+          ...changed,
+          status: complete ? finalStatus(changed.legs) : "partially_settled",
+          settledAt: complete ? settlement.settledAt : undefined,
+        },
+        bet.version,
+      );
       if (complete) payouts.push(this.pay(updated, settlement.settledAt));
     }
     return payouts;
@@ -114,9 +132,13 @@ export class SportsbookSettlementService {
     settledAt = new Date(),
   ): readonly BetPayout[] {
     if (selectionIds.length === 0) {
-      throw new SportsbookValidationError("void settlement requires selections");
+      throw new SportsbookValidationError(
+        "void settlement requires selections",
+      );
     }
-    const results = Object.fromEntries(selectionIds.map((id) => [id, "void" as const]));
+    const results = Object.fromEntries(
+      selectionIds.map((id) => [id, "void" as const]),
+    );
     return this.settleMarket({
       marketId,
       eventId,
@@ -163,7 +185,10 @@ export class SportsbookSettlementService {
     const legs = bet.legs.map((leg): BetLeg => {
       if (leg.marketId !== settlement.marketId) return leg;
       const result = settlement.results[leg.selectionId];
-      if (!result) throw new SportsbookValidationError("settlement omits a selected outcome");
+      if (!result)
+        throw new SportsbookValidationError(
+          "settlement omits a selected outcome",
+        );
       return {
         ...leg,
         result,
@@ -177,9 +202,10 @@ export class SportsbookSettlementService {
     const existing = this.#payouts.get(bet.id);
     if (existing) return { ...existing };
     const grossReturnMinor = calculateReturn(bet);
-    const taxableWinMinor = grossReturnMinor > bet.stakeMinor
-      ? grossReturnMinor - bet.stakeMinor
-      : 0n;
+    const taxableWinMinor =
+      grossReturnMinor > bet.stakeMinor
+        ? grossReturnMinor - bet.stakeMinor
+        : 0n;
     const taxMinor = this.calculateTax(bet.currency, taxableWinMinor);
     const netReturnMinor = grossReturnMinor - taxMinor;
     const payout: BetPayout = {
@@ -203,24 +229,35 @@ export class SportsbookSettlementService {
     if (!policy || winMinor <= policy.taxFreeWinMinor) return 0n;
     const taxable = winMinor - policy.taxFreeWinMinor;
     const calculated = (taxable * BigInt(policy.winTaxBasisPoints)) / 10_000n;
-    if (policy.maximumTaxMinor !== undefined && calculated > policy.maximumTaxMinor) {
+    if (
+      policy.maximumTaxMinor !== undefined &&
+      calculated > policy.maximumTaxMinor
+    ) {
       return policy.maximumTaxMinor;
     }
     return calculated;
   }
 
-  private assertCorrectionSafe(previous: MarketSettlement, next: MarketSettlement): void {
+  private assertCorrectionSafe(
+    previous: MarketSettlement,
+    next: MarketSettlement,
+  ): void {
     if (previous.eventId !== next.eventId) {
-      throw new SportsbookConflictError("settlement cannot move to another event");
+      throw new SportsbookConflictError(
+        "settlement cannot move to another event",
+      );
     }
     const affected = this.affectedPayouts(previous.marketId);
     if (affected.length > 0) {
-      throw new SportsbookConflictError("paid market correction requires manual reversal");
+      throw new SportsbookConflictError(
+        "paid market correction requires manual reversal",
+      );
     }
   }
 
   private affectedPayouts(marketId: string): BetPayout[] {
-    return this.#bets.open()
+    return this.#bets
+      .open()
       .filter((bet) => bet.legs.some((leg) => leg.marketId === marketId))
       .map((bet) => this.#payouts.get(bet.id))
       .filter((value): value is BetPayout => Boolean(value))
@@ -246,12 +283,16 @@ export class SportsbookSettlementService {
   }
 }
 
-function validateSettlement(value: Omit<MarketSettlement, "fingerprint">): MarketSettlement {
+function validateSettlement(
+  value: Omit<MarketSettlement, "fingerprint">,
+): MarketSettlement {
   const marketId = requiredText(value.marketId, "market id");
   const eventId = requiredText(value.eventId, "event id");
   const source = requiredText(value.source, "settlement source");
   if (!Number.isSafeInteger(value.sourceRevision) || value.sourceRevision < 1) {
-    throw new SportsbookValidationError("settlement source revision must be positive");
+    throw new SportsbookValidationError(
+      "settlement source revision must be positive",
+    );
   }
   const settledAt = new Date(value.settledAt);
   if (!Number.isFinite(settledAt.getTime())) {
@@ -259,15 +300,21 @@ function validateSettlement(value: Omit<MarketSettlement, "fingerprint">): Marke
   }
   const entries = Object.entries(value.results);
   if (entries.length === 0) {
-    throw new SportsbookValidationError("settlement requires selection results");
+    throw new SportsbookValidationError(
+      "settlement requires selection results",
+    );
   }
-  const results = Object.fromEntries(entries.map(([selectionId, result]) => {
-    requiredText(selectionId, "selection id");
-    if (result === "pending") {
-      throw new SportsbookValidationError("settlement result cannot remain pending");
-    }
-    return [selectionId, result];
-  }));
+  const results = Object.fromEntries(
+    entries.map(([selectionId, result]) => {
+      requiredText(selectionId, "selection id");
+      if (result === "pending") {
+        throw new SportsbookValidationError(
+          "settlement result cannot remain pending",
+        );
+      }
+      return [selectionId, result];
+    }),
+  );
   const normalized = {
     ...value,
     marketId,
@@ -285,8 +332,11 @@ function validateSettlement(value: Omit<MarketSettlement, "fingerprint">): Marke
 export function calculateReturn(bet: Bet): bigint {
   if (bet.kind === "system") return calculateSystemReturn(bet);
   if (bet.legs.some((leg) => ["lost", "half_lost"].includes(leg.result))) {
-    const halfLostCount = bet.legs.filter((leg) => leg.result === "half_lost").length;
-    if (halfLostCount === 0 || bet.legs.some((leg) => leg.result === "lost")) return 0n;
+    const halfLostCount = bet.legs.filter(
+      (leg) => leg.result === "half_lost",
+    ).length;
+    if (halfLostCount === 0 || bet.legs.some((leg) => leg.result === "lost"))
+      return 0n;
   }
   let adjustedStake = bet.stakeMinor;
   let price: Price = { numerator: 1n, denominator: 1n };
@@ -325,7 +375,9 @@ function calculateSystemReturn(bet: Bet): bigint {
       stakeMinor: unit + (BigInt(index) < remainder ? 1n : 0n),
       legs,
     };
-    return total + (synthetic.stakeMinor > 0n ? calculateReturn(synthetic) : 0n);
+    return (
+      total + (synthetic.stakeMinor > 0n ? calculateReturn(synthetic) : 0n)
+    );
   }, 0n);
 }
 
@@ -336,7 +388,11 @@ function combinationsOf<T>(values: readonly T[], size: number): T[][] {
       output.push([...selected]);
       return;
     }
-    for (let index = start; index <= values.length - (size - selected.length); index += 1) {
+    for (
+      let index = start;
+      index <= values.length - (size - selected.length);
+      index += 1
+    ) {
       selected.push(values[index]);
       walk(index + 1, selected);
       selected.pop();
@@ -349,14 +405,22 @@ function combinationsOf<T>(values: readonly T[], size: number): T[][] {
 function finalStatus(legs: readonly BetLeg[]): Bet["status"] {
   if (legs.every((leg) => leg.result === "void")) return "voided";
   if (legs.some((leg) => leg.result === "lost")) return "lost";
-  if (legs.some((leg) => leg.result === "half_lost")
-    && !legs.some((leg) => ["won", "half_won"].includes(leg.result))) return "lost";
+  if (
+    legs.some((leg) => leg.result === "half_lost") &&
+    !legs.some((leg) => ["won", "half_won"].includes(leg.result))
+  )
+    return "lost";
   return "won";
 }
 
 function stableHash(value: unknown): string {
-  return createHash("sha256").update(JSON.stringify(value, (_key, item) =>
-    typeof item === "bigint" ? item.toString() : item)).digest("hex");
+  return createHash("sha256")
+    .update(
+      JSON.stringify(value, (_key, item) =>
+        typeof item === "bigint" ? item.toString() : item,
+      ),
+    )
+    .digest("hex");
 }
 
 function hashAudit(value: Omit<SettlementAuditEntry, "hash">): string {

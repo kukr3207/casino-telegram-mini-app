@@ -267,11 +267,16 @@ export function positiveMinor(value: bigint, field: string): bigint {
 }
 
 export function validatePrice(value: Price): Price {
-  if (typeof value.numerator !== "bigint" || typeof value.denominator !== "bigint") {
+  if (
+    typeof value.numerator !== "bigint" ||
+    typeof value.denominator !== "bigint"
+  ) {
     throw new SportsbookValidationError("price components must be integers");
   }
   if (value.numerator <= value.denominator || value.denominator <= 0n) {
-    throw new SportsbookValidationError("decimal price must be greater than one");
+    throw new SportsbookValidationError(
+      "decimal price must be greater than one",
+    );
   }
   const divisor = greatestCommonDivisor(value.numerator, value.denominator);
   return {

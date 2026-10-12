@@ -105,43 +105,71 @@ export class SportsbookRiskEngine {
   decide(context: RiskContext): LimitDecision {
     const currency = normalizedCurrency(context.currency);
     const limits = this.#limits.get(currency);
-    if (!limits) throw new SportsbookValidationError("risk limits do not exist for currency");
+    if (!limits)
+      throw new SportsbookValidationError(
+        "risk limits do not exist for currency",
+      );
     const profile = this.playerProfile(context.playerId);
     const reasons: string[] = [];
     if (profile.blocked) reasons.push("player_blocked");
     for (const leg of context.legs) {
       const sport = context.sportByEvent[leg.eventId];
       const competition = context.competitionByEvent[leg.eventId];
-      if (sport && profile.blockedSports.includes(sport)) reasons.push("sport_blocked");
-      if (competition && profile.blockedCompetitions.includes(competition)) reasons.push("competition_blocked");
+      if (sport && profile.blockedSports.includes(sport))
+        reasons.push("sport_blocked");
+      if (competition && profile.blockedCompetitions.includes(competition))
+        reasons.push("competition_blocked");
     }
     const maximumStakeMinor = minBigInt(
-      (limits.maximumStakeMinor * BigInt(profile.stakeMultiplierBasisPoints)) / 10_000n,
+      (limits.maximumStakeMinor * BigInt(profile.stakeMultiplierBasisPoints)) /
+        10_000n,
       this.remainingPlayerOpenStake(context.playerId, currency, limits),
-      this.remainingPlayerDailyStake(context.playerId, currency, context.placedAt, limits),
+      this.remainingPlayerDailyStake(
+        context.playerId,
+        currency,
+        context.placedAt,
+        limits,
+      ),
     );
-    if (context.stakeMinor < limits.minimumStakeMinor) reasons.push("below_minimum_stake");
-    if (context.stakeMinor > maximumStakeMinor) reasons.push("stake_limit_exceeded");
-    const maximumReturn = (limits.maximumBetReturnMinor * BigInt(profile.returnMultiplierBasisPoints)) / 10_000n;
-    if (context.potentialReturnMinor > maximumReturn) reasons.push("return_limit_exceeded");
-    const requestedLiability = context.potentialReturnMinor - context.stakeMinor;
+    if (context.stakeMinor < limits.minimumStakeMinor)
+      reasons.push("below_minimum_stake");
+    if (context.stakeMinor > maximumStakeMinor)
+      reasons.push("stake_limit_exceeded");
+    const maximumReturn =
+      (limits.maximumBetReturnMinor *
+        BigInt(profile.returnMultiplierBasisPoints)) /
+      10_000n;
+    if (context.potentialReturnMinor > maximumReturn)
+      reasons.push("return_limit_exceeded");
+    const requestedLiability =
+      context.potentialReturnMinor - context.stakeMinor;
     for (const leg of context.legs) {
       const share = requestedLiability / BigInt(context.legs.length);
-      if (this.eventLiability(leg.eventId, currency) + share > limits.maximumEventLiabilityMinor) {
+      if (
+        this.eventLiability(leg.eventId, currency) + share >
+        limits.maximumEventLiabilityMinor
+      ) {
         reasons.push("event_liability_exceeded");
       }
-      if (this.marketLiability(leg.marketId, currency) + share > limits.maximumMarketLiabilityMinor) {
+      if (
+        this.marketLiability(leg.marketId, currency) + share >
+        limits.maximumMarketLiabilityMinor
+      ) {
         reasons.push("market_liability_exceeded");
       }
-      if (this.selectionLiability(leg.selectionId, currency) + share > limits.maximumSelectionLiabilityMinor) {
+      if (
+        this.selectionLiability(leg.selectionId, currency) + share >
+        limits.maximumSelectionLiabilityMinor
+      ) {
         reasons.push("selection_liability_exceeded");
       }
     }
     const uniqueReasons = [...new Set(reasons)];
-    const manualReview = uniqueReasons.length === 0
-      && (context.stakeMinor >= limits.reviewStakeMinor
-        || context.potentialReturnMinor >= limits.reviewReturnMinor
-        || profile.segment === "sharp");
+    const manualReview =
+      uniqueReasons.length === 0 &&
+      (context.stakeMinor >= limits.reviewStakeMinor ||
+        context.potentialReturnMinor >= limits.reviewReturnMinor ||
+        profile.segment === "sharp");
     return {
       accepted: uniqueReasons.length === 0,
       maximumStakeMinor: maximumStakeMinor > 0n ? maximumStakeMinor : 0n,
@@ -152,7 +180,9 @@ export class SportsbookRiskEngine {
 
   reserve(bet: Bet): LiabilityReservation {
     if (bet.status !== "accepted") {
-      throw new SportsbookValidationError("only accepted bets reserve liability");
+      throw new SportsbookValidationError(
+        "only accepted bets reserve liability",
+      );
     }
     const existing = this.#reservations.get(bet.id);
     if (existing) return cloneReservation(existing);
@@ -165,9 +195,10 @@ export class SportsbookRiskEngine {
       currency: bet.currency,
       stakeMinor: bet.stakeMinor,
       potentialReturnMinor: bet.acceptedReturnMinor,
-      liabilityMinor: bet.acceptedReturnMinor > bet.stakeMinor
-        ? bet.acceptedReturnMinor - bet.stakeMinor
-        : 0n,
+      liabilityMinor:
+        bet.acceptedReturnMinor > bet.stakeMinor
+          ? bet.acceptedReturnMinor - bet.stakeMinor
+          : 0n,
       eventIds,
       marketIds,
       selectionIds,
@@ -180,7 +211,10 @@ export class SportsbookRiskEngine {
 
   release(betId: string, settled = false): LiabilityReservation {
     const reservation = this.#reservations.get(requiredText(betId, "bet id"));
-    if (!reservation) throw new SportsbookValidationError("liability reservation does not exist");
+    if (!reservation)
+      throw new SportsbookValidationError(
+        "liability reservation does not exist",
+      );
     if (reservation.status !== "open") return cloneReservation(reservation);
     const changed: LiabilityReservation = {
       ...reservation,
@@ -196,7 +230,8 @@ export class SportsbookRiskEngine {
     for (const reservation of this.#reservations.values()) {
       if (reservation.status !== "open") continue;
       if (normalized && reservation.currency !== normalized) continue;
-      const eventShare = reservation.liabilityMinor / BigInt(reservation.eventIds.length || 1);
+      const eventShare =
+        reservation.liabilityMinor / BigInt(reservation.eventIds.length || 1);
       for (const eventId of reservation.eventIds) {
         mergeExposure(groups, {
           key: `event:${eventId}:${reservation.currency}`,
@@ -207,10 +242,14 @@ export class SportsbookRiskEngine {
           betCount: 1,
         });
       }
-      const marketShare = reservation.liabilityMinor / BigInt(reservation.marketIds.length || 1);
+      const marketShare =
+        reservation.liabilityMinor / BigInt(reservation.marketIds.length || 1);
       for (let index = 0; index < reservation.marketIds.length; index += 1) {
         const marketId = reservation.marketIds[index];
-        const eventId = reservation.eventIds[Math.min(index, reservation.eventIds.length - 1)];
+        const eventId =
+          reservation.eventIds[
+            Math.min(index, reservation.eventIds.length - 1)
+          ];
         mergeExposure(groups, {
           key: `market:${marketId}:${reservation.currency}`,
           eventId,
@@ -221,11 +260,19 @@ export class SportsbookRiskEngine {
           betCount: 1,
         });
       }
-      const selectionShare = reservation.liabilityMinor / BigInt(reservation.selectionIds.length || 1);
+      const selectionShare =
+        reservation.liabilityMinor /
+        BigInt(reservation.selectionIds.length || 1);
       for (let index = 0; index < reservation.selectionIds.length; index += 1) {
         const selectionId = reservation.selectionIds[index];
-        const marketId = reservation.marketIds[Math.min(index, reservation.marketIds.length - 1)];
-        const eventId = reservation.eventIds[Math.min(index, reservation.eventIds.length - 1)];
+        const marketId =
+          reservation.marketIds[
+            Math.min(index, reservation.marketIds.length - 1)
+          ];
+        const eventId =
+          reservation.eventIds[
+            Math.min(index, reservation.eventIds.length - 1)
+          ];
         mergeExposure(groups, {
           key: `selection:${selectionId}:${reservation.currency}`,
           eventId,
@@ -255,7 +302,9 @@ export class SportsbookRiskEngine {
   ): bigint {
     const used = [...this.#reservations.values()]
       .filter((value) => value.status === "open")
-      .filter((value) => value.playerId === playerId && value.currency === currency)
+      .filter(
+        (value) => value.playerId === playerId && value.currency === currency,
+      )
       .reduce((total, value) => total + value.stakeMinor, 0n);
     return limits.maximumPlayerOpenStakeMinor > used
       ? limits.maximumPlayerOpenStakeMinor - used
@@ -270,7 +319,9 @@ export class SportsbookRiskEngine {
   ): bigint {
     const day = at.toISOString().slice(0, 10);
     const used = [...this.#reservations.values()]
-      .filter((value) => value.playerId === playerId && value.currency === currency)
+      .filter(
+        (value) => value.playerId === playerId && value.currency === currency,
+      )
       .filter((value) => value.placedAt.slice(0, 10) === day)
       .reduce((total, value) => total + value.stakeMinor, 0n);
     return limits.maximumPlayerDailyStakeMinor > used
@@ -309,7 +360,10 @@ function validateLimits(value: SportsbookRiskLimits): SportsbookRiskLimits {
   positiveMinor(limits.maximumPlayerDailyStakeMinor, "maximum daily stake");
   positiveMinor(limits.maximumEventLiabilityMinor, "maximum event liability");
   positiveMinor(limits.maximumMarketLiabilityMinor, "maximum market liability");
-  positiveMinor(limits.maximumSelectionLiabilityMinor, "maximum selection liability");
+  positiveMinor(
+    limits.maximumSelectionLiabilityMinor,
+    "maximum selection liability",
+  );
   positiveMinor(limits.reviewStakeMinor, "review stake");
   positiveMinor(limits.reviewReturnMinor, "review return");
   if (limits.maximumStakeMinor < limits.minimumStakeMinor) {
@@ -320,34 +374,54 @@ function validateLimits(value: SportsbookRiskLimits): SportsbookRiskLimits {
 
 function validateProfile(value: PlayerRiskProfile): PlayerRiskProfile {
   const playerId = requiredText(value.playerId, "player id");
-  for (const multiplier of [value.stakeMultiplierBasisPoints, value.returnMultiplierBasisPoints]) {
-    if (!Number.isSafeInteger(multiplier) || multiplier < 0 || multiplier > 100_000) {
+  for (const multiplier of [
+    value.stakeMultiplierBasisPoints,
+    value.returnMultiplierBasisPoints,
+  ]) {
+    if (
+      !Number.isSafeInteger(multiplier) ||
+      multiplier < 0 ||
+      multiplier > 100_000
+    ) {
       throw new SportsbookValidationError("player risk multiplier is invalid");
     }
   }
   return {
     ...value,
     playerId,
-    blockedSports: [...new Set(value.blockedSports.map((item) => requiredText(item, "sport")))].sort(),
-    blockedCompetitions: [...new Set(value.blockedCompetitions.map((item) => requiredText(item, "competition")))].sort(),
+    blockedSports: [
+      ...new Set(
+        value.blockedSports.map((item) => requiredText(item, "sport")),
+      ),
+    ].sort(),
+    blockedCompetitions: [
+      ...new Set(
+        value.blockedCompetitions.map((item) =>
+          requiredText(item, "competition"),
+        ),
+      ),
+    ].sort(),
     version: Math.max(0, value.version || 0),
   };
 }
 
 function mergeExposure(target: Map<string, Exposure>, value: Exposure): void {
   const current = target.get(value.key);
-  target.set(value.key, current
-    ? {
-      ...current,
-      liabilityMinor: current.liabilityMinor + value.liabilityMinor,
-      stakeMinor: current.stakeMinor + value.stakeMinor,
-      betCount: current.betCount + value.betCount,
-    }
-    : value);
+  target.set(
+    value.key,
+    current
+      ? {
+          ...current,
+          liabilityMinor: current.liabilityMinor + value.liabilityMinor,
+          stakeMinor: current.stakeMinor + value.stakeMinor,
+          betCount: current.betCount + value.betCount,
+        }
+      : value,
+  );
 }
 
 function minBigInt(...values: readonly bigint[]): bigint {
-  return values.reduce((minimum, value) => value < minimum ? value : minimum);
+  return values.reduce((minimum, value) => (value < minimum ? value : minimum));
 }
 
 function cloneLimits(value: SportsbookRiskLimits): SportsbookRiskLimits {

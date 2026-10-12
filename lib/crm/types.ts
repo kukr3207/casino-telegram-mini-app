@@ -1,7 +1,17 @@
 export type PartnerStatus = "pending" | "active" | "suspended" | "terminated";
 export type CommissionModel = "cpa" | "revenue_share" | "hybrid";
-export type CommissionStatus = "pending" | "approved" | "held" | "paid" | "reversed";
-export type VipCaseStatus = "open" | "in_progress" | "waiting_player" | "resolved" | "cancelled";
+export type CommissionStatus =
+  | "pending"
+  | "approved"
+  | "held"
+  | "paid"
+  | "reversed";
+export type VipCaseStatus =
+  | "open"
+  | "in_progress"
+  | "waiting_player"
+  | "resolved"
+  | "cancelled";
 
 export interface AffiliatePartner {
   id: string;
@@ -137,7 +147,13 @@ export interface VipCase {
   id: string;
   playerId: string;
   hostId?: string;
-  category: "onboarding" | "service" | "retention" | "event" | "complaint" | "responsible_play";
+  category:
+    | "onboarding"
+    | "service"
+    | "retention"
+    | "event"
+    | "complaint"
+    | "responsible_play";
   priority: "low" | "normal" | "high" | "urgent";
   status: VipCaseStatus;
   subject: string;
@@ -162,7 +178,12 @@ export interface VipInteraction {
 export interface JourneyDefinition {
   id: string;
   name: string;
-  trigger: "registration" | "first_deposit" | "inactive" | "vip_change" | "manual";
+  trigger:
+    | "registration"
+    | "first_deposit"
+    | "inactive"
+    | "vip_change"
+    | "manual";
   triggerDays?: number;
   segmentConditions: Readonly<Record<string, readonly string[]>>;
   steps: readonly JourneyStep[];
@@ -192,13 +213,33 @@ export interface JourneyEnrollment {
 }
 
 export class CrmValidationError extends Error {
-  constructor(message: string) { super(message); this.name = "CrmValidationError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = "CrmValidationError";
+  }
 }
 
 export class CrmConflictError extends Error {
-  constructor(message: string) { super(message); this.name = "CrmConflictError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = "CrmConflictError";
+  }
 }
 
-export function crmText(value: string, field: string): string { if (typeof value !== "string" || !value.trim()) throw new CrmValidationError(`${field} is required`); return value.trim(); }
-export function crmDate(value: string | Date, field: string): Date { const date = new Date(value); if (!Number.isFinite(date.getTime())) throw new CrmValidationError(`${field} is invalid`); return date; }
-export function crmCurrency(value: string): string { const currency = crmText(value, "currency").toUpperCase(); if (!/^[A-Z][A-Z0-9]{2,7}$/.test(currency)) throw new CrmValidationError("currency is invalid"); return currency; }
+export function crmText(value: string, field: string): string {
+  if (typeof value !== "string" || !value.trim())
+    throw new CrmValidationError(`${field} is required`);
+  return value.trim();
+}
+export function crmDate(value: string | Date, field: string): Date {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime()))
+    throw new CrmValidationError(`${field} is invalid`);
+  return date;
+}
+export function crmCurrency(value: string): string {
+  const currency = crmText(value, "currency").toUpperCase();
+  if (!/^[A-Z][A-Z0-9]{2,7}$/.test(currency))
+    throw new CrmValidationError("currency is invalid");
+  return currency;
+}

@@ -68,7 +68,9 @@ export class BetRepository {
     if (existingId) {
       const existing = this.#bets.get(existingId)!;
       if (betIdentity(existing) !== betIdentity(value)) {
-        throw new SportsbookConflictError("request id was already used for another bet");
+        throw new SportsbookConflictError(
+          "request id was already used for another bet",
+        );
       }
       return cloneBet(existing);
     }
@@ -100,14 +102,24 @@ export class BetRepository {
   forPlayer(playerId: string): readonly Bet[] {
     return [...(this.#byPlayer.get(playerId.trim()) ?? [])]
       .map((id) => this.#bets.get(id)!)
-      .sort((left, right) => right.placedAt.localeCompare(left.placedAt) || right.id.localeCompare(left.id))
+      .sort(
+        (left, right) =>
+          right.placedAt.localeCompare(left.placedAt) ||
+          right.id.localeCompare(left.id),
+      )
       .map(cloneBet);
   }
 
   open(): readonly Bet[] {
     return [...this.#bets.values()]
-      .filter((bet) => ["pending", "accepted", "partially_settled"].includes(bet.status))
-      .sort((left, right) => left.placedAt.localeCompare(right.placedAt) || left.id.localeCompare(right.id))
+      .filter((bet) =>
+        ["pending", "accepted", "partially_settled"].includes(bet.status),
+      )
+      .sort(
+        (left, right) =>
+          left.placedAt.localeCompare(right.placedAt) ||
+          left.id.localeCompare(right.id),
+      )
       .map(cloneBet);
   }
 }
@@ -137,13 +149,20 @@ export class BetService {
     const legs = input.selections.map(({ marketId, selectionId }): BetLeg => {
       const market = this.#catalog.market(marketId);
       if (!market) throw new SportsbookValidationError("market does not exist");
-      if (market.status !== "open") throw new SportsbookConflictError("market is not open");
+      if (market.status !== "open")
+        throw new SportsbookConflictError("market is not open");
       const event = this.#catalog.event(market.eventId);
-      if (!event || ["finished", "cancelled", "abandoned"].includes(event.status)) {
+      if (
+        !event ||
+        ["finished", "cancelled", "abandoned"].includes(event.status)
+      ) {
         throw new SportsbookConflictError("event is not accepting bets");
       }
-      const selection = market.selections.find((value) => value.id === selectionId);
-      if (!selection) throw new SportsbookValidationError("selection does not exist");
+      const selection = market.selections.find(
+        (value) => value.id === selectionId,
+      );
+      if (!selection)
+        throw new SportsbookValidationError("selection does not exist");
       if (selection.status !== "active") {
         throw new SportsbookConflictError("selection is not active");
       }
@@ -157,10 +176,16 @@ export class BetService {
       };
     });
     this.validateRelatedSelections(legs);
-    const potentialReturnMinor = quoteReturn(input.stakeMinor, input.kind, legs, input.systemSize);
-    const cappedReturn = potentialReturnMinor > this.#policy.maximumReturnMinor
-      ? this.#policy.maximumReturnMinor
-      : potentialReturnMinor;
+    const potentialReturnMinor = quoteReturn(
+      input.stakeMinor,
+      input.kind,
+      legs,
+      input.systemSize,
+    );
+    const cappedReturn =
+      potentialReturnMinor > this.#policy.maximumReturnMinor
+        ? this.#policy.maximumReturnMinor
+        : potentialReturnMinor;
     const created = new Date(now);
     const quote: BetQuote = {
       id: randomUUID(),
@@ -171,7 +196,9 @@ export class BetService {
       kind: input.kind,
       systemSize: input.systemSize,
       potentialReturnMinor: cappedReturn,
-      expiresAt: new Date(created.getTime() + this.#policy.quoteLifetimeMs).toISOString(),
+      expiresAt: new Date(
+        created.getTime() + this.#policy.quoteLifetimeMs,
+      ).toISOString(),
       fingerprint: quoteFingerprint(input, legs),
     };
     this.#quotes.set(quote.id, cloneQuote(quote));
@@ -185,10 +212,14 @@ export class BetService {
     if (acceptedAt >= new Date(quote.expiresAt)) {
       throw new SportsbookConflictError("bet quote expired");
     }
-    const existing = this.#repository.forPlayer(quote.playerId)
+    const existing = this.#repository
+      .forPlayer(quote.playerId)
       .find((bet) => bet.requestId === requestId.trim());
     if (existing) {
-      if (existing.legs.length !== quote.legs.length || existing.stakeMinor !== quote.stakeMinor) {
+      if (
+        existing.legs.length !== quote.legs.length ||
+        existing.stakeMinor !== quote.stakeMinor
+      ) {
         throw new SportsbookConflictError("request id was already used");
       }
       return existing;
@@ -199,7 +230,9 @@ export class BetService {
       const current = currentLegs[index].currentPrice!;
       const movement = priceMovementBasisPoints(quoted, current);
       if (movement < -this.#policy.priceChangeToleranceBasisPoints) {
-        throw new SportsbookConflictError("selection price moved beyond tolerance");
+        throw new SportsbookConflictError(
+          "selection price moved beyond tolerance",
+        );
       }
     }
     const acceptedReturnMinor = quoteReturn(
@@ -208,9 +241,10 @@ export class BetService {
       currentLegs.map((leg) => ({ ...leg, acceptedPrice: leg.currentPrice! })),
       quote.systemSize,
     );
-    const cappedReturn = acceptedReturnMinor > this.#policy.maximumReturnMinor
-      ? this.#policy.maximumReturnMinor
-      : acceptedReturnMinor;
+    const cappedReturn =
+      acceptedReturnMinor > this.#policy.maximumReturnMinor
+        ? this.#policy.maximumReturnMinor
+        : acceptedReturnMinor;
     const id = randomUUID();
     const reservation = `sportsbook:${id}`;
     this.#wallet.reserve({
@@ -267,9 +301,13 @@ export class BetService {
     if (!market || market.status !== "open") {
       throw new SportsbookConflictError("market closed before bet acceptance");
     }
-    const selection = market.selections.find((value) => value.id === leg.selectionId);
+    const selection = market.selections.find(
+      (value) => value.id === leg.selectionId,
+    );
     if (!selection || selection.status !== "active") {
-      throw new SportsbookConflictError("selection closed before bet acceptance");
+      throw new SportsbookConflictError(
+        "selection closed before bet acceptance",
+      );
     }
     return {
       ...leg,
@@ -282,7 +320,9 @@ export class BetService {
     const events = new Set<string>();
     for (const leg of legs) {
       if (events.has(leg.eventId)) {
-        throw new SportsbookValidationError("related selections are not allowed");
+        throw new SportsbookValidationError(
+          "related selections are not allowed",
+        );
       }
       events.add(leg.eventId);
     }
@@ -290,7 +330,10 @@ export class BetService {
 }
 
 function validatePolicy(value: BetAcceptancePolicy): void {
-  if (!Number.isSafeInteger(value.quoteLifetimeMs) || value.quoteLifetimeMs < 100) {
+  if (
+    !Number.isSafeInteger(value.quoteLifetimeMs) ||
+    value.quoteLifetimeMs < 100
+  ) {
     throw new SportsbookValidationError("quote lifetime is invalid");
   }
   positiveMinor(value.minimumStakeMinor, "minimum stake");
@@ -298,13 +341,19 @@ function validatePolicy(value: BetAcceptancePolicy): void {
   if (value.maximumStakeMinor < value.minimumStakeMinor) {
     throw new SportsbookValidationError("maximum stake is below minimum stake");
   }
-  if (!Number.isSafeInteger(value.maximumLegs) || value.maximumLegs < 1 || value.maximumLegs > 100) {
+  if (
+    !Number.isSafeInteger(value.maximumLegs) ||
+    value.maximumLegs < 1 ||
+    value.maximumLegs > 100
+  ) {
     throw new SportsbookValidationError("maximum legs is invalid");
   }
   positiveMinor(value.maximumReturnMinor, "maximum return");
-  if (!Number.isSafeInteger(value.priceChangeToleranceBasisPoints)
-    || value.priceChangeToleranceBasisPoints < 0
-    || value.priceChangeToleranceBasisPoints > 10_000) {
+  if (
+    !Number.isSafeInteger(value.priceChangeToleranceBasisPoints) ||
+    value.priceChangeToleranceBasisPoints < 0 ||
+    value.priceChangeToleranceBasisPoints > 10_000
+  ) {
     throw new SportsbookValidationError("price tolerance is invalid");
   }
   if (value.allowedCurrencies.length === 0) {
@@ -312,7 +361,10 @@ function validatePolicy(value: BetAcceptancePolicy): void {
   }
 }
 
-function validateRequest(value: BetRequest, policy: BetAcceptancePolicy): BetRequest {
+function validateRequest(
+  value: BetRequest,
+  policy: BetAcceptancePolicy,
+): BetRequest {
   const playerId = requiredText(value.playerId, "player id");
   const requestId = requiredText(value.requestId, "request id");
   const currency = normalizedCurrency(value.currency);
@@ -320,22 +372,34 @@ function validateRequest(value: BetRequest, policy: BetAcceptancePolicy): BetReq
   if (!policy.allowedCurrencies.map(normalizedCurrency).includes(currency)) {
     throw new SportsbookValidationError("currency is not accepted");
   }
-  if (stakeMinor < policy.minimumStakeMinor || stakeMinor > policy.maximumStakeMinor) {
+  if (
+    stakeMinor < policy.minimumStakeMinor ||
+    stakeMinor > policy.maximumStakeMinor
+  ) {
     throw new SportsbookValidationError("stake is outside allowed limits");
   }
-  if (value.selections.length < 1 || value.selections.length > policy.maximumLegs) {
-    throw new SportsbookValidationError("selection count is outside allowed limits");
+  if (
+    value.selections.length < 1 ||
+    value.selections.length > policy.maximumLegs
+  ) {
+    throw new SportsbookValidationError(
+      "selection count is outside allowed limits",
+    );
   }
   if (value.kind === "single" && value.selections.length !== 1) {
     throw new SportsbookValidationError("single bet requires one selection");
   }
   if (value.kind === "accumulator" && value.selections.length < 2) {
-    throw new SportsbookValidationError("accumulator requires at least two selections");
+    throw new SportsbookValidationError(
+      "accumulator requires at least two selections",
+    );
   }
   if (value.kind === "system") {
-    if (!Number.isSafeInteger(value.systemSize)
-      || value.systemSize! < 1
-      || value.systemSize! >= value.selections.length) {
+    if (
+      !Number.isSafeInteger(value.systemSize) ||
+      value.systemSize! < 1 ||
+      value.systemSize! >= value.selections.length
+    ) {
       throw new SportsbookValidationError("system size is invalid");
     }
   }
@@ -344,7 +408,8 @@ function validateRequest(value: BetRequest, policy: BetAcceptancePolicy): BetReq
     const marketId = requiredText(selection.marketId, "market id");
     const selectionId = requiredText(selection.selectionId, "selection id");
     const key = `${marketId}:${selectionId}`;
-    if (keys.has(key)) throw new SportsbookValidationError("duplicate selection");
+    if (keys.has(key))
+      throw new SportsbookValidationError("duplicate selection");
     keys.add(key);
     return { marketId, selectionId };
   });
@@ -392,7 +457,11 @@ function choose<T>(values: readonly T[], size: number): T[][] {
       output.push([...selected]);
       return;
     }
-    for (let index = start; index <= values.length - (size - selected.length); index += 1) {
+    for (
+      let index = start;
+      index <= values.length - (size - selected.length);
+      index += 1
+    ) {
       selected.push(values[index]);
       walk(index + 1, selected);
       selected.pop();
@@ -404,20 +473,22 @@ function choose<T>(values: readonly T[], size: number): T[][] {
 
 function quoteFingerprint(input: BetRequest, legs: readonly BetLeg[]): string {
   return createHash("sha256")
-    .update(JSON.stringify({
-      playerId: input.playerId,
-      requestId: input.requestId,
-      currency: input.currency,
-      stakeMinor: input.stakeMinor.toString(),
-      kind: input.kind,
-      systemSize: input.systemSize,
-      legs: legs.map((leg) => ({
-        marketId: leg.marketId,
-        selectionId: leg.selectionId,
-        numerator: leg.acceptedPrice.numerator.toString(),
-        denominator: leg.acceptedPrice.denominator.toString(),
-      })),
-    }))
+    .update(
+      JSON.stringify({
+        playerId: input.playerId,
+        requestId: input.requestId,
+        currency: input.currency,
+        stakeMinor: input.stakeMinor.toString(),
+        kind: input.kind,
+        systemSize: input.systemSize,
+        legs: legs.map((leg) => ({
+          marketId: leg.marketId,
+          selectionId: leg.selectionId,
+          numerator: leg.acceptedPrice.numerator.toString(),
+          denominator: leg.acceptedPrice.denominator.toString(),
+        })),
+      }),
+    )
     .digest("hex");
 }
 

@@ -1,5 +1,18 @@
-export type GameLifecycle = "draft" | "certification" | "scheduled" | "live" | "suspended" | "retired";
-export type ReleaseStatus = "draft" | "approved" | "scheduled" | "deploying" | "completed" | "failed" | "rolled_back";
+export type GameLifecycle =
+  | "draft"
+  | "certification"
+  | "scheduled"
+  | "live"
+  | "suspended"
+  | "retired";
+export type ReleaseStatus =
+  | "draft"
+  | "approved"
+  | "scheduled"
+  | "deploying"
+  | "completed"
+  | "failed"
+  | "rolled_back";
 export type FlagValue = string | number | boolean;
 
 export interface GameDefinition {
@@ -7,7 +20,14 @@ export interface GameDefinition {
   slug: string;
   name: string;
   provider: string;
-  category: "slots" | "table" | "live_dealer" | "dice" | "instant" | "sportsbook" | "poker";
+  category:
+    | "slots"
+    | "table"
+    | "live_dealer"
+    | "dice"
+    | "instant"
+    | "sportsbook"
+    | "poker";
   lifecycle: GameLifecycle;
   currencies: readonly string[];
   countries: readonly string[];
@@ -73,7 +93,15 @@ export interface TargetingRule {
 
 export interface TargetingCondition {
   attribute: string;
-  operator: "equals" | "not_equals" | "in" | "not_in" | "starts_with" | "ends_with" | "greater_than" | "less_than";
+  operator:
+    | "equals"
+    | "not_equals"
+    | "in"
+    | "not_in"
+    | "starts_with"
+    | "ends_with"
+    | "greater_than"
+    | "less_than";
   values: readonly string[];
 }
 
@@ -199,12 +227,14 @@ export class LiveOpsConflictError extends Error {
 }
 
 export function liveOpsText(value: string, field: string): string {
-  if (typeof value !== "string" || !value.trim()) throw new LiveOpsValidationError(`${field} is required`);
+  if (typeof value !== "string" || !value.trim())
+    throw new LiveOpsValidationError(`${field} is required`);
   return value.trim();
 }
 
 export function liveOpsDate(value: string | Date, field: string): Date {
   const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) throw new LiveOpsValidationError(`${field} is invalid`);
+  if (!Number.isFinite(date.getTime()))
+    throw new LiveOpsValidationError(`${field} is invalid`);
   return date;
 }

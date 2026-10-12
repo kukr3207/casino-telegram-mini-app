@@ -2,8 +2,20 @@ import type { Card, EvaluatedHand } from "./cards.ts";
 
 export type PokerVariant = "holdem" | "omaha";
 export type TableStatus = "waiting" | "running" | "paused" | "closed";
-export type HandStage = "preflop" | "flop" | "turn" | "river" | "showdown" | "complete";
-export type PlayerAction = "fold" | "check" | "call" | "bet" | "raise" | "all_in";
+export type HandStage =
+  | "preflop"
+  | "flop"
+  | "turn"
+  | "river"
+  | "showdown"
+  | "complete";
+export type PlayerAction =
+  | "fold"
+  | "check"
+  | "call"
+  | "bet"
+  | "raise"
+  | "all_in";
 
 export interface PokerPlayer {
   playerId: string;
@@ -109,7 +121,13 @@ export interface PokerTournament {
   startsAt: string;
   blindLevels: readonly BlindLevel[];
   prizesBasisPoints: readonly number[];
-  status: "scheduled" | "registering" | "running" | "paused" | "finished" | "cancelled";
+  status:
+    | "scheduled"
+    | "registering"
+    | "running"
+    | "paused"
+    | "finished"
+    | "cancelled";
   version: number;
 }
 
@@ -148,17 +166,23 @@ export class PokerConflictError extends Error {
 }
 
 export function pokerText(value: string, field: string): string {
-  if (typeof value !== "string" || !value.trim()) throw new PokerValidationError(`${field} is required`);
+  if (typeof value !== "string" || !value.trim())
+    throw new PokerValidationError(`${field} is required`);
   return value.trim();
 }
 
 export function pokerDate(value: string | Date, field: string): Date {
   const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) throw new PokerValidationError(`${field} is invalid`);
+  if (!Number.isFinite(date.getTime()))
+    throw new PokerValidationError(`${field} is invalid`);
   return date;
 }
 
-export function pokerAmount(value: bigint, field: string, allowZero = false): bigint {
+export function pokerAmount(
+  value: bigint,
+  field: string,
+  allowZero = false,
+): bigint {
   if (typeof value !== "bigint" || (allowZero ? value < 0n : value <= 0n)) {
     throw new PokerValidationError(`${field} is invalid`);
   }

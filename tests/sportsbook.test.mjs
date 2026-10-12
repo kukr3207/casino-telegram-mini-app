@@ -17,7 +17,8 @@ class Wallet {
   settlements = new Map();
 
   reserve(input) {
-    if (this.reservations.has(input.reference)) throw new Error("duplicate reservation");
+    if (this.reservations.has(input.reference))
+      throw new Error("duplicate reservation");
     this.reservations.set(input.reference, input);
   }
 
@@ -109,7 +110,12 @@ function setup() {
   catalog.putMarket(market("event-1", "market-1"));
   const repository = new BetRepository();
   const wallet = new Wallet();
-  const service = new BetService(catalog, repository, wallet, acceptancePolicy());
+  const service = new BetService(
+    catalog,
+    repository,
+    wallet,
+    acceptancePolicy(),
+  );
   return { catalog, repository, wallet, service };
 }
 
@@ -144,21 +150,33 @@ test("catalog closes all markets when an event finishes", () => {
   const live = catalog.event("e");
   catalog.transitionEvent(live.id, live.version, "finished");
   assert.equal(catalog.market("m").status, "closed");
-  assert.equal(catalog.market("m").selections.every((selection) => selection.status === "suspended"), true);
+  assert.equal(
+    catalog
+      .market("m")
+      .selections.every((selection) => selection.status === "suspended"),
+    true,
+  );
 });
 
 test("bet quotes reserve a wallet balance only on acceptance", () => {
   const { service, wallet } = setup();
-  const quote = service.quote({
-    playerId: "player",
-    requestId: "request",
-    currency: "chip",
-    stakeMinor: 1_000n,
-    kind: "single",
-    selections: [{ marketId: "market-1", selectionId: "market-1-home" }],
-  }, new Date("2026-10-19T10:00:00Z"));
+  const quote = service.quote(
+    {
+      playerId: "player",
+      requestId: "request",
+      currency: "chip",
+      stakeMinor: 1_000n,
+      kind: "single",
+      selections: [{ marketId: "market-1", selectionId: "market-1-home" }],
+    },
+    new Date("2026-10-19T10:00:00Z"),
+  );
   assert.equal(wallet.reservations.size, 0);
-  const bet = service.accept(quote.id, "request", new Date("2026-10-19T10:00:01Z"));
+  const bet = service.accept(
+    quote.id,
+    "request",
+    new Date("2026-10-19T10:00:01Z"),
+  );
   assert.equal(bet.status, "accepted");
   assert.equal(bet.acceptedReturnMinor, 2_000n);
   assert.equal(wallet.reservations.size, 1);
@@ -166,16 +184,27 @@ test("bet quotes reserve a wallet balance only on acceptance", () => {
 
 test("request ids make accepted bets idempotent", () => {
   const { service, repository } = setup();
-  const quote = service.quote({
-    playerId: "player",
-    requestId: "same",
-    currency: "CHIP",
-    stakeMinor: 500n,
-    kind: "single",
-    selections: [{ marketId: "market-1", selectionId: "market-1-away" }],
-  }, new Date("2026-10-19T10:00:00Z"));
-  const first = service.accept(quote.id, "same", new Date("2026-10-19T10:00:01Z"));
-  const retry = service.accept(quote.id, "same", new Date("2026-10-19T10:00:02Z"));
+  const quote = service.quote(
+    {
+      playerId: "player",
+      requestId: "same",
+      currency: "CHIP",
+      stakeMinor: 500n,
+      kind: "single",
+      selections: [{ marketId: "market-1", selectionId: "market-1-away" }],
+    },
+    new Date("2026-10-19T10:00:00Z"),
+  );
+  const first = service.accept(
+    quote.id,
+    "same",
+    new Date("2026-10-19T10:00:01Z"),
+  );
+  const retry = service.accept(
+    quote.id,
+    "same",
+    new Date("2026-10-19T10:00:02Z"),
+  );
   assert.equal(retry.id, first.id);
   assert.equal(repository.forPlayer("player").length, 1);
 });
@@ -200,13 +229,15 @@ test("risk engine enforces player and liability limits", () => {
     currency: "CHIP",
     stakeMinor: 9_000n,
     potentialReturnMinor: 45_000n,
-    legs: [{
-      eventId: "event",
-      marketId: "market",
-      selectionId: "selection",
-      acceptedPrice: { numerator: 5n, denominator: 1n },
-      result: "pending",
-    }],
+    legs: [
+      {
+        eventId: "event",
+        marketId: "market",
+        selectionId: "selection",
+        acceptedPrice: { numerator: 5n, denominator: 1n },
+        result: "pending",
+      },
+    ],
     sportByEvent: { event: "football" },
     competitionByEvent: { event: "league" },
     placedAt: new Date("2026-10-19T10:00:00Z"),
@@ -217,15 +248,22 @@ test("risk engine enforces player and liability limits", () => {
 
 test("settlement pays a winning single exactly once", () => {
   const { service, repository, wallet } = setup();
-  const quote = service.quote({
-    playerId: "player",
-    requestId: "settle",
-    currency: "CHIP",
-    stakeMinor: 1_000n,
-    kind: "single",
-    selections: [{ marketId: "market-1", selectionId: "market-1-home" }],
-  }, new Date("2026-10-19T10:00:00Z"));
-  const bet = service.accept(quote.id, "settle", new Date("2026-10-19T10:00:01Z"));
+  const quote = service.quote(
+    {
+      playerId: "player",
+      requestId: "settle",
+      currency: "CHIP",
+      stakeMinor: 1_000n,
+      kind: "single",
+      selections: [{ marketId: "market-1", selectionId: "market-1-home" }],
+    },
+    new Date("2026-10-19T10:00:00Z"),
+  );
+  const bet = service.accept(
+    quote.id,
+    "settle",
+    new Date("2026-10-19T10:00:01Z"),
+  );
   const settlement = new SportsbookSettlementService(repository, wallet);
   const payouts = settlement.settleMarket({
     marketId: "market-1",
@@ -247,15 +285,22 @@ test("settlement pays a winning single exactly once", () => {
 
 test("cash out values the remaining probability and closes a bet", () => {
   const { service, repository, wallet } = setup();
-  const quote = service.quote({
-    playerId: "player",
-    requestId: "cashout",
-    currency: "CHIP",
-    stakeMinor: 1_000n,
-    kind: "single",
-    selections: [{ marketId: "market-1", selectionId: "market-1-home" }],
-  }, new Date("2026-10-19T10:00:00Z"));
-  const bet = service.accept(quote.id, "cashout", new Date("2026-10-19T10:00:01Z"));
+  const quote = service.quote(
+    {
+      playerId: "player",
+      requestId: "cashout",
+      currency: "CHIP",
+      stakeMinor: 1_000n,
+      kind: "single",
+      selections: [{ marketId: "market-1", selectionId: "market-1-home" }],
+    },
+    new Date("2026-10-19T10:00:00Z"),
+  );
+  const bet = service.accept(
+    quote.id,
+    "cashout",
+    new Date("2026-10-19T10:00:01Z"),
+  );
   const cashout = new CashOutService(repository, wallet, {
     enabled: true,
     minimumOfferMinor: 100n,
@@ -275,7 +320,11 @@ test("cash out values the remaining probability and closes a bet", () => {
   });
   assert.equal(offer.fairValueMinor, 500n);
   assert.equal(offer.amountMinor, 475n);
-  const accepted = cashout.accept(offer.id, "player", new Date("2026-10-19T10:01:01Z"));
+  const accepted = cashout.accept(
+    offer.id,
+    "player",
+    new Date("2026-10-19T10:01:01Z"),
+  );
   assert.equal(accepted.bet.status, "cashed_out");
   assert.equal(wallet.settlements.get(`sportsbook:${bet.id}`), 475n);
 });
