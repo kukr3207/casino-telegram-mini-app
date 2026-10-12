@@ -2,6 +2,7 @@
 
 import { readdir, readFile, stat } from "node:fs/promises";
 import { extname, relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const languages = new Map([
   [".js", "JavaScript"],
@@ -192,7 +193,7 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   main().catch((error) => {
     console.error(`inventory error: ${error.message}`);
     process.exitCode = 2;
