@@ -137,9 +137,9 @@ export class VaultService {
       kind: "vault_withdrawal",
       occurredAt: withdrawalTime,
       postings: [
-        { accountId: vault.vaultAccount, direction: "debit", units: gross },
-        { accountId: vault.sourceAccount, direction: "credit", units: net },
-        { accountId: penaltyAccount, direction: "credit", units: penalty },
+        { accountId: vault.vaultAccount, direction: "debit" as const, units: gross },
+        { accountId: vault.sourceAccount, direction: "credit" as const, units: net },
+        { accountId: penaltyAccount, direction: "credit" as const, units: penalty },
       ].filter((posting) => posting.units > 0n),
       metadata: { vaultId, early },
     });

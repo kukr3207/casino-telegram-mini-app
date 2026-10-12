@@ -83,9 +83,9 @@ export class WagerService {
       kind: "wager_reserve",
       occurredAt: input.at,
       postings: [
-        { accountId: player.id, direction: "debit", units: stake },
-        { accountId: house.id, direction: "debit", units: reserveCapacity },
-        { accountId: escrow.id, direction: "credit", units: potentialPayout },
+        { accountId: player.id, direction: "debit" as const, units: stake },
+        { accountId: house.id, direction: "debit" as const, units: reserveCapacity },
+        { accountId: escrow.id, direction: "credit" as const, units: potentialPayout },
       ].filter((posting) => posting.units > 0n),
       metadata: { wagerId, playerId, game, roundId },
     });
@@ -126,9 +126,9 @@ export class WagerService {
       kind: "wager_settlement",
       occurredAt: input.at,
       postings: [
-        { accountId: input.accounts.escrow, direction: "debit", units: wager.potentialPayout },
-        { accountId: input.accounts.player, direction: "credit", units: payout },
-        { accountId: input.accounts.house, direction: "credit", units: remainder },
+        { accountId: input.accounts.escrow, direction: "debit" as const, units: wager.potentialPayout },
+        { accountId: input.accounts.player, direction: "credit" as const, units: payout },
+        { accountId: input.accounts.house, direction: "credit" as const, units: remainder },
       ].filter((posting) => posting.units > 0n),
       metadata: { wagerId: wager.id, result: input.result.trim() },
     });
@@ -150,9 +150,9 @@ export class WagerService {
       kind: "wager_void",
       occurredAt: input.at,
       postings: [
-        { accountId: input.accounts.escrow, direction: "debit", units: wager.potentialPayout },
-        { accountId: input.accounts.player, direction: "credit", units: wager.stake },
-        { accountId: input.accounts.house, direction: "credit", units: houseReserve },
+        { accountId: input.accounts.escrow, direction: "debit" as const, units: wager.potentialPayout },
+        { accountId: input.accounts.player, direction: "credit" as const, units: wager.stake },
+        { accountId: input.accounts.house, direction: "credit" as const, units: houseReserve },
       ].filter((posting) => posting.units > 0n),
       metadata: { wagerId: wager.id, reason: id(input.reason, "void reason") },
     });
